@@ -1,3 +1,16 @@
 spring:
   application:
     name: oficina-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/oficina_db
+    username: postgres
+    password: 123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      # Use 'update' apenas em dev. Em prod, use Flyway e mude para 'validate'
+      ddl-auto: update
+    show-sql: true # Mostra os SQLs no console para debugar
+    properties:
+      hibernate:
+        format_sql: true
