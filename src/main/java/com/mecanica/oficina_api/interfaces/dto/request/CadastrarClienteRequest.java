@@ -1,4 +1,4 @@
-package com.mecanica.oficina_api.interfaces.dto;
+package com.mecanica.oficina_api.interfaces.dto.request;
 
 public class CadastrarClienteRequest {
 
