@@ -1,9 +1,9 @@
 package com.mecanica.oficina_api.infrastructure.persistence;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "clientes")
@@ -17,6 +17,9 @@ public class ClienteJpaEntity {
     private String email;
     private String telefone;
     private LocalDateTime dataCadastro;
+
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VeiculoJpaEntity> veiculos = new ArrayList<>();
 
     public ClienteJpaEntity() {}
 
@@ -32,4 +35,6 @@ public class ClienteJpaEntity {
     public void setTelefone(String telefone) { this.telefone = telefone; }
     public LocalDateTime getDataCadastro() { return dataCadastro; }
     public void setDataCadastro(LocalDateTime dataCadastro) { this.dataCadastro = dataCadastro; }
+    public List<VeiculoJpaEntity> getVeiculos() { return veiculos; }
+    public void setVeiculos(List<VeiculoJpaEntity> veiculos) { this.veiculos = veiculos; }
 }

@@ -1,7 +1,8 @@
 package com.mecanica.oficina_api.interfaces;
 
 import com.mecanica.oficina_api.application.cliente.ClienteService;
-import com.mecanica.oficina_api.interfaces.dto.CadastrarClienteRequest;
+import com.mecanica.oficina_api.interfaces.dto.request.CadastrarClienteRequest;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

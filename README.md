@@ -55,26 +55,43 @@ Isso cria os containers da aplicação e do PostgreSQL:
 - Banco: `localhost:5432` — `oficina_db` / `postgres` / `123`
 
 ## Endpoints
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `POST` | `/cliente` | Cadastra um novo cliente |
-| `GET` | `/cliente/{idCliente}` | Busca cliente por ID |
-
 A documentação interativa (Swagger UI) está disponível em:
 
 ```
 http://localhost:8080/swagger-ui.html
 ```
 
-## Build e testes
+## Testes
+
+### Executar todos os testes
 
 ```bash
-# Executar testes
 ./mvnw test
+```
 
-# Gerar JAR
+### Estrutura de testes
+
+Os testes seguem as mesmas camadas da aplicação:
+
+```
+src/test/java/com/mecanica/oficina_api/
+├── domain/veiculo/
+│   └── VeiculoTest.java          # Validações de domínio (sem Spring)
+├── application/veiculo/
+│   └── VeiculoServiceTest.java   # Lógica de negócio com Mockito
+└── interfaces/
+    └── VeiculoControllerTest.java # HTTP (status codes, JSON) com MockMvc
+```
+
+
+### Build
+
+```bash
+# Gerar JAR (inclui execução dos testes)
 ./mvnw clean package
+
+# Gerar JAR pulando os testes
+./mvnw clean package -DskipTests
 
 # Executar o JAR gerado
 java -jar target/oficina-api-0.0.1-SNAPSHOT.jar

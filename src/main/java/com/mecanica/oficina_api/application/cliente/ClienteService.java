@@ -6,7 +6,8 @@ import com.mecanica.oficina_api.domain.cliente.model.Email;
 import com.mecanica.oficina_api.domain.cliente.model.Telefone;
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
-import com.mecanica.oficina_api.interfaces.dto.CadastrarClienteRequest;
+import com.mecanica.oficina_api.interfaces.dto.request.CadastrarClienteRequest;
+
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
