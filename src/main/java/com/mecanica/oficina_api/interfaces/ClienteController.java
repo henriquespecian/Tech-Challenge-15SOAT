@@ -1,7 +1,9 @@
 package com.mecanica.oficina_api.interfaces;
 
 import com.mecanica.oficina_api.application.cliente.ClienteService;
+import com.mecanica.oficina_api.interfaces.dto.AlterarClienteRequest;
 import com.mecanica.oficina_api.interfaces.dto.CadastrarClienteRequest;
+import com.mecanica.oficina_api.interfaces.dto.ConsultarClienteResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("cliente")
@@ -34,9 +37,38 @@ public class ClienteController {
         return ResponseEntity.status(201).build();
     }
 
-    @GetMapping("/{idCliente}")
-    @Operation(summary = "Consultar cliente por ID", description = "Permite consultar os detalhes de um cliente específico usando seu ID")
-    public ResponseEntity<Void> consultar(@PathVariable String idCliente) {
-        return ResponseEntity.ok().build();
+    @GetMapping("/{cpf}")
+    @Operation(summary = "Consultar cliente por CPF", description = "Permite consultar os detalhes de um cliente específico usando seu CPF")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Cliente encontrado com sucesso",
+        content = @Content(schema = @Schema(implementation = ConsultarClienteResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
+        content =  @Content(schema = @Schema(implementation = ResponseStatusException.class))),
+    })
+    public ResponseEntity<ConsultarClienteResponse> consultar(@PathVariable String cpf) {
+        var cliente_encontrado = clienteService.consultar(cpf);
+        return ResponseEntity.status(200).body(cliente_encontrado);
+    }
+
+    @PutMapping("/{cpf}")
+    @Operation(summary = "Alterar um cliente por CPF", description = "Permite alterar os dados de um cliente específico usando seu CPF")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Cliente encontrado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
+            content =  @Content(schema = @Schema(implementation = ResponseStatusException.class))),
+    })
+    public ResponseEntity<Void> alterar(@PathVariable String cpf, @RequestBody AlterarClienteRequest request) {
+        clienteService.alterar(cpf, request);
+        return ResponseEntity.status(204).build();
+    }
+
+    @DeleteMapping("/{cpf}")
+    @Operation(summary = "Desativar um cliente por CPF", description = "Permite desativar um cliente específico usando seu CPF")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Cliente desativado com sucesso")
+    })
+    public ResponseEntity<Void> deletar(@PathVariable String cpf) {
+        clienteService.deletar(cpf);
+        return ResponseEntity.status(204).build();
     }
 }

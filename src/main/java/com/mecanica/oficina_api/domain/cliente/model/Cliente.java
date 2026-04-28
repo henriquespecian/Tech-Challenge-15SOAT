@@ -12,6 +12,8 @@ public class Cliente {
     private Telefone telefone;
     private final List<Veiculo> veiculos;
     private LocalDateTime dataCadastro;
+    private boolean ativo;
+
 
     protected Cliente() {
         this.veiculos = new ArrayList<>();
