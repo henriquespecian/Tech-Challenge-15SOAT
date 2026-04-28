@@ -25,29 +25,34 @@ src/main/java/com/mecanica/oficina_api/
 
 ## Pré-requisitos
 
-- Java 25+
 - Docker e Docker Compose
+- `make` (opcional, mas recomendado)
 
 ## Como executar
 
-**1. Suba o banco de dados:**
+### Com Make (recomendado)
 
 ```bash
-docker-compose up -d
+make start
 ```
 
-Isso cria um container PostgreSQL com as seguintes configurações:
-- Host: `localhost:5432`
-- Banco: `oficina_db`
-- Usuário: `postgres` / Senha: `123`
+Isso remove tudo que existia, reconstrói a imagem e sobe a aplicação com os logs no terminal.
 
-**2. Execute a aplicação:**
+| Comando | Descrição |
+|---|---|
+| `make start` | Limpa tudo e sobe do zero com logs |
+
+### Sem Make
+
+**1. Suba tudo:**
 
 ```bash
-./mvnw spring-boot:run
+docker-compose up --build
 ```
 
-A API estará disponível em `http://localhost:8080`.
+Isso cria os containers da aplicação e do PostgreSQL:
+- API: `http://localhost:8080`
+- Banco: `localhost:5432` — `oficina_db` / `postgres` / `123`
 
 ## Endpoints
 
