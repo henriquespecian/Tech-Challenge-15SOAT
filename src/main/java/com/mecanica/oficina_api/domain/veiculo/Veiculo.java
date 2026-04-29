@@ -12,6 +12,7 @@ public class Veiculo {
     private String modelo;
     private int ano;
     private String cor;
+    private boolean ativo;
 
     protected Veiculo() {}
 
@@ -23,6 +24,7 @@ public class Veiculo {
         veiculo.setAno(ano);
         veiculo.cor = cor;
         veiculo.setPlaca(placa);
+        veiculo.ativo = true;
         return veiculo;
     }
 
@@ -48,4 +50,5 @@ public class Veiculo {
     public String getModelo() { return modelo; }
     public int getAno() { return ano; }
     public String getCor() { return cor; }
+    public boolean isAtivo() { return ativo; }
 }

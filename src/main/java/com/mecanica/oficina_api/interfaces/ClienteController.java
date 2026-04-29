@@ -71,4 +71,5 @@ public class ClienteController {
         clienteService.deletar(cpf);
         return ResponseEntity.status(204).build();
     }
+
 }

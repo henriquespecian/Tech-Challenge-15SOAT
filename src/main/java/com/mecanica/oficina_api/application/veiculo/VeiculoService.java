@@ -5,12 +5,16 @@ import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.VeiculoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
+import com.mecanica.oficina_api.interfaces.dto.request.AlterarVeiculoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarVeiculoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.VeiculoResponse;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class VeiculoService {
@@ -28,7 +32,7 @@ public class VeiculoService {
         ClienteJpaEntity clienteEntity = clienteRepository.findById(request.getClienteId())
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + request.getClienteId()));
 
-        if (veiculoRepository.existsByPlaca(request.getPlaca())) {
+        if (veiculoRepository.existsByPlacaAndAtivoTrue(request.getPlaca())) {
             throw new IllegalArgumentException("Já existe um veículo com a placa: " + request.getPlaca());
         }
 
@@ -48,13 +52,14 @@ public class VeiculoService {
         entity.setAno(veiculo.getAno());
         entity.setCor(veiculo.getCor());
         entity.setCliente(clienteEntity);
+        entity.setAtivo(true);
 
         veiculoRepository.save(entity);
     }
 
     public VeiculoResponse buscarPorId(String id) {
-        VeiculoJpaEntity entity = veiculoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Veículo não encontrado: " + id));
+        VeiculoJpaEntity entity = veiculoRepository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado: " + id));
 
         return new VeiculoResponse(
                 entity.getId(),
@@ -68,7 +73,7 @@ public class VeiculoService {
     }
 
     public List<VeiculoResponse> listarPorCliente(String clienteId) {
-        return veiculoRepository.findByCliente_Id(clienteId).stream()
+        return veiculoRepository.findByCliente_IdAndAtivoTrue(clienteId).stream()
                 .map(e -> new VeiculoResponse(
                         e.getId(),
                         e.getCliente().getId(),
@@ -79,5 +84,43 @@ public class VeiculoService {
                         e.getCor()
                 ))
                 .toList();
+    }
+
+    public VeiculoResponse alterar(String id, AlterarVeiculoRequest request) {
+        VeiculoJpaEntity entity = veiculoRepository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado: " + id));
+
+        if (!entity.getPlaca().equals(request.getPlaca()) &&
+                veiculoRepository.existsByPlacaAndAtivoTrue(request.getPlaca())) {
+            throw new IllegalArgumentException("Já existe um veículo com a placa: " + request.getPlaca());
+        }
+
+        entity.setPlaca(request.getPlaca());
+        entity.setMarca(request.getMarca());
+        entity.setModelo(request.getModelo());
+        entity.setAno(request.getAno());
+        entity.setCor(request.getCor());
+
+        VeiculoJpaEntity saved = veiculoRepository.save(entity);
+
+        return new VeiculoResponse(
+                saved.getId(),
+                saved.getCliente().getId(),
+                saved.getPlaca(),
+                saved.getMarca(),
+                saved.getModelo(),
+                saved.getAno(),
+                saved.getCor()
+        );
+    }
+
+    public void deletar(String id) {
+
+        Optional<VeiculoJpaEntity> entity = veiculoRepository.findByIdAndAtivoTrue(id);
+        
+        if(entity.isPresent()) {
+            entity.get().setAtivo(false);
+            veiculoRepository.save(entity.get());
+        }
     }
 }

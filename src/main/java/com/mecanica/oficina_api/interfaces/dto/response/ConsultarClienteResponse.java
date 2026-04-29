@@ -2,6 +2,7 @@ package com.mecanica.oficina_api.interfaces.dto.response;
 
 public class ConsultarClienteResponse {
 
+  private String id;
   private String nome;
   private String cpf;
   private String email;
@@ -11,11 +12,20 @@ public class ConsultarClienteResponse {
 
   }
 
-  public ConsultarClienteResponse(String nome, String cpf, String email, String telefone) {
+  public ConsultarClienteResponse(String id, String nome, String cpf, String email, String telefone) {
+    this.id = id;
     this.nome = nome;
     this.cpf = cpf;
     this.email = email;
     this.telefone = telefone;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
   }
 
   public String getNome() {

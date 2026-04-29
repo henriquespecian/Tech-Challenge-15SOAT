@@ -24,6 +24,8 @@ public class VeiculoJpaEntity {
 
     private String cor;
 
+    private boolean ativo;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
     private ClienteJpaEntity cliente;
@@ -42,6 +44,8 @@ public class VeiculoJpaEntity {
     public void setAno(int ano) { this.ano = ano; }
     public String getCor() { return cor; }
     public void setCor(String cor) { this.cor = cor; }
+    public boolean getAtivo() { return ativo; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
     public ClienteJpaEntity getCliente() { return cliente; }
     public void setCliente(ClienteJpaEntity cliente) { this.cliente = cliente; }
 }

@@ -52,7 +52,7 @@ public class ClienteService {
         ClienteJpaEntity entity = repository.findByCpfAndAtivoTrue(cpf_cliente.getValue())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CPF inexistente"));
 
-        var response = new ConsultarClienteResponse(entity.getNome(), entity.getCpf(), entity.getEmail(),  entity.getTelefone());
+        var response = new ConsultarClienteResponse(entity.getId(), entity.getNome(), entity.getCpf(), entity.getEmail(), entity.getTelefone());
 
         return response;
     }

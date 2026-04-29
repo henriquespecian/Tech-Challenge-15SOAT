@@ -2,6 +2,7 @@ package com.mecanica.oficina_api.interfaces;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mecanica.oficina_api.application.veiculo.VeiculoService;
+import com.mecanica.oficina_api.interfaces.dto.request.AlterarVeiculoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarVeiculoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.VeiculoResponse;
 
@@ -17,7 +18,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -81,6 +81,27 @@ class VeiculoControllerTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].placa").value("ABC1234"))
                 .andExpect(jsonPath("$[1].placa").value("XYZ5678"));
+    }
+
+    @Test
+    void deveAlterarVeiculoERetornar200() throws Exception {
+        AlterarVeiculoRequest request = new AlterarVeiculoRequest();
+        request.setPlaca("XYZ9999");
+        request.setMarca("Honda");
+        request.setModelo("Civic");
+        request.setAno(2023);
+        request.setCor("Preto");
+
+        VeiculoResponse response = new VeiculoResponse("veiculo-1", "cliente-1", "XYZ9999", "Honda", "Civic", 2023, "Preto");
+        when(veiculoService.alterar("veiculo-1", request)).thenReturn(response);
+
+        mockMvc.perform(put("/veiculo/veiculo-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("veiculo-1"))
+                .andExpect(jsonPath("$.placa").value("XYZ9999"))
+                .andExpect(jsonPath("$.marca").value("Honda"));
     }
 
     @Test

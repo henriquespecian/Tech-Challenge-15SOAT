@@ -5,9 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface VeiculoSpringDataRepository extends JpaRepository<VeiculoJpaEntity, String> {
-    boolean existsByPlaca(String placa);
+    boolean existsByPlacaAndAtivoTrue(String placa);
     List<VeiculoJpaEntity> findByCliente_Id(String clienteId);
+    List<VeiculoJpaEntity> findByCliente_IdAndAtivoTrue(String clienteId);
+    boolean existsByIdAndAtivoTrue(String id);
+    Optional<VeiculoJpaEntity> findByIdAndAtivoTrue(String id);
 }

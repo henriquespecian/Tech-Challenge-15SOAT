@@ -84,19 +84,6 @@ src/test/java/com/mecanica/oficina_api/
 ```
 
 
-### Build
-
-```bash
-# Gerar JAR (inclui execução dos testes)
-./mvnw clean package
-
-# Gerar JAR pulando os testes
-./mvnw clean package -DskipTests
-
-# Executar o JAR gerado
-java -jar target/oficina-api-0.0.1-SNAPSHOT.jar
-```
-
 ## Licença
 
 Distribuído sob a licença [MIT](https://opensource.org/licenses/MIT).
