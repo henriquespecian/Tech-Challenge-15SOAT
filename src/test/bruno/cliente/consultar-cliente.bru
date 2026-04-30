@@ -1,0 +1,19 @@
+meta {
+  name: Consultar Cliente
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/cliente/:cpf
+  body: none
+  auth: bearer
+}
+
+params:path {
+  cpf: 
+}
+
+auth:bearer {
+  token: {{token}}
+}

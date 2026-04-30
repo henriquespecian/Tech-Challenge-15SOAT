@@ -73,7 +73,7 @@ class VeiculoServiceTest {
         request.setClienteId("cliente-inexistente");
 
         assertThatThrownBy(() -> veiculoService.cadastrar(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Cliente não encontrado");
 
         verify(veiculoRepository, never()).save(any());
@@ -85,7 +85,7 @@ class VeiculoServiceTest {
         when(veiculoRepository.existsByPlacaAndAtivoTrue("ABC1234")).thenReturn(true);
 
         assertThatThrownBy(() -> veiculoService.cadastrar(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Já existe um veículo com a placa");
 
         verify(veiculoRepository, never()).save(any());
@@ -205,7 +205,7 @@ class VeiculoServiceTest {
         request.setPlaca("XYZ9999");
 
         assertThatThrownBy(() -> veiculoService.alterar("veiculo-1", request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Já existe um veículo com a placa");
 
         verify(veiculoRepository, never()).save(any());

@@ -18,7 +18,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -93,7 +95,7 @@ class VeiculoControllerTest {
         request.setCor("Preto");
 
         VeiculoResponse response = new VeiculoResponse("veiculo-1", "cliente-1", "XYZ9999", "Honda", "Civic", 2023, "Preto");
-        when(veiculoService.alterar("veiculo-1", request)).thenReturn(response);
+        when(veiculoService.alterar(eq("veiculo-1"), any(AlterarVeiculoRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/veiculo/veiculo-1")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -1,0 +1,19 @@
+meta {
+  name: Deletar Cliente
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/cliente/:cpf
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  cpf:
+}

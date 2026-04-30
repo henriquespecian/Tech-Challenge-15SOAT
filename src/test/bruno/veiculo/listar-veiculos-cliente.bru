@@ -1,0 +1,19 @@
+meta {
+  name: Listar Veiculos do Cliente
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/veiculo/cliente/:clienteId
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  clienteId:
+}

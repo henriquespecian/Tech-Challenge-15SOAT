@@ -1,0 +1,33 @@
+meta {
+  name: Alterar Veiculo
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/veiculo/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+params:path {
+  id:
+}
+
+body:json {
+  {
+    "placa": "ABC1D23",
+    "marca": "Toyota",
+    "modelo": "Corolla",
+    "ano": 2023,
+    "cor": "Branco"
+  }
+}

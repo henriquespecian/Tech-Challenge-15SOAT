@@ -1,0 +1,31 @@
+meta {
+  name: Alterar Cliente
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/cliente/:cpf
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+params:path {
+  cpf:
+}
+
+body:json {
+  {
+    "nome": "Maria Oliveira Atualizada",
+    "email": "maria@email.com",
+    "telefone": "11988888888"
+  }
+}

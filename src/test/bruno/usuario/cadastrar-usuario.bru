@@ -1,0 +1,28 @@
+meta {
+  name: Cadastrar Usuario
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/usuario
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nome": "João Silva",
+    "email": "joao@email.com",
+    "senha": "123456",
+    "perfil": "MECANICO"
+  }
+}

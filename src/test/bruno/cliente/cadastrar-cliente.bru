@@ -1,0 +1,28 @@
+meta {
+  name: Cadastrar Cliente
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/cliente
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nome": "Maria Oliveira",
+    "cpf": "12345678900",
+    "email": "maria@email.com",
+    "telefone": "11999999999"
+  }
+}

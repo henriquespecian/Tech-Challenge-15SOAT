@@ -69,6 +69,18 @@ http://localhost:8080/swagger-ui.html
 ./mvnw test
 ```
 
+### Testando com Bruno
+
+As coleções Bruno estão na pasta `bruno/` do projeto, organizadas por recurso.
+
+#### Como usar
+
+1. Instale o [Bruno](https://www.usebruno.com/)
+2. Abra o Bruno e importe a pasta `bruno/` do projeto
+3. Selecione o environment `local`
+4. Execute o request **Auth > Login** — o token JWT será salvo automaticamente no environment
+5. Todos os demais requests já usam `{{token}}` e estarão prontos para uso
+
 ### Estrutura de testes
 
 Os testes seguem as mesmas camadas da aplicação:

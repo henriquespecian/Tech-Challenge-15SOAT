@@ -1,0 +1,30 @@
+meta {
+  name: Cadastrar Veiculo
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/veiculo
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "clienteId": "",
+    "placa": "ABC1D23",
+    "marca": "Toyota",
+    "modelo": "Corolla",
+    "ano": 2022,
+    "cor": "Prata"
+  }
+}
