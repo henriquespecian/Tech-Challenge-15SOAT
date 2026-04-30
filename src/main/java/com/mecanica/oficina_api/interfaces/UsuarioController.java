@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("usuario")
 @Tag(name = "Usuario", description = "Gerenciamento de usuários do sistema")
+@SecurityRequirement(name = "bearerAuth")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -33,6 +36,7 @@ public class UsuarioController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Cadastrar um novo usuário", description = "Perfis aceitos: ADMIN, MECANICO, CLIENTE, ATENDENTE. Para perfil CLIENTE, clienteId é obrigatório.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso"),
@@ -45,6 +49,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Buscar usuário por ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Usuário encontrado",
@@ -57,6 +62,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Alterar usuário por ID", description = "Não altera senha. Para mudar perfil para CLIENTE, clienteId é obrigatório.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Usuário alterado com sucesso",
@@ -69,6 +75,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Desativar usuário por ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Usuário desativado com sucesso"),

@@ -26,6 +26,10 @@ public class ClienteService {
     }
 
     public void cadastrar(CadastrarClienteRequest request) {
+        if (repository.existsByCpf(request.getCpf())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado");
+        }
+
         Cliente cliente = Cliente.criar(
             request.getNome(),
             new Cpf(request.getCpf()),

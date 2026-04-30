@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("veiculo")
 @Tag(name = "Veículo", description = "Gerenciamento de veículos dos clientes da oficina")
+@SecurityRequirement(name = "bearerAuth")
 public class VeiculoController {
 
     private final VeiculoService veiculoService;
@@ -27,6 +30,7 @@ public class VeiculoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Cadastrar um novo veículo", description = "Permite cadastrar um novo veículo para um cliente na oficina")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Veículo criado com sucesso"),
@@ -39,6 +43,7 @@ public class VeiculoController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
     @Operation(summary = "Consultar veículo por ID", description = "Retorna os detalhes de um veículo específico")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Veículo encontrado"),
@@ -50,12 +55,14 @@ public class VeiculoController {
     }
 
     @GetMapping("/cliente/{clienteId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
     @Operation(summary = "Listar veículos de um cliente", description = "Retorna todos os veículos associados a um cliente")
     public ResponseEntity<List<VeiculoResponse>> listarPorCliente(@PathVariable String clienteId) {
         return ResponseEntity.ok(veiculoService.listarPorCliente(clienteId));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
     @Operation(summary = "Alterar um veículo", description = "Permite atualizar os dados de um veículo existente")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Veículo atualizado com sucesso"),
@@ -69,6 +76,7 @@ public class VeiculoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Deletar um veículo por ID", description = "Permite deletar um veículo específico usando seu ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Veículo deletado com sucesso"),

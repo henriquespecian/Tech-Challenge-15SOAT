@@ -11,7 +11,7 @@ import com.mecanica.oficina_api.interfaces.dto.response.UsuarioResponse;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -20,13 +20,14 @@ public class UsuarioService {
 
     private final UsuarioSpringDataRepository usuarioRepository;
     private final ClienteSpringDataRepository clienteRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public UsuarioService(UsuarioSpringDataRepository usuarioRepository,
-                          ClienteSpringDataRepository clienteRepository) {
+                          ClienteSpringDataRepository clienteRepository,
+                          PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.clienteRepository = clienteRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
     }
 
     public void cadastrar(CadastrarUsuarioRequest request) {

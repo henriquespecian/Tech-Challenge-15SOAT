@@ -9,14 +9,17 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("cliente")
 @Tag(name = "Cliente", description = "Gerenciamento de clientes da oficina")
+@SecurityRequirement(name = "bearerAuth")
 public class ClienteController {
 
     private final ClienteService clienteService;
@@ -26,6 +29,7 @@ public class ClienteController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Cadastrar um novo cliente", description = "Permite cadastrar um novo cliente na oficina")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Cliente criado com sucesso"),
@@ -38,6 +42,7 @@ public class ClienteController {
     }
 
     @GetMapping("/{cpf}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
     @Operation(summary = "Consultar cliente por CPF", description = "Permite consultar os detalhes de um cliente específico usando seu CPF")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Cliente encontrado com sucesso",
@@ -51,6 +56,7 @@ public class ClienteController {
     }
 
     @PutMapping("/{cpf}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Alterar um cliente por CPF", description = "Permite alterar os dados de um cliente específico usando seu CPF")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Cliente encontrado com sucesso"),
@@ -63,6 +69,7 @@ public class ClienteController {
     }
 
     @DeleteMapping("/{cpf}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Desativar um cliente por CPF", description = "Permite desativar um cliente específico usando seu CPF")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Cliente desativado com sucesso")

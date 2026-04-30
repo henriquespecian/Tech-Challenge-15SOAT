@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -36,14 +36,16 @@ public class DevDataLoader implements CommandLineRunner {
     private final ClienteSpringDataRepository clienteRepository;
     private final VeiculoSpringDataRepository veiculoRepository;
     private final UsuarioSpringDataRepository usuarioRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
     public DevDataLoader(ClienteSpringDataRepository clienteRepository,
                          VeiculoSpringDataRepository veiculoRepository,
-                         UsuarioSpringDataRepository usuarioRepository) {
+                         UsuarioSpringDataRepository usuarioRepository,
+                         PasswordEncoder passwordEncoder) {
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override

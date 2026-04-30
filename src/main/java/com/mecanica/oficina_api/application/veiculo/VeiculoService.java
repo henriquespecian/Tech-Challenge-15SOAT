@@ -30,10 +30,10 @@ public class VeiculoService {
 
     public void cadastrar(CadastrarVeiculoRequest request) {
         ClienteJpaEntity clienteEntity = clienteRepository.findById(request.getClienteId())
-                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + request.getClienteId()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado: " + request.getClienteId()));
 
         if (veiculoRepository.existsByPlacaAndAtivoTrue(request.getPlaca())) {
-            throw new IllegalArgumentException("Já existe um veículo com a placa: " + request.getPlaca());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um veículo com a placa: " + request.getPlaca());
         }
 
         Veiculo veiculo = Veiculo.criar(
@@ -92,7 +92,7 @@ public class VeiculoService {
 
         if (!entity.getPlaca().equals(request.getPlaca()) &&
                 veiculoRepository.existsByPlacaAndAtivoTrue(request.getPlaca())) {
-            throw new IllegalArgumentException("Já existe um veículo com a placa: " + request.getPlaca());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um veículo com a placa: " + request.getPlaca());
         }
 
         entity.setPlaca(request.getPlaca());
