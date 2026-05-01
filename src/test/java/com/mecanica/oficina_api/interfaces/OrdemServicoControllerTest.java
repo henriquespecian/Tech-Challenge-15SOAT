@@ -47,11 +47,14 @@ class OrdemServicoControllerTest {
         req.setVeiculoId("veiculo-1");
         req.setClienteId("cliente-1");
 
+        when(ordemServicoService.criar(any(CriarOrdemServicoRequest.class))).thenReturn(osResponse("os-1", "EM_TRIAGEM", null));
+
         mockMvc.perform(post("/ordem-servico")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$").doesNotExist());
+                .andExpect(jsonPath("$.id").value("os-1"))
+                .andExpect(jsonPath("$.status").value("EM_TRIAGEM"));
     }
 
     @Test

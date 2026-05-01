@@ -50,6 +50,7 @@ public class InsumosService {
 
     List<InsumosResponse> response_list = entities.stream().map((entity) -> {
         return new InsumosResponse(
+            entity.getId(),
             entity.getNome(),
             entity.getPrecoUnitario(),
             entity.getEstoqueAtual(),

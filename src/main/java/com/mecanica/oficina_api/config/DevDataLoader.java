@@ -2,11 +2,14 @@ package com.mecanica.oficina_api.config;
 
 import com.mecanica.oficina_api.domain.usuario.Perfil;
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
+import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.UsuarioJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.VeiculoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
+import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.UsuarioSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
+import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -36,15 +39,18 @@ public class DevDataLoader implements CommandLineRunner {
     private final ClienteSpringDataRepository clienteRepository;
     private final VeiculoSpringDataRepository veiculoRepository;
     private final UsuarioSpringDataRepository usuarioRepository;
+    private final InsumosSpringDataRepository insumosRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DevDataLoader(ClienteSpringDataRepository clienteRepository,
                          VeiculoSpringDataRepository veiculoRepository,
                          UsuarioSpringDataRepository usuarioRepository,
+                         InsumosSpringDataRepository insumosRepository,
                          PasswordEncoder passwordEncoder) {
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.insumosRepository = insumosRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -54,6 +60,7 @@ public class DevDataLoader implements CommandLineRunner {
         ClienteJpaEntity ana = seedClientes();
         seedVeiculos();
         seedUsuarios(ana);
+        seedInsumos();
         log.info("=== [DEV] Carga concluída ===");
     }
 
@@ -118,6 +125,23 @@ public class DevDataLoader implements CommandLineRunner {
         log.info("[DEV]   ana.portal@teste.com   / cliente123   (CLIENTE)");
     }
 
+    private void seedInsumos() {
+        if (insumosRepository.count() > 0) {
+            log.info("[DEV] Insumos já existem, pulando.");
+            return;
+        }
+
+        insumosRepository.save(insumo("Óleo de Motor 5W30",    new BigDecimal("45.90"),  50, 10, "litro"));
+        insumosRepository.save(insumo("Filtro de Óleo",        new BigDecimal("22.50"),  40, 10, "unidade"));
+        insumosRepository.save(insumo("Filtro de Ar",          new BigDecimal("35.00"),  30, 5,  "unidade"));
+        insumosRepository.save(insumo("Pastilha de Freio",     new BigDecimal("89.90"),  20, 5,  "par"));
+        insumosRepository.save(insumo("Fluido de Freio DOT 4", new BigDecimal("18.00"),  25, 5,  "litro"));
+        insumosRepository.save(insumo("Vela de Ignição",       new BigDecimal("12.00"), 100, 20, "unidade"));
+        insumosRepository.save(insumo("Correia Dentada",       new BigDecimal("120.00"), 15, 3,  "unidade"));
+
+        log.info("[DEV] 7 insumos criados.");
+    }
+
     // --- builders ---
 
     private ClienteJpaEntity cliente(String nome, String cpf, String email, String telefone) {
@@ -142,6 +166,18 @@ public class DevDataLoader implements CommandLineRunner {
         e.setCor(cor);
         e.setAtivo(true);
         e.setCliente(cliente);
+        return e;
+    }
+
+    private InsumosJpaEntity insumo(String nome, BigDecimal preco, int estoqueAtual,
+                                    int estoqueMinimo, String unidade) {
+        InsumosJpaEntity e = new InsumosJpaEntity();
+        e.setNome(nome);
+        e.setPrecoUnitario(preco);
+        e.setEstoqueAtual(estoqueAtual);
+        e.setEstoqueMinimo(estoqueMinimo);
+        e.setUnidade(unidade);
+        e.setAtivo(true);
         return e;
     }
 

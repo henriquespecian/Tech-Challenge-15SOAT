@@ -66,13 +66,16 @@ class OrdemServicoServiceTest {
     void deveCriarOrdemServicoComSucesso() {
         when(veiculoRepository.findByIdAndAtivoTrue("veiculo-1")).thenReturn(Optional.of(veiculo));
         when(clienteRepository.findById("cliente-1")).thenReturn(Optional.of(cliente));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntity);
 
         CriarOrdemServicoRequest req = new CriarOrdemServicoRequest();
         req.setVeiculoId("veiculo-1");
         req.setClienteId("cliente-1");
 
-        service.criar(req);
+        OrdemServicoResponse resp = service.criar(req);
 
+        assertThat(resp.getId()).isEqualTo("os-1");
+        assertThat(resp.getStatus()).isEqualTo("EM_TRIAGEM");
         verify(ordemServicoRepository).save(argThat(e -> "EM_TRIAGEM".equals(e.getStatus())));
     }
 

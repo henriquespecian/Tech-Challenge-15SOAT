@@ -1,11 +1,11 @@
 meta {
-  name: 05 - Listar Insumos
+  name: 06 - Consultar OS por Veiculo
   type: http
   seq: 6
 }
 
 get {
-  url: {{baseUrl}}/insumos
+  url: {{baseUrl}}/ordem-servico/veiculo/{{veiculoId}}
   body: none
   auth: none
 }

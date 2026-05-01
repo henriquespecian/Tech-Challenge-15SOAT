@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public class InsumosResponse {
 
+  private String id;
   private String nome;
   private BigDecimal precoUnitario;
   private Integer estoqueAtual;
@@ -13,7 +14,8 @@ public class InsumosResponse {
 
   public InsumosResponse() {}
 
-  public InsumosResponse(String nome, BigDecimal precoUnitario, Integer estoqueAtual, Integer estoqueMinimo, String unidade, Boolean ativo) {
+  public InsumosResponse(String id, String nome, BigDecimal precoUnitario, Integer estoqueAtual, Integer estoqueMinimo, String unidade, Boolean ativo) {
+    this.id = id;
     this.nome = nome;
     this.precoUnitario = precoUnitario;
     this.estoqueAtual = estoqueAtual;
@@ -22,6 +24,7 @@ public class InsumosResponse {
     this.ativo = ativo;
   }
 
+  public String getId() {return id;}
   public String getNome() {return nome;}
   public BigDecimal getPrecoUnitario() {return precoUnitario;}
   public Integer getEstoqueAtual() {return estoqueAtual;}

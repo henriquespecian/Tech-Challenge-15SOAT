@@ -28,7 +28,7 @@ public class VeiculoService {
         this.clienteRepository = clienteRepository;
     }
 
-    public void cadastrar(CadastrarVeiculoRequest request) {
+    public VeiculoResponse cadastrar(CadastrarVeiculoRequest request) {
         ClienteJpaEntity clienteEntity = clienteRepository.findById(request.getClienteId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado: " + request.getClienteId()));
 
@@ -54,7 +54,16 @@ public class VeiculoService {
         entity.setCliente(clienteEntity);
         entity.setAtivo(true);
 
-        veiculoRepository.save(entity);
+        VeiculoJpaEntity saved = veiculoRepository.save(entity);
+        return new VeiculoResponse(
+                saved.getId(),
+                saved.getCliente().getId(),
+                saved.getPlaca(),
+                saved.getMarca(),
+                saved.getModelo(),
+                saved.getAno(),
+                saved.getCor()
+        );
     }
 
     public VeiculoResponse buscarPorId(String id) {

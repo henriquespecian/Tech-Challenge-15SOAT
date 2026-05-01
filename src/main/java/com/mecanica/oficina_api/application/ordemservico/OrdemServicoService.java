@@ -39,7 +39,7 @@ public class OrdemServicoService {
         this.insumosRepository = insumosRepository;
     }
 
-    public void criar(CriarOrdemServicoRequest request) {
+    public OrdemServicoResponse criar(CriarOrdemServicoRequest request) {
         veiculoRepository.findByIdAndAtivoTrue(request.getVeiculoId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado: " + request.getVeiculoId()));
         clienteRepository.findById(request.getClienteId())
@@ -53,7 +53,7 @@ public class OrdemServicoService {
         entity.setClienteId(os.getClienteId());
         entity.setStatus(os.getStatus().name());
 
-        ordemServicoRepository.save(entity);
+        return toResponse(ordemServicoRepository.save(entity));
     }
 
     public OrdemServicoResponse buscarPorId(String id) {

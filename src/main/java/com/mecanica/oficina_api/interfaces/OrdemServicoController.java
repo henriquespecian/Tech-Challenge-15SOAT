@@ -37,9 +37,8 @@ public class OrdemServicoController {
             @ApiResponse(responseCode = "404", description = "Veículo ou cliente não encontrado",
                     content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<Void> criar(@RequestBody CriarOrdemServicoRequest request) {
-        ordemServicoService.criar(request);
-        return ResponseEntity.status(201).build();
+    public ResponseEntity<OrdemServicoResponse> criar(@RequestBody CriarOrdemServicoRequest request) {
+        return ResponseEntity.status(201).body(ordemServicoService.criar(request));
     }
 
     @GetMapping("/{id}")

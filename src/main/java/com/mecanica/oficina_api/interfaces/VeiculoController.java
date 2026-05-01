@@ -37,9 +37,8 @@ public class VeiculoController {
             @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
                     content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<Void> cadastrar(@RequestBody CadastrarVeiculoRequest request) {
-        veiculoService.cadastrar(request);
-        return ResponseEntity.status(201).build();
+    public ResponseEntity<VeiculoResponse> cadastrar(@RequestBody CadastrarVeiculoRequest request) {
+        return ResponseEntity.status(201).body(veiculoService.cadastrar(request));
     }
 
     @GetMapping("/{id}")
