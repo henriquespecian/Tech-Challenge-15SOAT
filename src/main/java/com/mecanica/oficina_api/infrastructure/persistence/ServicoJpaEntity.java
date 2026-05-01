@@ -2,13 +2,8 @@ package com.mecanica.oficina_api.infrastructure.persistence;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-
-import org.hibernate.annotations.ColumnDefault;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
