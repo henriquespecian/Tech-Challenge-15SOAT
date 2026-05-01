@@ -47,6 +47,26 @@ public class Servico {
         }
     }
 
+    public static Servico reconstituir(String id, String nome, String descricao,
+                                       BigDecimal preco, Duration tempoEstimadoHoras, boolean ativo) {
+        Servico servico = new Servico();
+        servico.id = id;
+        servico.nome = nome;
+        servico.descricao = descricao;
+        servico.preco = preco;
+        servico.tempoEstimadoHoras = tempoEstimadoHoras;
+        servico.ativo = ativo;
+        return servico;
+    }
+
+    public void atualizar(String nome, String descricao, BigDecimal preco, Duration tempoEstimadoHoras) {
+        validarParametros(nome, descricao, preco, tempoEstimadoHoras);
+        this.nome = nome;
+        this.descricao = descricao;
+        this.preco = preco;
+        this.tempoEstimadoHoras = tempoEstimadoHoras;
+    }
+
     public void ativar() {
         this.ativo = true;
     }

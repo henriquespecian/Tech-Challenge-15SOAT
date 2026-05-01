@@ -1,6 +1,8 @@
 package com.mecanica.oficina_api.infrastructure.persistence;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -32,6 +34,15 @@ public class OrdemServicoJpaEntity {
 
     @Column(name = "orcamento_observacoes", columnDefinition = "TEXT")
     private String orcamentoObservacoes;
+
+    @Column(name = "orcamento_respondido_em")
+    private LocalDateTime orcamentoRespondidoEm;
+
+    @Column(name = "valor_final", precision = 12, scale = 2)
+    private BigDecimal valorFinal;
+
+    @Column(name = "data_final")
+    private LocalDateTime dataFinal;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "ordem_servico_id")

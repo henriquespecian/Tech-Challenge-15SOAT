@@ -25,4 +25,7 @@ public class ItemOrcamentoJpaEntity {
 
     @Column(name = "preco_unitario", nullable = false, precision = 12, scale = 2)
     private BigDecimal precoUnitario;
+
+    @Column(name = "insumo_id")
+    private String insumoId;
 }

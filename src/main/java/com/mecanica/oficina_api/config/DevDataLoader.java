@@ -12,6 +12,7 @@ import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpr
 import com.mecanica.oficina_api.infrastructure.persistence.repository.UsuarioSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import java.math.BigDecimal;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -192,12 +193,13 @@ public class DevDataLoader implements CommandLineRunner {
         return e;
     }
 
-    private ServicoJpaEntity servico(String nome, String descricao, BigDecimal preco, int tempoEstimadoHoras) {
+    private ServicoJpaEntity servico(String nome, String descricao, BigDecimal preco, int horas) {
         ServicoJpaEntity e = new ServicoJpaEntity();
+        e.setId(java.util.UUID.randomUUID().toString());
         e.setNome(nome);
         e.setDescricao(descricao);
         e.setPreco(preco);
-        e.setTempoEstimadoHoras(tempoEstimadoHoras);
+        e.setTempoEstimadoHoras(Duration.ofHours(horas));
         e.setAtivo(true);
         return e;
     }

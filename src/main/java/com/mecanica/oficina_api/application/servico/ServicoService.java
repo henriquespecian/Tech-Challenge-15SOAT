@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -23,7 +24,7 @@ public class ServicoService {
 
     public ServicoResponse cadastrar(CadastrarServicoRequest request) {
         Servico servico = Servico.criar(request.getNome(), request.getDescricao(),
-                request.getPreco(), request.getTempoEstimadoHoras());
+                request.getPreco(), Duration.ofHours(request.getTempoEstimadoHoras()));
         return toResponse(repository.save(toEntity(servico)));
     }
 
@@ -39,7 +40,7 @@ public class ServicoService {
         ServicoJpaEntity entity = encontrarOuLancar(id);
         Servico servico = toDomain(entity);
         servico.atualizar(request.getNome(), request.getDescricao(),
-                request.getPreco(), request.getTempoEstimadoHoras());
+                request.getPreco(), Duration.ofHours(request.getTempoEstimadoHoras()));
         entity.setNome(servico.getNome());
         entity.setDescricao(servico.getDescricao());
         entity.setPreco(servico.getPreco());
@@ -66,6 +67,7 @@ public class ServicoService {
 
     private ServicoJpaEntity toEntity(Servico s) {
         ServicoJpaEntity e = new ServicoJpaEntity();
+        e.setId(s.getId());
         e.setNome(s.getNome());
         e.setDescricao(s.getDescricao());
         e.setPreco(s.getPreco());
@@ -81,6 +83,6 @@ public class ServicoService {
 
     private ServicoResponse toResponse(ServicoJpaEntity e) {
         return new ServicoResponse(e.getId(), e.getNome(), e.getDescricao(),
-                e.getPreco(), e.getTempoEstimadoHoras(), e.isAtivo());
+                e.getPreco(), (int) e.getTempoEstimadoHoras().toHours(), e.isAtivo());
     }
 }
