@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,12 +32,14 @@ public class InsumosController {
   public InsumosController(InsumosService insumosService){this.insumosService = insumosService;}
 
   @GetMapping
+  @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
   @Operation(summary = "Listar Insumos e Peças", description = "Retorna todos os Insumos e Peças ativas no sistema")
   public ResponseEntity<List<InsumosResponse>> listarInsumos(){
     return ResponseEntity.status(HttpStatus.OK).body(insumosService.listar());
   }
 
   @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
   @Operation(summary = "Cadastrar novo Insumo ou Peça", description = "Permite cadastrar Insumos e peças no estoque")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "201", description = "Insumo/Peça criado com sucesso"),
@@ -51,6 +54,7 @@ public class InsumosController {
   }
 
   @PutMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
   @Operation(summary = "Alterar Insumo ou Peça", description = "Permite realizar alterações no cadastro de um Insumo ou Peça ativo")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "204", description = "Insumo/Peça alterado com sucesso"),
@@ -65,6 +69,7 @@ public class InsumosController {
   }
 
   @DeleteMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   @Operation(summary = "Desativar Insumo ou Peça", description = "Permite desativar um Insumo ou Peça do sistema")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "204", description = "Insumo/Peça desativado com sucesso")

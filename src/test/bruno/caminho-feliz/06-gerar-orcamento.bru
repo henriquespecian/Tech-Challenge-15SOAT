@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/ordem-servico/:id/orcamento
   body: json
-  auth: bearer
+  auth: none
 }
 
 params:path {
@@ -15,11 +15,8 @@ params:path {
 }
 
 headers {
+  Authorization: Bearer {{token}}
   Content-Type: application/json
-}
-
-auth:bearer {
-  token: {{token}}
 }
 
 body:json {

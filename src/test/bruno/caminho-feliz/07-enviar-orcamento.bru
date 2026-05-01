@@ -7,13 +7,13 @@ meta {
 patch {
   url: {{baseUrl}}/ordem-servico/:id/orcamento/enviar
   body: none
-  auth: bearer
+  auth: none
 }
 
 params:path {
   id: {{ordemServicoId}}
 }
 
-auth:bearer {
-  token: {{token}}
+headers {
+  Authorization: Bearer {{token}}
 }

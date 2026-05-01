@@ -7,13 +7,13 @@ meta {
 get {
   url: {{baseUrl}}/cliente/:cpf
   body: none
-  auth: bearer
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
 }
 
 params:path {
-  cpf: 
-}
-
-auth:bearer {
-  token: {{token}}
+  cpf: 11144477735
 }

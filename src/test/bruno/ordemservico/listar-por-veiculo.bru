@@ -7,11 +7,11 @@ meta {
 get {
   url: {{baseUrl}}/ordem-servico/veiculo/:veiculoId
   body: none
-  auth: bearer
+  auth: none
 }
 
-auth:bearer {
-  token: {{token}}
+headers {
+  Authorization: Bearer {{token}}
 }
 
 params:path {

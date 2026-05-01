@@ -7,15 +7,12 @@ meta {
 post {
   url: {{baseUrl}}/ordem-servico
   body: json
-  auth: bearer
+  auth: none
 }
 
 headers {
+  Authorization: Bearer {{token}}
   Content-Type: application/json
-}
-
-auth:bearer {
-  token: {{token}}
 }
 
 body:json {
