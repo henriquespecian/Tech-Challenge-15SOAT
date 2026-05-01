@@ -4,13 +4,14 @@ import java.util.List;
 
 public class GerarOrcamentoRequest {
 
-    private List<ItemOrcamentoRequest> itens;
+    private List<ItemOrcamentoRequest> insumos;
+    // TODO: adicionar List<ItemServicoRequest> servicos quando a entidade Servico for implementada
     private String observacoes;
 
     public GerarOrcamentoRequest() {}
 
-    public List<ItemOrcamentoRequest> getItens() { return itens; }
-    public void setItens(List<ItemOrcamentoRequest> itens) { this.itens = itens; }
+    public List<ItemOrcamentoRequest> getInsumos() { return insumos; }
+    public void setInsumos(List<ItemOrcamentoRequest> insumos) { this.insumos = insumos; }
     public String getObservacoes() { return observacoes; }
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
 }

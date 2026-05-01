@@ -132,12 +132,11 @@ class OrdemServicoControllerTest {
 
     private GerarOrcamentoRequest gerarOrcamentoRequest() {
         ItemOrcamentoRequest item = new ItemOrcamentoRequest();
-        item.setDescricao("Troca de óleo");
+        item.setInsumoId("insumo-1");
         item.setQuantidade(1);
-        item.setPrecoUnitario(BigDecimal.valueOf(100));
 
         GerarOrcamentoRequest req = new GerarOrcamentoRequest();
-        req.setItens(List.of(item));
+        req.setInsumos(List.of(item));
         req.setObservacoes("obs");
         return req;
     }

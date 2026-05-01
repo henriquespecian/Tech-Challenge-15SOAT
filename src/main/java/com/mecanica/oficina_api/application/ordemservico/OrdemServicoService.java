@@ -5,7 +5,9 @@ import com.mecanica.oficina_api.domain.ordemservico.Orcamento;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 import com.mecanica.oficina_api.infrastructure.persistence.ItemOrcamentoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.OrdemServicoJpaEntity;
+import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
+import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.OrdemServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
@@ -25,13 +27,16 @@ public class OrdemServicoService {
     private final OrdemServicoSpringDataRepository ordemServicoRepository;
     private final VeiculoSpringDataRepository veiculoRepository;
     private final ClienteSpringDataRepository clienteRepository;
+    private final InsumosSpringDataRepository insumosRepository;
 
     public OrdemServicoService(OrdemServicoSpringDataRepository ordemServicoRepository,
                                VeiculoSpringDataRepository veiculoRepository,
-                               ClienteSpringDataRepository clienteRepository) {
+                               ClienteSpringDataRepository clienteRepository,
+                               InsumosSpringDataRepository insumosRepository) {
         this.ordemServicoRepository = ordemServicoRepository;
         this.veiculoRepository = veiculoRepository;
         this.clienteRepository = clienteRepository;
+        this.insumosRepository = insumosRepository;
     }
 
     public void criar(CriarOrdemServicoRequest request) {
@@ -122,8 +127,12 @@ public class OrdemServicoService {
     }
 
     private List<ItemOrcamento> toItemOrcamentoDomain(GerarOrcamentoRequest request) {
-        return request.getItens().stream()
-                .map(i -> new ItemOrcamento(i.getDescricao(), i.getQuantidade(), i.getPrecoUnitario()))
+        return request.getInsumos().stream()
+                .map(i -> {
+                    InsumosJpaEntity insumo = insumosRepository.findByIdAndAtivoTrue(i.getInsumoId())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado: " + i.getInsumoId()));
+                    return new ItemOrcamento(insumo.getNome(), i.getQuantidade(), insumo.getPrecoUnitario());
+                })
                 .toList();
     }
 

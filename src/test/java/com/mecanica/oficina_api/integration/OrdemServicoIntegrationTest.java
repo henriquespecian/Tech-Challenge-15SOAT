@@ -2,6 +2,7 @@ package com.mecanica.oficina_api.integration;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
+import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarVeiculoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
@@ -59,14 +60,24 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
         return (String) lista.get(0).get("id");
     }
 
-    private GerarOrcamentoRequest orcamentoRequest() {
+    private InsumosJpaEntity salvarInsumo(String nome, double preco) {
+        InsumosJpaEntity ie = new InsumosJpaEntity();
+        ie.setNome(nome);
+        ie.setPrecoUnitario(BigDecimal.valueOf(preco));
+        ie.setEstoqueAtual(10);
+        ie.setEstoqueMinimo(2);
+        ie.setUnidade("Litro");
+        ie.setAtivo(true);
+        return insumosRepository.save(ie);
+    }
+
+    private GerarOrcamentoRequest orcamentoRequest(String insumoId) {
         ItemOrcamentoRequest item = new ItemOrcamentoRequest();
-        item.setDescricao("Troca de óleo");
+        item.setInsumoId(insumoId);
         item.setQuantidade(1);
-        item.setPrecoUnitario(BigDecimal.valueOf(150.0));
 
         GerarOrcamentoRequest req = new GerarOrcamentoRequest();
-        req.setItens(List.of(item));
+        req.setInsumos(List.of(item));
         req.setObservacoes("Serviço padrão");
         return req;
     }
@@ -76,6 +87,7 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
         ClienteJpaEntity c = salvarCliente();
         String veiculoId = cadastrarVeiculo(c.getId());
         String osId = criarOs(veiculoId, c.getId());
+        String insumoId = salvarInsumo("Óleo de motor", 150.0).getId();
 
         mockMvc.perform(comToken(get("/ordem-servico/" + osId)))
                 .andExpect(status().isOk())
@@ -84,7 +96,7 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(comToken(post("/ordem-servico/" + osId + "/orcamento")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(orcamentoRequest()))))
+                .content(toJson(orcamentoRequest(insumoId)))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orcamento.status").value("PENDENTE"))
                 .andExpect(jsonPath("$.orcamento.valorTotal").value(150.0));
@@ -108,10 +120,12 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
         ClienteJpaEntity c = salvarCliente();
         String veiculoId = cadastrarVeiculo(c.getId());
         String osId = criarOs(veiculoId, c.getId());
+        String insumoId = salvarInsumo("Óleo de motor", 150.0).getId();
+        String insumoAtualizadoId = salvarInsumo("Óleo de motor + filtro", 200.0).getId();
 
         mockMvc.perform(comToken(post("/ordem-servico/" + osId + "/orcamento")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(orcamentoRequest()))))
+                .content(toJson(orcamentoRequest(insumoId)))))
                 .andExpect(status().isOk());
 
         mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/orcamento/enviar")))
@@ -121,17 +135,9 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orcamento.status").value("EM_NEGOCIACAO"));
 
-        ItemOrcamentoRequest novoItem = new ItemOrcamentoRequest();
-        novoItem.setDescricao("Troca de óleo + filtro");
-        novoItem.setQuantidade(1);
-        novoItem.setPrecoUnitario(BigDecimal.valueOf(200.0));
-        GerarOrcamentoRequest novoOrc = new GerarOrcamentoRequest();
-        novoOrc.setItens(List.of(novoItem));
-        novoOrc.setObservacoes("Revisado após negociação");
-
         mockMvc.perform(comToken(put("/ordem-servico/" + osId + "/orcamento")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(novoOrc))))
+                .content(toJson(orcamentoRequest(insumoAtualizadoId)))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orcamento.valorTotal").value(200.0));
 
@@ -158,9 +164,10 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void gerarOrcamento_osNaoExiste_retorna404() throws Exception {
+        String insumoId = salvarInsumo("Óleo de motor", 150.0).getId();
         mockMvc.perform(comToken(post("/ordem-servico/" + UUID.randomUUID() + "/orcamento")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(orcamentoRequest()))))
+                .content(toJson(orcamentoRequest(insumoId)))))
                 .andExpect(status().isNotFound());
     }
 

@@ -1,19 +1,14 @@
 package com.mecanica.oficina_api.interfaces.dto.request;
 
-import java.math.BigDecimal;
-
 public class ItemOrcamentoRequest {
 
-    private String descricao;
+    private String insumoId;
     private int quantidade;
-    private BigDecimal precoUnitario;
 
     public ItemOrcamentoRequest() {}
 
-    public String getDescricao() { return descricao; }
-    public void setDescricao(String descricao) { this.descricao = descricao; }
+    public String getInsumoId() { return insumoId; }
+    public void setInsumoId(String insumoId) { this.insumoId = insumoId; }
     public int getQuantidade() { return quantidade; }
     public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
-    public BigDecimal getPrecoUnitario() { return precoUnitario; }
-    public void setPrecoUnitario(BigDecimal precoUnitario) { this.precoUnitario = precoUnitario; }
 }

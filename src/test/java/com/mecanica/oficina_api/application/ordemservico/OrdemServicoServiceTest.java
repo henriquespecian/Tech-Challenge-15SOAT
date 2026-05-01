@@ -1,10 +1,12 @@
 package com.mecanica.oficina_api.application.ordemservico;
 
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
+import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.ItemOrcamentoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.OrdemServicoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.VeiculoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
+import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.OrdemServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
@@ -34,6 +36,7 @@ class OrdemServicoServiceTest {
     @Mock private OrdemServicoSpringDataRepository ordemServicoRepository;
     @Mock private VeiculoSpringDataRepository veiculoRepository;
     @Mock private ClienteSpringDataRepository clienteRepository;
+    @Mock private InsumosSpringDataRepository insumosRepository;
     @InjectMocks private OrdemServicoService service;
 
     private VeiculoJpaEntity veiculo;
@@ -143,6 +146,7 @@ class OrdemServicoServiceTest {
     void deveGerarOrcamentoComSucesso() {
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
         when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("PENDENTE"));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
 
         OrdemServicoResponse resp = service.gerarOrcamento("os-1", gerarOrcamentoRequest());
 
@@ -156,6 +160,7 @@ class OrdemServicoServiceTest {
         osEntity.setOrcamentoStatus("APROVADO");
         osEntity.setItensOrcamento(itensEntity());
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
 
         assertThatThrownBy(() -> service.gerarOrcamento("os-1", gerarOrcamentoRequest()))
                 .isInstanceOf(ResponseStatusException.class)
@@ -234,14 +239,25 @@ class OrdemServicoServiceTest {
 
     private GerarOrcamentoRequest gerarOrcamentoRequest() {
         ItemOrcamentoRequest item = new ItemOrcamentoRequest();
-        item.setDescricao("Troca de óleo");
+        item.setInsumoId("insumo-1");
         item.setQuantidade(1);
-        item.setPrecoUnitario(BigDecimal.valueOf(100.0));
 
         GerarOrcamentoRequest req = new GerarOrcamentoRequest();
-        req.setItens(List.of(item));
+        req.setInsumos(List.of(item));
         req.setObservacoes("obs");
         return req;
+    }
+
+    private InsumosJpaEntity insumoEntity() {
+        InsumosJpaEntity ie = new InsumosJpaEntity();
+        ie.setId("insumo-1");
+        ie.setNome("Óleo de motor");
+        ie.setPrecoUnitario(BigDecimal.valueOf(100.0));
+        ie.setEstoqueAtual(10);
+        ie.setEstoqueMinimo(2);
+        ie.setUnidade("Litro");
+        ie.setAtivo(true);
+        return ie;
     }
 
     private List<ItemOrcamentoJpaEntity> itensEntity() {
