@@ -1,0 +1,19 @@
+meta {
+  name: Consultar Ordem de Servico
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/ordem-servico/:id
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+params:path {
+  id:
+}

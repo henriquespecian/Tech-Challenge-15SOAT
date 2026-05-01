@@ -1,0 +1,19 @@
+meta {
+  name: 11 - Retirar Veiculo
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/ordem-servico/:id/veiculo/retirar
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{ordemServicoId}}
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

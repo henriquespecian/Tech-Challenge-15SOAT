@@ -1,0 +1,19 @@
+meta {
+  name: Negociar Orcamento
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento/negociar
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+params:path {
+  id:
+}

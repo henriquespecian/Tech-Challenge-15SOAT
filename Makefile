@@ -22,6 +22,7 @@ start:
 
 dev:
 	@echo "Subindo banco e aguardando ficar pronto..."
+	docker-compose down -v --rmi local
 	docker-compose up -d postgres
 	@until docker exec oficina_postgres pg_isready -U postgres > /dev/null 2>&1; do sleep 1; done
 	@$(MAKE) info-dev

@@ -1,0 +1,33 @@
+meta {
+  name: Gerar Orcamento
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+params:path {
+  id:
+}
+
+body:json {
+  {
+    "itens": [
+      {
+        "descricao": "Troca de óleo",
+        "quantidade": 1,
+        "precoUnitario": 150.00
+      }
+    ],
+    "observacoes": "Serviço padrão"
+  }
+}

@@ -1,0 +1,28 @@
+meta {
+  name: 03 - Consulta cliente cadastrado
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/cliente/{{cpf}}
+  body: none
+  auth: none
+}
+
+params:query {
+  : 
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:post-response {
+  const clienteId = res.getBody().id;
+  bru.setEnvVar("clienteId", clienteId);
+}

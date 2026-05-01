@@ -1,0 +1,23 @@
+meta {
+  name: Criar Ordem de Servico
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/ordem-servico
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "veiculoId": "",
+    "clienteId": ""
+  }
+}

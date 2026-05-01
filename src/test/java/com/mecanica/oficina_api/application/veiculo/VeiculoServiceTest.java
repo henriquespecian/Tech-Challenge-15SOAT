@@ -59,11 +59,24 @@ class VeiculoServiceTest {
 
     @Test
     void deveCadastrarVeiculoComSucesso() {
+        VeiculoJpaEntity savedEntity = new VeiculoJpaEntity();
+        savedEntity.setId("veiculo-1");
+        savedEntity.setPlaca("ABC1234");
+        savedEntity.setMarca("Toyota");
+        savedEntity.setModelo("Corolla");
+        savedEntity.setAno(2020);
+        savedEntity.setCor("Branco");
+        savedEntity.setAtivo(true);
+        savedEntity.setCliente(clienteEntity);
+
         when(clienteRepository.findById("cliente-1")).thenReturn(Optional.of(clienteEntity));
         when(veiculoRepository.existsByPlacaAndAtivoTrue("ABC1234")).thenReturn(false);
+        when(veiculoRepository.save(any())).thenReturn(savedEntity);
 
-        veiculoService.cadastrar(request);
+        VeiculoResponse resp = veiculoService.cadastrar(request);
 
+        assertThat(resp.getId()).isEqualTo("veiculo-1");
+        assertThat(resp.getPlaca()).isEqualTo("ABC1234");
         verify(veiculoRepository).save(argThat(e -> e.getAtivo()));
     }
 

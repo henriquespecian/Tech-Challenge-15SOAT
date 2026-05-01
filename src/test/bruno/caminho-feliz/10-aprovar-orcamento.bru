@@ -1,0 +1,19 @@
+meta {
+  name: 10 - Aprovar Orcamento
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento/aprovar
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{ordemServicoId}}
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

@@ -52,11 +52,15 @@ class VeiculoControllerTest {
         request.setAno(2020);
         request.setCor("Branco");
 
+        VeiculoResponse response = new VeiculoResponse("veiculo-1", "cliente-1", "ABC1234", "Toyota", "Corolla", 2020, "Branco");
+        when(veiculoService.cadastrar(any(CadastrarVeiculoRequest.class))).thenReturn(response);
+
         mockMvc.perform(post("/veiculo")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$").doesNotExist());
+                .andExpect(jsonPath("$.id").value("veiculo-1"))
+                .andExpect(jsonPath("$.placa").value("ABC1234"));
     }
 
     @Test
