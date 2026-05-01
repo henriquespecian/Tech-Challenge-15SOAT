@@ -1,7 +1,7 @@
 meta {
-  name: 08 - Gerar Orcamento
+  name: 09 - Gerar Orcamento
   type: http
-  seq: 8
+  seq: 9
 }
 
 post {
@@ -28,6 +28,12 @@ body:json {
       },
       {
         "insumoId": "{{insumoId2}}",
+        "quantidade": 1
+      }
+    ],
+   "servicos": [
+      {
+        "servicoId": {{serviceid1}},
         "quantidade": 1
       }
     ],

@@ -5,6 +5,10 @@ import com.mecanica.oficina_api.infrastructure.security.JwtService;
 import com.mecanica.oficina_api.interfaces.dto.request.LoginRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.LoginResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Autenticação")
+@Tag(name = "Autenticação", description = "Autenticação e emissão de tokens JWT")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -34,7 +38,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Autenticar usuário e obter token JWT")
+    @Operation(summary = "Autenticar usuário e obter token JWT",
+               description = "Recebe email e senha, retorna token JWT para uso no header Authorization: Bearer {token}")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Autenticação realizada com sucesso",
+            content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Credenciais inválidas",
+            content = @Content(schema = @Schema()))
+    })
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.senha())

@@ -52,6 +52,14 @@ public class Insumos {
     this.estoqueMinimo = estoqueMinimo;
   }
 
+  public void darBaixa(int quantidade) {
+    if (quantidade <= 0)
+      throw new IllegalArgumentException("Quantidade para baixa deve ser positiva");
+    if (this.estoqueAtual - quantidade < 0)
+      throw new IllegalStateException("Estoque insuficiente para o insumo: " + nome);
+    this.estoqueAtual -= quantidade;
+  }
+
   public String getId() {return id;}
   public String getNome() {return nome;}
   public BigDecimal getPrecoUnitario() {return precoUnitario;}

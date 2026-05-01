@@ -1,0 +1,25 @@
+meta {
+  name: 08 - Listar serviços
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/servico
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+script:post-response {
+  const service = res.getBody();
+  if (service && service.length >= 1) {
+    bru.setEnvVar("serviceid1", service[0].id);
+  }
+  if (service && service.length >= 2) {
+    bru.setEnvVar("serviceid2", service[1].id);
+  }
+}

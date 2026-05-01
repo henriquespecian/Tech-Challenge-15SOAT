@@ -1,0 +1,30 @@
+meta {
+  name: Listar Servicos
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/servico
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+script:post-response {
+  const service = res.getBody();
+  if (service && service.length >= 1) {
+    bru.setEnvVar("service1", service[0].id);
+  }
+  if (service && service.length >= 2) {
+    bru.setEnvVar("service2", service[1].id);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

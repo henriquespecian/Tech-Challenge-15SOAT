@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("cliente")
@@ -46,9 +45,9 @@ public class ClienteController {
     @Operation(summary = "Consultar cliente por CPF", description = "Permite consultar os detalhes de um cliente específico usando seu CPF")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Cliente encontrado com sucesso",
-        content = @Content(schema = @Schema(implementation = ConsultarClienteResponse.class))),
+            content = @Content(schema = @Schema(implementation = ConsultarClienteResponse.class))),
         @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
-        content =  @Content(schema = @Schema(implementation = ResponseStatusException.class))),
+            content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ConsultarClienteResponse> consultar(@PathVariable String cpf) {
         var cliente_encontrado = clienteService.consultar(cpf);
@@ -59,9 +58,9 @@ public class ClienteController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Alterar um cliente por CPF", description = "Permite alterar os dados de um cliente específico usando seu CPF")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Cliente encontrado com sucesso"),
+        @ApiResponse(responseCode = "204", description = "Cliente alterado com sucesso"),
         @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
-            content =  @Content(schema = @Schema(implementation = ResponseStatusException.class))),
+            content = @Content(schema = @Schema()))
     })
     public ResponseEntity<Void> alterar(@PathVariable String cpf, @RequestBody AlterarClienteRequest request) {
         clienteService.alterar(cpf, request);

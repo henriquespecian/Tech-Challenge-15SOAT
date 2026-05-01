@@ -3,10 +3,12 @@ package com.mecanica.oficina_api.config;
 import com.mecanica.oficina_api.domain.usuario.Perfil;
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
+import com.mecanica.oficina_api.infrastructure.persistence.ServicoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.UsuarioJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.VeiculoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
+import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.UsuarioSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import java.math.BigDecimal;
@@ -40,17 +42,20 @@ public class DevDataLoader implements CommandLineRunner {
     private final VeiculoSpringDataRepository veiculoRepository;
     private final UsuarioSpringDataRepository usuarioRepository;
     private final InsumosSpringDataRepository insumosRepository;
+    private final ServicoSpringDataRepository servicoRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DevDataLoader(ClienteSpringDataRepository clienteRepository,
                          VeiculoSpringDataRepository veiculoRepository,
                          UsuarioSpringDataRepository usuarioRepository,
                          InsumosSpringDataRepository insumosRepository,
+                         ServicoSpringDataRepository servicoRepository,
                          PasswordEncoder passwordEncoder) {
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
         this.usuarioRepository = usuarioRepository;
         this.insumosRepository = insumosRepository;
+        this.servicoRepository = servicoRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -61,6 +66,7 @@ public class DevDataLoader implements CommandLineRunner {
         seedVeiculos();
         seedUsuarios(ana);
         seedInsumos();
+        seedServicos();
         log.info("=== [DEV] Carga concluída ===");
     }
 
@@ -142,6 +148,23 @@ public class DevDataLoader implements CommandLineRunner {
         log.info("[DEV] 7 insumos criados.");
     }
 
+    private void seedServicos() {
+        if (servicoRepository.count() > 0) {
+            log.info("[DEV] Serviços já existem, pulando.");
+            return;
+        }
+
+        servicoRepository.save(servico("Troca de Óleo",              "Substituição do óleo do motor e filtro de óleo",                          new BigDecimal("80.00"),  1));
+        servicoRepository.save(servico("Alinhamento e Balanceamento", "Alinhamento da direção e balanceamento de todas as rodas",                 new BigDecimal("120.00"), 2));
+        servicoRepository.save(servico("Revisão de Freios",          "Inspeção e substituição de pastilhas, discos e fluido de freio",           new BigDecimal("150.00"), 3));
+        servicoRepository.save(servico("Troca de Correia Dentada",   "Substituição da correia dentada e tensores",                               new BigDecimal("350.00"), 4));
+        servicoRepository.save(servico("Diagnóstico Eletrônico",     "Leitura de códigos de falha e diagnóstico do sistema eletrônico",          new BigDecimal("100.00"), 2));
+        servicoRepository.save(servico("Troca de Velas de Ignição",  "Substituição das velas de ignição e cabos de vela",                        new BigDecimal("90.00"),  1));
+        servicoRepository.save(servico("Revisão Completa",           "Revisão geral do veículo incluindo motor, freios, suspensão e elétrica",   new BigDecimal("500.00"), 8));
+
+        log.info("[DEV] 7 serviços criados.");
+    }
+
     // --- builders ---
 
     private ClienteJpaEntity cliente(String nome, String cpf, String email, String telefone) {
@@ -166,6 +189,16 @@ public class DevDataLoader implements CommandLineRunner {
         e.setCor(cor);
         e.setAtivo(true);
         e.setCliente(cliente);
+        return e;
+    }
+
+    private ServicoJpaEntity servico(String nome, String descricao, BigDecimal preco, int tempoEstimadoHoras) {
+        ServicoJpaEntity e = new ServicoJpaEntity();
+        e.setNome(nome);
+        e.setDescricao(descricao);
+        e.setPreco(preco);
+        e.setTempoEstimadoHoras(tempoEstimadoHoras);
+        e.setAtivo(true);
         return e;
     }
 

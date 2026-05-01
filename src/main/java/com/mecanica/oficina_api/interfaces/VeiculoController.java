@@ -56,6 +56,7 @@ public class VeiculoController {
     @GetMapping("/cliente/{clienteId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
     @Operation(summary = "Listar veículos de um cliente", description = "Retorna todos os veículos associados a um cliente")
+    @ApiResponse(responseCode = "200", description = "Lista de veículos do cliente")
     public ResponseEntity<List<VeiculoResponse>> listarPorCliente(@PathVariable String clienteId) {
         return ResponseEntity.ok(veiculoService.listarPorCliente(clienteId));
     }

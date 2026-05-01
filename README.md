@@ -23,6 +23,43 @@ src/main/java/com/mecanica/oficina_api/
 └── interfaces/      # Controllers REST e DTOs
 ```
 
+## Por Que PostgreSQL?
+
+PostgreSQL é a escolha ideal para este projeto por:
+
+1. **ACID + Integridade Referencial**
+   - Garante consistência de dados críticos (clientes, veículos, usuários)
+   - Foreign keys previnem dados órfãos automaticamente
+
+2. **Relacionamentos Entre Agregados**
+   - Suporta as referências
+   - Constraints validam relacionamentos em tempo de banco
+
+3. **Otimização de Soft Deletes**
+   - Índices compostos aceleram queries que filtram por `ativo = true`
+   - Melhor performance em operações lógicas de exclusão
+
+4. **Compatibilidade com Spring Boot + JPA/Hibernate**
+   - Suporte nativo para tipos avançados (UUID, arrays, JSON)
+   - Queries customizadas funcionam sem limitações
+   - Migrações são diretas e previsíveis
+
+5. **Auditoria Nativa**
+   - Triggers podem auto-manter `dataCadastro` e `dataAtualizacao` (se expandido)
+   - Suporta histórico de alterações em implementações futuras
+
+6. **Escalabilidade e Confiabilidade**
+   - Adequado para crescimento de dados (centenas/milhares de clientes)
+   - Backup, restore e replicação são operações padrão
+   - Comunidade ativa e bem documentado
+
+7. **Padrão da Indústria**
+   - Escolha padrão em sistemas enterprise
+   - Educativamente realista para um Tech Challenge
+   - Gratuito (open source)
+
+PostgreSQL evita problemas comuns de bancos menos robustos.
+
 ## Pré-requisitos
 
 - Docker e Docker Compose

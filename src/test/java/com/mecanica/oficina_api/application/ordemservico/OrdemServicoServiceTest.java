@@ -8,6 +8,7 @@ import com.mecanica.oficina_api.infrastructure.persistence.VeiculoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.OrdemServicoSpringDataRepository;
+import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
@@ -37,6 +38,7 @@ class OrdemServicoServiceTest {
     @Mock private VeiculoSpringDataRepository veiculoRepository;
     @Mock private ClienteSpringDataRepository clienteRepository;
     @Mock private InsumosSpringDataRepository insumosRepository;
+    @Mock private ServicoSpringDataRepository servicoRepository;
     @InjectMocks private OrdemServicoService service;
 
     private VeiculoJpaEntity veiculo;
@@ -57,16 +59,22 @@ class OrdemServicoServiceTest {
         osEntity.setId("os-1");
         osEntity.setVeiculoId("veiculo-1");
         osEntity.setClienteId("cliente-1");
-        osEntity.setStatus("EM_TRIAGEM");
+        osEntity.setStatus("RECEBIDA");
     }
 
     // --- criar ---
 
     @Test
     void deveCriarOrdemServicoComSucesso() {
+        OrdemServicoJpaEntity salva = new OrdemServicoJpaEntity();
+        salva.setId("os-1");
+        salva.setVeiculoId("veiculo-1");
+        salva.setClienteId("cliente-1");
+        salva.setStatus("RECEBIDA");
+
         when(veiculoRepository.findByIdAndAtivoTrue("veiculo-1")).thenReturn(Optional.of(veiculo));
         when(clienteRepository.findById("cliente-1")).thenReturn(Optional.of(cliente));
-        when(ordemServicoRepository.save(any())).thenReturn(osEntity);
+        when(ordemServicoRepository.save(any())).thenReturn(salva);
 
         CriarOrdemServicoRequest req = new CriarOrdemServicoRequest();
         req.setVeiculoId("veiculo-1");
@@ -75,8 +83,8 @@ class OrdemServicoServiceTest {
         OrdemServicoResponse resp = service.criar(req);
 
         assertThat(resp.getId()).isEqualTo("os-1");
-        assertThat(resp.getStatus()).isEqualTo("EM_TRIAGEM");
-        verify(ordemServicoRepository).save(argThat(e -> "EM_TRIAGEM".equals(e.getStatus())));
+        assertThat(resp.getStatus()).isEqualTo("RECEBIDA");
+        verify(ordemServicoRepository).save(argThat(e -> "RECEBIDA".equals(e.getStatus())));
     }
 
     @Test
@@ -119,7 +127,7 @@ class OrdemServicoServiceTest {
         OrdemServicoResponse resp = service.buscarPorId("os-1");
 
         assertThat(resp.getId()).isEqualTo("os-1");
-        assertThat(resp.getStatus()).isEqualTo("EM_TRIAGEM");
+        assertThat(resp.getStatus()).isEqualTo("RECEBIDA");
         assertThat(resp.getOrcamento()).isNull();
     }
 
@@ -147,8 +155,9 @@ class OrdemServicoServiceTest {
 
     @Test
     void deveGerarOrcamentoComSucesso() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("PENDENTE"));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("PENDENTE", "EM_DIAGNOSTICO"));
         when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
 
         OrdemServicoResponse resp = service.gerarOrcamento("os-1", gerarOrcamentoRequest());
@@ -159,7 +168,7 @@ class OrdemServicoServiceTest {
 
     @Test
     void deveLancarConflictAoGerarOrcamentoEmOsFinalizada() {
-        osEntity.setStatus("FINALIZADO");
+        osEntity.setStatus("FINALIZADA");
         osEntity.setOrcamentoStatus("APROVADO");
         osEntity.setItensOrcamento(itensEntity());
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
@@ -174,10 +183,11 @@ class OrdemServicoServiceTest {
 
     @Test
     void deveEnviarOrcamentoComSucesso() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
         osEntity.setOrcamentoStatus("PENDENTE");
         osEntity.setItensOrcamento(itensEntity());
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("ENVIADO"));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("ENVIADO", "AGUARDANDO_APROVACAO"));
 
         OrdemServicoResponse resp = service.enviarOrcamento("os-1");
 
@@ -186,6 +196,7 @@ class OrdemServicoServiceTest {
 
     @Test
     void deveLancarConflictAoEnviarOrcamentoJaEnviado() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
         osEntity.setOrcamentoStatus("ENVIADO");
         osEntity.setItensOrcamento(itensEntity());
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
@@ -198,42 +209,40 @@ class OrdemServicoServiceTest {
     // --- aprovarOrcamento ---
 
     @Test
-    void deveAprovarOrcamentoEFinalizarOs() {
+    void deveAprovarOrcamentoETransicionarOsParaEmExecucao() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
         osEntity.setOrcamentoStatus("ENVIADO");
         osEntity.setItensOrcamento(itensEntity());
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        OrdemServicoJpaEntity finalizado = osEntityComOrcamento("APROVADO");
-        finalizado.setStatus("FINALIZADO");
-        when(ordemServicoRepository.save(any())).thenReturn(finalizado);
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "EM_EXECUCAO"));
 
         OrdemServicoResponse resp = service.aprovarOrcamento("os-1");
 
-        assertThat(resp.getStatus()).isEqualTo("FINALIZADO");
+        assertThat(resp.getStatus()).isEqualTo("EM_EXECUCAO");
         assertThat(resp.getOrcamento().getStatus()).isEqualTo("APROVADO");
     }
 
-    // --- retirarVeiculo ---
+    // --- entregar ---
 
     @Test
-    void deveRetirarVeiculoDeOsFinalizada() {
-        osEntity.setStatus("FINALIZADO");
+    void deveEntregarVeiculoDeOsFinalizada() {
+        osEntity.setStatus("FINALIZADA");
         osEntity.setOrcamentoStatus("APROVADO");
         osEntity.setItensOrcamento(itensEntity());
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        OrdemServicoJpaEntity retirado = osEntityComOrcamento("APROVADO");
-        retirado.setStatus("VEICULO_RETIRADO");
-        when(ordemServicoRepository.save(any())).thenReturn(retirado);
+        OrdemServicoJpaEntity entregue = osEntityComOrcamento("APROVADO", "ENTREGUE");
+        when(ordemServicoRepository.save(any())).thenReturn(entregue);
 
-        OrdemServicoResponse resp = service.retirarVeiculo("os-1");
+        OrdemServicoResponse resp = service.entregar("os-1");
 
-        assertThat(resp.getStatus()).isEqualTo("VEICULO_RETIRADO");
+        assertThat(resp.getStatus()).isEqualTo("ENTREGUE");
     }
 
     @Test
-    void deveLancarConflictAoRetirarVeiculoDeOsNaoFinalizada() {
+    void deveLancarConflictAoEntregarVeiculoDeOsNaoFinalizada() {
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
 
-        assertThatThrownBy(() -> service.retirarVeiculo("os-1"))
+        assertThatThrownBy(() -> service.entregar("os-1"))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
     }
@@ -271,12 +280,12 @@ class OrdemServicoServiceTest {
         return new java.util.ArrayList<>(List.of(ie));
     }
 
-    private OrdemServicoJpaEntity osEntityComOrcamento(String orcStatus) {
+    private OrdemServicoJpaEntity osEntityComOrcamento(String orcStatus, String osStatus) {
         OrdemServicoJpaEntity e = new OrdemServicoJpaEntity();
         e.setId("os-1");
         e.setVeiculoId("veiculo-1");
         e.setClienteId("cliente-1");
-        e.setStatus("EM_TRIAGEM");
+        e.setStatus(osStatus);
         e.setOrcamentoStatus(orcStatus);
         e.setItensOrcamento(itensEntity());
         return e;

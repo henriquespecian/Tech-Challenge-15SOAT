@@ -1,5 +1,5 @@
 package com.mecanica.oficina_api.domain.ordemservico;
 
 public enum OrdemServicoStatus {
-    EM_TRIAGEM, EM_DIAGNOSTICO, EM_EXECUCAO, FINALIZADO, VEICULO_RETIRADO
+    RECEBIDA, EM_DIAGNOSTICO, AGUARDANDO_APROVACAO, EM_EXECUCAO, FINALIZADA, ENTREGUE
 }

@@ -1,0 +1,20 @@
+meta {
+  name: Inativar serviço
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/servico/8defeee4-025c-4043-983a-03ee90f85125
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

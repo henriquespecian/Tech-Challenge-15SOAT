@@ -84,12 +84,19 @@ public class InsumosService {
     insumosSpringDataRepository.save(entity);
   }
 
-  public void deletar(String id) {
-    var entity = insumosSpringDataRepository.findById(id);
+  public InsumosResponse ativar(String id) {
+    var entity = insumosSpringDataRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+    entity.setAtivo(true);
+    insumosSpringDataRepository.save(entity);
+    return new InsumosResponse(entity.getId(), entity.getNome(), entity.getPrecoUnitario(),
+        entity.getEstoqueAtual(), entity.getEstoqueMinimo(), entity.getUnidade(), entity.getAtivo());
+  }
 
-    if(entity.isPresent()) {
-      entity.get().setAtivo(false);
-      insumosSpringDataRepository.save(entity.get());
-    }
+  public void deletar(String id) {
+    var entity = insumosSpringDataRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+    entity.setAtivo(false);
+    insumosSpringDataRepository.save(entity);
   }
 }

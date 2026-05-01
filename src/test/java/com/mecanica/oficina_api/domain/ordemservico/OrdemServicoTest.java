@@ -14,13 +14,15 @@ class OrdemServicoTest {
     }
 
     @Test
-    void deveCriarOrdemServicoEmTriagem() {
+    void deveCriarOrdemServicoComoRecebida() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
 
         assertThat(os.getVeiculoId()).isEqualTo("veiculo-1");
         assertThat(os.getClienteId()).isEqualTo("cliente-1");
-        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.EM_TRIAGEM);
+        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.RECEBIDA);
         assertThat(os.getOrcamento()).isNull();
+        assertThat(os.getValorFinal()).isNull();
+        assertThat(os.getDataFinal()).isNull();
     }
 
     @Test
@@ -36,8 +38,25 @@ class OrdemServicoTest {
     }
 
     @Test
+    void deveIniciarDiagnosticoDeOsRecebida() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
+
+        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.EM_DIAGNOSTICO);
+    }
+
+    @Test
+    void deveLancarExcecaoAoIniciarDiagnosticoEmOsNaoRecebida() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
+
+        assertThatThrownBy(os::iniciarDiagnostico).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void deveGerarOrcamentoComSucesso() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
         os.gerarOrcamento(itens(), "observacao");
 
         assertThat(os.getOrcamento()).isNotNull();
@@ -45,59 +64,122 @@ class OrdemServicoTest {
     }
 
     @Test
-    void deveLancarExcecaoAoGerarOrcamentoEmOsFinalizadaa() {
+    void deveEnviarOrcamentoETransicionarOsParaAguardandoAprovacao() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
         os.gerarOrcamento(itens(), null);
         os.enviarOrcamento();
-        os.aprovarOrcamento();
 
-        assertThatThrownBy(() -> os.gerarOrcamento(itens(), null))
-                .isInstanceOf(IllegalStateException.class);
+        assertThat(os.getOrcamento().getStatus()).isEqualTo(OrcamentoStatus.ENVIADO);
+        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.AGUARDANDO_APROVACAO);
     }
 
     @Test
-    void deveLancarExcecaoAoGerarOrcamentoEmOsComVeiculoRetirado() {
+    void deveAguardarOrcamento() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
         os.gerarOrcamento(itens(), null);
         os.enviarOrcamento();
-        os.aprovarOrcamento();
-        os.retirarVeiculo();
+        os.aguardarOrcamento();
 
-        assertThatThrownBy(() -> os.gerarOrcamento(itens(), null))
-                .isInstanceOf(IllegalStateException.class);
+        assertThat(os.getOrcamento().getStatus()).isEqualTo(OrcamentoStatus.AGUARDANDO);
     }
 
     @Test
-    void deveAprovarOrcamentoEFinalizarOs() {
+    void deveAprovarOrcamentoETransicionarOsParaEmExecucao() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
         os.gerarOrcamento(itens(), null);
         os.enviarOrcamento();
         os.aprovarOrcamento();
 
-        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.FINALIZADO);
+        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.EM_EXECUCAO);
         assertThat(os.getOrcamento().getStatus()).isEqualTo(OrcamentoStatus.APROVADO);
+        assertThat(os.getOrcamento().getRespondidoEm()).isNotNull();
+    }
+
+    @Test
+    void deveNegarOrcamentoEFinalizarOs() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
+        os.gerarOrcamento(itens(), null);
+        os.enviarOrcamento();
+        os.negarOrcamento();
+
+        assertThat(os.getOrcamento().getStatus()).isEqualTo(OrcamentoStatus.NEGADO);
+        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.FINALIZADA);
+        assertThat(os.getDataFinal()).isNotNull();
+    }
+
+    @Test
+    void deveFinalizarOsEmExecucaoComValorEData() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
+        os.gerarOrcamento(itens(), null);
+        os.enviarOrcamento();
+        os.aprovarOrcamento();
+        os.finalizar();
+
+        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.FINALIZADA);
+        assertThat(os.getValorFinal()).isEqualByComparingTo(BigDecimal.valueOf(100.0));
+        assertThat(os.getDataFinal()).isNotNull();
+    }
+
+    @Test
+    void deveLancarExcecaoAoFinalizarOsNaoEmExecucao() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        assertThatThrownBy(os::finalizar).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void deveEntregarVeiculoDeOsFinalizada() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
+        os.gerarOrcamento(itens(), null);
+        os.enviarOrcamento();
+        os.aprovarOrcamento();
+        os.finalizar();
+        os.entregar();
+
+        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.ENTREGUE);
+    }
+
+    @Test
+    void deveLancarExcecaoAoEntregarVeiculoDeOsNaoFinalizada() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        assertThatThrownBy(os::entregar).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void deveLancarExcecaoAoGerarOrcamentoEmOsFinalizada() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
+        os.gerarOrcamento(itens(), null);
+        os.enviarOrcamento();
+        os.aprovarOrcamento();
+        os.finalizar();
+
+        assertThatThrownBy(() -> os.gerarOrcamento(itens(), null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void deveLancarExcecaoAoGerarOrcamentoEmOsEntregue() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
+        os.gerarOrcamento(itens(), null);
+        os.enviarOrcamento();
+        os.aprovarOrcamento();
+        os.finalizar();
+        os.entregar();
+
+        assertThatThrownBy(() -> os.gerarOrcamento(itens(), null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void deveLancarExcecaoAoAprovarSemOrcamento() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
         assertThatThrownBy(os::aprovarOrcamento).isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void deveRetirarVeiculoDeOsFinalizada() {
-        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
-        os.gerarOrcamento(itens(), null);
-        os.enviarOrcamento();
-        os.aprovarOrcamento();
-        os.retirarVeiculo();
-
-        assertThat(os.getStatus()).isEqualTo(OrdemServicoStatus.VEICULO_RETIRADO);
-    }
-
-    @Test
-    void deveLancarExcecaoAoRetirarVeiculoDeOsNaoFinalizada() {
-        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
-        assertThatThrownBy(os::retirarVeiculo).isInstanceOf(IllegalStateException.class);
     }
 }

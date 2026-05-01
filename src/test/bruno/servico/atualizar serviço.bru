@@ -1,0 +1,29 @@
+meta {
+  name: atualizar serviço
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/servico/5c15245b-c431-4ac2-abdc-20b52aff9e87
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "nome": "troca de oleo 2",
+    "descricao": "troca de oleo",
+    "preco": 200,
+    "tempoEstimadoHoras": 1073741824
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -33,48 +33,45 @@ class OrcamentoTest {
     }
 
     @Test
-    void deveTransicionarDeStatuPendente_paraEnviado() {
+    void deveTransicionarDePendenteParaEnviado() {
         Orcamento o = orcamentoSimples();
-        o.enviar();
-        assertThat(o.getStatus()).isEqualTo(OrcamentoStatus.ENVIADO);
+        Orcamento enviado = o.enviar();
+        assertThat(enviado.getStatus()).isEqualTo(OrcamentoStatus.ENVIADO);
     }
 
     @Test
     void deveLancarExcecaoAoEnviarOrcamentoNaoPendente() {
-        Orcamento o = orcamentoSimples();
-        o.enviar();
-        assertThatThrownBy(o::enviar).isInstanceOf(IllegalStateException.class);
+        Orcamento enviado = orcamentoSimples().enviar();
+        assertThatThrownBy(enviado::enviar).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void deveTransicionarDeEnviadoParaNegociacao() {
+    void deveTransicionarDeEnviadoParaAguardando() {
         Orcamento o = orcamentoSimples();
-        o.enviar();
-        o.negociar();
-        assertThat(o.getStatus()).isEqualTo(OrcamentoStatus.EM_NEGOCIACAO);
+        Orcamento enviado = o.enviar();
+        Orcamento aguardando = enviado.aguardar();
+        assertThat(aguardando.getStatus()).isEqualTo(OrcamentoStatus.AGUARDANDO);
     }
 
     @Test
-    void deveLancarExcecaoAoNegociarOrcamentoNaoEnviado() {
+    void deveLancarExcecaoAoAguardarOrcamentoNaoEnviado() {
         Orcamento o = orcamentoSimples();
-        assertThatThrownBy(o::negociar).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(o::aguardar).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void deveAprovarOrcamentoEnviado() {
-        Orcamento o = orcamentoSimples();
-        o.enviar();
-        o.aprovar();
-        assertThat(o.getStatus()).isEqualTo(OrcamentoStatus.APROVADO);
+        Orcamento enviado = orcamentoSimples().enviar();
+        Orcamento aprovado = enviado.aprovar();
+        assertThat(aprovado.getStatus()).isEqualTo(OrcamentoStatus.APROVADO);
+        assertThat(aprovado.getRespondidoEm()).isNotNull();
     }
 
     @Test
-    void deveAprovarOrcamentoEmNegociacao() {
-        Orcamento o = orcamentoSimples();
-        o.enviar();
-        o.negociar();
-        o.aprovar();
-        assertThat(o.getStatus()).isEqualTo(OrcamentoStatus.APROVADO);
+    void deveAprovarOrcamentoAguardando() {
+        Orcamento aguardando = orcamentoSimples().enviar().aguardar();
+        Orcamento aprovado = aguardando.aprovar();
+        assertThat(aprovado.getStatus()).isEqualTo(OrcamentoStatus.APROVADO);
     }
 
     @Test
@@ -85,10 +82,10 @@ class OrcamentoTest {
 
     @Test
     void deveNegarOrcamentoEnviado() {
-        Orcamento o = orcamentoSimples();
-        o.enviar();
-        o.negar();
-        assertThat(o.getStatus()).isEqualTo(OrcamentoStatus.NEGADO);
+        Orcamento enviado = orcamentoSimples().enviar();
+        Orcamento negado = enviado.negar();
+        assertThat(negado.getStatus()).isEqualTo(OrcamentoStatus.NEGADO);
+        assertThat(negado.getRespondidoEm()).isNotNull();
     }
 
     @Test

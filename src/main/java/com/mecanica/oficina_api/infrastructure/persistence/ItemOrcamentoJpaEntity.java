@@ -20,6 +20,9 @@ public class ItemOrcamentoJpaEntity {
     @Column(name = "preco_unitario", nullable = false, precision = 12, scale = 2)
     private BigDecimal precoUnitario;
 
+    @Column(name = "insumo_id")
+    private String insumoId;
+
     public ItemOrcamentoJpaEntity() {}
 
     public String getId() { return id; }
@@ -30,4 +33,6 @@ public class ItemOrcamentoJpaEntity {
     public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
     public BigDecimal getPrecoUnitario() { return precoUnitario; }
     public void setPrecoUnitario(BigDecimal precoUnitario) { this.precoUnitario = precoUnitario; }
+    public String getInsumoId() { return insumoId; }
+    public void setInsumoId(String insumoId) { this.insumoId = insumoId; }
 }

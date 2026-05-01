@@ -19,7 +19,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("ordem-servico")
-@Tag(name = "Ordem de Serviço", description = "Gerenciamento de ordens de serviço da oficina")
+@Tag(name = "Ordem de Serviço", description = "Gerenciamento de ordens de serviço. Fluxo: RECEBIDA → EM_DIAGNOSTICO → (orçamento gerado) → AGUARDANDO_APROVACAO → EM_EXECUCAO → FINALIZADA → ENTREGUE")
 @SecurityRequirement(name = "bearerAuth")
 public class OrdemServicoController {
 
@@ -31,9 +31,10 @@ public class OrdemServicoController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Criar ordem de serviço")
+    @Operation(summary = "Criar ordem de serviço", description = "Cria uma nova OS com status RECEBIDA")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Ordem de serviço criada com sucesso"),
+            @ApiResponse(responseCode = "201", description = "OS criada com sucesso",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
             @ApiResponse(responseCode = "404", description = "Veículo ou cliente não encontrado",
                     content = @Content(schema = @Schema()))
     })
@@ -43,10 +44,11 @@ public class OrdemServicoController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
-    @Operation(summary = "Buscar ordem de serviço por ID")
+    @Operation(summary = "Buscar OS por ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Ordem de serviço encontrada"),
-            @ApiResponse(responseCode = "404", description = "Ordem de serviço não encontrada",
+            @ApiResponse(responseCode = "200", description = "OS encontrada",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "404", description = "OS não encontrada",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> buscarPorId(@PathVariable String id) {
@@ -55,19 +57,66 @@ public class OrdemServicoController {
 
     @GetMapping("/veiculo/{veiculoId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
-    @Operation(summary = "Listar ordens de serviço por veículo")
+    @Operation(summary = "Listar OSs por veículo")
+    @ApiResponse(responseCode = "200", description = "Lista de OSs do veículo")
     public ResponseEntity<List<OrdemServicoResponse>> listarPorVeiculo(@PathVariable String veiculoId) {
         return ResponseEntity.ok(ordemServicoService.listarPorVeiculo(veiculoId));
     }
 
+    // --- Transições de status da OS ---
+
+    @PatchMapping("/{id}/iniciar-diagnostico")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    @Operation(summary = "Iniciar diagnóstico", description = "Transição: RECEBIDA → EM_DIAGNOSTICO")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Diagnóstico iniciado",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "OS não está RECEBIDA",
+                    content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<OrdemServicoResponse> iniciarDiagnostico(@PathVariable String id) {
+        return ResponseEntity.ok(ordemServicoService.iniciarDiagnostico(id));
+    }
+
+    @PatchMapping("/{id}/finalizar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    @Operation(summary = "Finalizar execução", description = "Transição: EM_EXECUCAO → FINALIZADA. Registra valorFinal, dataFinal e dá baixa nos insumos utilizados.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OS finalizada",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "OS não está EM_EXECUCAO",
+                    content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<OrdemServicoResponse> finalizar(@PathVariable String id) {
+        return ResponseEntity.ok(ordemServicoService.finalizar(id));
+    }
+
+    @PatchMapping("/{id}/entregar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
+    @Operation(summary = "Registrar entrega do veículo", description = "Transição: FINALIZADA → ENTREGUE")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Veículo entregue ao cliente",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "OS não está FINALIZADA",
+                    content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<OrdemServicoResponse> entregar(@PathVariable String id) {
+        return ResponseEntity.ok(ordemServicoService.entregar(id));
+    }
+
+    // --- Orçamento ---
+
     @PostMapping("/{id}/orcamento")
     @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
-    @Operation(summary = "Gerar orçamento para a ordem de serviço")
+    @Operation(summary = "Gerar orçamento", description = "Gera o orçamento da OS com insumos e/ou serviços do catálogo. Pode incluir itens de ambas as listas.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orçamento gerado"),
-            @ApiResponse(responseCode = "404", description = "Ordem de serviço não encontrada",
+            @ApiResponse(responseCode = "200", description = "Orçamento gerado",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Nenhum item informado",
                     content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "409", description = "Estado inválido para gerar orçamento",
+            @ApiResponse(responseCode = "404", description = "OS, insumo ou serviço não encontrado",
+                    content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "409", description = "OS em estado inválido para gerar orçamento",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> gerarOrcamento(@PathVariable String id,
@@ -77,10 +126,11 @@ public class OrdemServicoController {
 
     @PutMapping("/{id}/orcamento")
     @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
-    @Operation(summary = "Atualizar orçamento (apenas quando EM_NEGOCIACAO)")
+    @Operation(summary = "Atualizar orçamento", description = "Substitui o orçamento quando está com status AGUARDANDO (cliente pediu ajuste)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orçamento atualizado"),
-            @ApiResponse(responseCode = "409", description = "Estado inválido para atualizar orçamento",
+            @ApiResponse(responseCode = "200", description = "Orçamento atualizado",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Orçamento não está AGUARDANDO",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> atualizarOrcamento(@PathVariable String id,
@@ -90,34 +140,37 @@ public class OrdemServicoController {
 
     @PatchMapping("/{id}/orcamento/enviar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Enviar orçamento para aprovação do cliente")
+    @Operation(summary = "Enviar orçamento ao cliente", description = "Transição do orçamento: PENDENTE → ENVIADO. OS passa a AGUARDANDO_APROVACAO.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orçamento enviado"),
-            @ApiResponse(responseCode = "409", description = "Estado inválido",
+            @ApiResponse(responseCode = "200", description = "Orçamento enviado",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Orçamento não está PENDENTE",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> enviarOrcamento(@PathVariable String id) {
         return ResponseEntity.ok(ordemServicoService.enviarOrcamento(id));
     }
 
-    @PatchMapping("/{id}/orcamento/negociar")
+    @PatchMapping("/{id}/orcamento/aguardar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Colocar orçamento em negociação")
+    @Operation(summary = "Aguardar resposta do cliente", description = "Transição do orçamento: ENVIADO → AGUARDANDO (cliente solicitou ajustes ou prazo extra)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orçamento em negociação"),
-            @ApiResponse(responseCode = "409", description = "Estado inválido",
+            @ApiResponse(responseCode = "200", description = "Orçamento em aguardo",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Orçamento não está ENVIADO",
                     content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<OrdemServicoResponse> negociarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.negociarOrcamento(id));
+    public ResponseEntity<OrdemServicoResponse> aguardarOrcamento(@PathVariable String id) {
+        return ResponseEntity.ok(ordemServicoService.aguardarOrcamento(id));
     }
 
     @PatchMapping("/{id}/orcamento/aprovar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Aprovar orçamento e finalizar ordem de serviço")
+    @Operation(summary = "Aprovar orçamento", description = "Transição do orçamento: ENVIADO|AGUARDANDO → APROVADO. OS passa a EM_EXECUCAO.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orçamento aprovado, OS finalizada"),
-            @ApiResponse(responseCode = "409", description = "Estado inválido",
+            @ApiResponse(responseCode = "200", description = "Orçamento aprovado, OS em execução",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Orçamento em estado inválido para aprovação",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> aprovarOrcamento(@PathVariable String id) {
@@ -126,25 +179,14 @@ public class OrdemServicoController {
 
     @PatchMapping("/{id}/orcamento/negar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Negar orçamento")
+    @Operation(summary = "Negar orçamento", description = "Transição do orçamento: ENVIADO|AGUARDANDO → NEGADO. OS retorna a EM_DIAGNOSTICO para novo orçamento.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orçamento negado"),
-            @ApiResponse(responseCode = "409", description = "Estado inválido",
+            @ApiResponse(responseCode = "200", description = "Orçamento negado",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Orçamento em estado inválido para negar",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> negarOrcamento(@PathVariable String id) {
         return ResponseEntity.ok(ordemServicoService.negarOrcamento(id));
-    }
-
-    @PatchMapping("/{id}/veiculo/retirar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Registrar retirada do veículo")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Veículo retirado"),
-            @ApiResponse(responseCode = "409", description = "OS não está finalizada",
-                    content = @Content(schema = @Schema()))
-    })
-    public ResponseEntity<OrdemServicoResponse> retirarVeiculo(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.retirarVeiculo(id));
     }
 }
