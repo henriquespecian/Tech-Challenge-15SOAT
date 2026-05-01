@@ -1,0 +1,19 @@
+meta {
+  name: Listar Ordens por Veiculo
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/ordem-servico/veiculo/:veiculoId
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  veiculoId:
+}

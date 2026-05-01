@@ -1,0 +1,36 @@
+meta {
+  name: Atualizar Orcamento
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+params:path {
+  id:
+}
+
+body:json {
+  {
+    "itens": [
+      {
+        "descricao": "Troca de óleo + filtro",
+        "quantidade": 1,
+        "precoUnitario": 200.00
+      }
+    ],
+    "observacoes": "Revisado após negociação"
+  }
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Enviar Orcamento
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento/enviar
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id:
+}

@@ -1,0 +1,46 @@
+meta {
+  name: 06 - Gerar Orcamento
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento
+  body: json
+  auth: bearer
+}
+
+params:path {
+  id: {{ordemServicoId}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "itens": [
+      {
+        "descricao": "Troca de óleo do motor",
+        "quantidade": 1,
+        "precoUnitario": 120.00
+      },
+      {
+        "descricao": "Filtro de óleo",
+        "quantidade": 1,
+        "precoUnitario": 45.00
+      },
+      {
+        "descricao": "Mão de obra",
+        "quantidade": 1,
+        "precoUnitario": 80.00
+      }
+    ],
+    "observacoes": "Veículo com 10.000 km. Troca de óleo preventiva conforme diagnóstico."
+  }
+}
