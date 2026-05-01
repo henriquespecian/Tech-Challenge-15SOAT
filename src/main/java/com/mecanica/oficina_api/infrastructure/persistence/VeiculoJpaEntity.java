@@ -1,7 +1,13 @@
 package com.mecanica.oficina_api.infrastructure.persistence;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "veiculos")
 public class VeiculoJpaEntity {
@@ -24,28 +30,9 @@ public class VeiculoJpaEntity {
 
     private String cor;
 
-    private boolean ativo;
+    private Boolean ativo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
     private ClienteJpaEntity cliente;
-
-    public VeiculoJpaEntity() {}
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getPlaca() { return placa; }
-    public void setPlaca(String placa) { this.placa = placa; }
-    public String getMarca() { return marca; }
-    public void setMarca(String marca) { this.marca = marca; }
-    public String getModelo() { return modelo; }
-    public void setModelo(String modelo) { this.modelo = modelo; }
-    public int getAno() { return ano; }
-    public void setAno(int ano) { this.ano = ano; }
-    public String getCor() { return cor; }
-    public void setCor(String cor) { this.cor = cor; }
-    public boolean getAtivo() { return ativo; }
-    public void setAtivo(boolean ativo) { this.ativo = ativo; }
-    public ClienteJpaEntity getCliente() { return cliente; }
-    public void setCliente(ClienteJpaEntity cliente) { this.cliente = cliente; }
 }
