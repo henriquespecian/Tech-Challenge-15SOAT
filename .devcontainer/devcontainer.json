@@ -1,0 +1,17 @@
+{
+	"name": "Oficina API Dev",
+	"dockerComposeFile": ["../docker-compose.yaml", "docker-compose.dev.yaml"],
+	"service": "app",
+	"workspaceFolder": "/app",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"vscjava.vscode-java-pack",
+				"vmware.vscode-spring-boot",
+				"rangav.vscode-thunder-client",
+				"vscjava.vscode-lombok"
+			]
+		}
+	},
+	"remoteUser": "root"
+}
