@@ -71,8 +71,11 @@ class UsuarioServiceTest {
     void deveCadastrarUsuarioAdminComSucesso() {
         when(usuarioRepository.existsByEmail("joao@email.com")).thenReturn(false);
 
-        usuarioService.cadastrar(cadastrarRequest);
+        UsuarioResponse response = usuarioService.cadastrar(cadastrarRequest);
 
+        assertThat(response.getId()).isNotBlank();
+        assertThat(response.getEmail()).isEqualTo("joao@email.com");
+        assertThat(response.getPerfil()).isEqualTo(Perfil.ADMIN);
         verify(usuarioRepository).save(any(UsuarioJpaEntity.class));
     }
 

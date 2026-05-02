@@ -20,7 +20,7 @@ public class InsumosService {
     this.insumosSpringDataRepository = insumosSpringDataRepository;
   }
 
-  public void cadastrar(CadastrarInsumosRequest request) {
+  public InsumosResponse cadastrar(CadastrarInsumosRequest request) {
     insumosSpringDataRepository.findByNome(request.getNome()).ifPresent(insumosJpaEntity -> {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "O Insumo "+ request.getNome() +" já está cadastrado");
     });
@@ -43,6 +43,14 @@ public class InsumosService {
     entity.setAtivo(insumos.getAtivo());
 
     insumosSpringDataRepository.save(entity);
+    return new InsumosResponse(
+        entity.getId(),
+        entity.getNome(),
+        entity.getPrecoUnitario(),
+        entity.getEstoqueAtual(),
+        entity.getEstoqueMinimo(),
+        entity.getUnidade(),
+        entity.getAtivo());
   }
 
   public List<InsumosResponse> listar() {

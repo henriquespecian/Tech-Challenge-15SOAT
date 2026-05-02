@@ -49,15 +49,15 @@ public class InsumosController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Cadastrar insumo", description = "Cadastra um novo insumo ou peça no estoque")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Insumo cadastrado com sucesso"),
+        @ApiResponse(responseCode = "201", description = "Insumo cadastrado com sucesso",
+            content = @Content(schema = @Schema(implementation = InsumosResponse.class))),
         @ApiResponse(responseCode = "409", description = "Insumo com o mesmo nome já existe",
             content = @Content(schema = @Schema())),
         @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
             content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<Void> cadastrarInsumo(@RequestBody CadastrarInsumosRequest request) {
-        insumosService.cadastrar(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<InsumosResponse> cadastrarInsumo(@RequestBody CadastrarInsumosRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(insumosService.cadastrar(request));
     }
 
     @PutMapping("/{id}")

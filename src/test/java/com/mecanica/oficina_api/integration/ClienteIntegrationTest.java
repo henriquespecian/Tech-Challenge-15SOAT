@@ -30,7 +30,10 @@ class ClienteIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(comToken(post("/cliente")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(cadastroValido("Ana Souza", CPF_ANA, "ana@teste.com")))))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.cpf").value(CPF_ANA))
+                .andExpect(jsonPath("$.nome").value("Ana Souza"));
     }
 
     @Test

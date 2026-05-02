@@ -31,13 +31,13 @@ public class ClienteController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Cadastrar um novo cliente", description = "Permite cadastrar um novo cliente na oficina")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Cliente criado com sucesso"),
+            @ApiResponse(responseCode = "201", description = "Cliente criado com sucesso",
+                    content = @Content(schema = @Schema(implementation = ConsultarClienteResponse.class))),
             @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
                     content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<Void> cadastrar(@RequestBody CadastrarClienteRequest request) {
-        clienteService.cadastrar(request);
-        return ResponseEntity.status(201).build();
+    public ResponseEntity<ConsultarClienteResponse> cadastrar(@RequestBody CadastrarClienteRequest request) {
+        return ResponseEntity.status(201).body(clienteService.cadastrar(request));
     }
 
     @GetMapping("/{cpf}")

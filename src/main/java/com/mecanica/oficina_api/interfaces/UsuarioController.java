@@ -39,13 +39,13 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Cadastrar um novo usuário", description = "Perfis aceitos: ADMIN, MECANICO, CLIENTE, ATENDENTE. Para perfil CLIENTE, clienteId é obrigatório.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso"),
+        @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso",
+            content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
         @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema())),
         @ApiResponse(responseCode = "409", description = "Email já cadastrado", content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<Void> cadastrar(@RequestBody CadastrarUsuarioRequest request) {
-        usuarioService.cadastrar(request);
-        return ResponseEntity.status(201).build();
+    public ResponseEntity<UsuarioResponse> cadastrar(@RequestBody CadastrarUsuarioRequest request) {
+        return ResponseEntity.status(201).body(usuarioService.cadastrar(request));
     }
 
     @GetMapping("/{id}")

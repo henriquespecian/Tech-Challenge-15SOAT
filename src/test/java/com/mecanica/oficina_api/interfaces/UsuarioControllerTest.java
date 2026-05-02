@@ -59,11 +59,17 @@ class UsuarioControllerTest {
         request.setSenha("senha123");
         request.setPerfil("ADMIN");
 
+        when(usuarioService.cadastrar(any(CadastrarUsuarioRequest.class))).thenReturn(usuarioResponse);
+
         mockMvc.perform(post("/usuario")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$").doesNotExist());
+            .andExpect(jsonPath("$.id").value("usuario-1"))
+            .andExpect(jsonPath("$.nome").value("João Silva"))
+            .andExpect(jsonPath("$.email").value("joao@email.com"))
+            .andExpect(jsonPath("$.perfil").value("ADMIN"))
+            .andExpect(jsonPath("$.senha").doesNotExist());
     }
 
     @Test

@@ -33,7 +33,10 @@ class UsuarioIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(comToken(post("/usuario")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(cadastroMecanico("mecanico@teste.com")))))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.email").value("mecanico@teste.com"))
+                .andExpect(jsonPath("$.perfil").value("MECANICO"));
     }
 
     @Test

@@ -30,7 +30,7 @@ public class UsuarioService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public void cadastrar(CadastrarUsuarioRequest request) {
+    public UsuarioResponse cadastrar(CadastrarUsuarioRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado");
         }
@@ -53,6 +53,7 @@ public class UsuarioService {
         entity.setAtivo(true);
 
         usuarioRepository.save(entity);
+        return toResponse(entity);
     }
 
     public UsuarioResponse buscar(String id) {

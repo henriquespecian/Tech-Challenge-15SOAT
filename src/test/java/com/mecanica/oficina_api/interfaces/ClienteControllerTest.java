@@ -55,11 +55,17 @@ class ClienteControllerTest {
         request.setEmail("joao@email.com");
         request.setTelefone("11999999999");
 
+        when(clienteService.cadastrar(any(CadastrarClienteRequest.class))).thenReturn(clienteResponse);
+
         mockMvc.perform(post("/cliente")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$").doesNotExist());
+            .andExpect(jsonPath("$.id").value("cliente-1"))
+            .andExpect(jsonPath("$.nome").value("João Silva"))
+            .andExpect(jsonPath("$.cpf").value("12345678900"))
+            .andExpect(jsonPath("$.email").value("joao@email.com"))
+            .andExpect(jsonPath("$.telefone").value("11999999999"));
     }
 
     @Test

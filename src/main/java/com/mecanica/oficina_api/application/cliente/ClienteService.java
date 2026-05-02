@@ -25,7 +25,7 @@ public class ClienteService {
         this.repository = repository;
     }
 
-    public void cadastrar(CadastrarClienteRequest request) {
+    public ConsultarClienteResponse cadastrar(CadastrarClienteRequest request) {
         if (repository.existsByCpf(request.getCpf())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado");
         }
@@ -47,6 +47,8 @@ public class ClienteService {
         entity.setAtivo(true);
 
         repository.save(entity);
+        return new ConsultarClienteResponse(
+            entity.getId(), entity.getNome(), entity.getCpf(), entity.getEmail(), entity.getTelefone());
     }
 
     public ConsultarClienteResponse consultar(String cpf) {

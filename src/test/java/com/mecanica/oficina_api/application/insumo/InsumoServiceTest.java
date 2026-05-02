@@ -3,7 +3,7 @@ package com.mecanica.oficina_api.application.insumo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -55,9 +55,16 @@ public class InsumoServiceTest {
   void deveCadastrarInsumoComSucesso() {
 
     when(repository.findByNome("Óleo")).thenReturn(Optional.empty());
+    when(repository.save(any(InsumosJpaEntity.class))).thenAnswer(invocation -> {
+      InsumosJpaEntity e = invocation.getArgument(0);
+      e.setId("insumo-uuid-1");
+      return e;
+    });
 
-    service.cadastrar(cadastrarRequest);
+    var response = service.cadastrar(cadastrarRequest);
 
+    assertEquals("insumo-uuid-1", response.getId());
+    assertEquals("Óleo", response.getNome());
     verify(repository, times(1)).save(any(InsumosJpaEntity.class));
   }
 
