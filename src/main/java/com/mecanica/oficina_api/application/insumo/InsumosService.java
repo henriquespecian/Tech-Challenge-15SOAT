@@ -15,9 +15,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class InsumosService {
 
   private final InsumosSpringDataRepository insumosSpringDataRepository;
+  private final NotificadorEstoqueBaixo notificadorEstoqueBaixo;
 
-  public InsumosService(InsumosSpringDataRepository insumosSpringDataRepository) {
+  public InsumosService(InsumosSpringDataRepository insumosSpringDataRepository,
+      NotificadorEstoqueBaixo notificadorEstoqueBaixo) {
     this.insumosSpringDataRepository = insumosSpringDataRepository;
+    this.notificadorEstoqueBaixo = notificadorEstoqueBaixo;
   }
 
   public InsumosResponse cadastrar(CadastrarInsumosRequest request) {
@@ -75,6 +78,9 @@ public class InsumosService {
     var entity = insumosSpringDataRepository.findByIdAndAtivoTrue(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
 
+    int estoqueAnterior = entity.getEstoqueAtual();
+    int estoqueMinimoAnterior = entity.getEstoqueMinimo();
+
     var insumos = Insumos.criar(
         request.getNome(),
         request.getPrecoUnitario(),
@@ -90,6 +96,21 @@ public class InsumosService {
     entity.setUnidade(insumos.getUnidade());
 
     insumosSpringDataRepository.save(entity);
+
+    if (AlertaEstoqueBaixo.deveEmitirAlerta(
+        estoqueAnterior,
+        estoqueMinimoAnterior,
+        entity.getEstoqueAtual(),
+        entity.getEstoqueMinimo())) {
+      notificadorEstoqueBaixo.notificar(new AlertaEstoqueBaixo(
+          entity.getId(),
+          entity.getNome(),
+          estoqueAnterior,
+          entity.getEstoqueAtual(),
+          entity.getEstoqueMinimo(),
+          OrigemNotificacaoEstoque.ALTERACAO_INSUMO,
+          id));
+    }
   }
 
   public InsumosResponse ativar(String id) {

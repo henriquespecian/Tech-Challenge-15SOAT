@@ -1,0 +1,15 @@
+meta {
+  name: Desativar insumo
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/insumos/{{insumoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

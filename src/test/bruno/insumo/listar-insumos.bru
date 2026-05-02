@@ -1,0 +1,26 @@
+meta {
+  name: Listar insumos
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/insumos
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+script:post-response {
+  const insumos = res.getBody();
+  if (insumos && insumos.length >= 1) {
+    bru.setEnvVar("insumoId1", insumos[0].id);
+    bru.setEnvVar("insumoId", insumos[0].id);
+  }
+  if (insumos && insumos.length >= 2) {
+    bru.setEnvVar("insumoId2", insumos[1].id);
+  }
+}

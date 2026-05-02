@@ -5,6 +5,9 @@ import com.mecanica.oficina_api.domain.ordemservico.Orcamento;
 import com.mecanica.oficina_api.domain.ordemservico.OrcamentoStatus;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
+import com.mecanica.oficina_api.application.insumo.AlertaEstoqueBaixo;
+import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
+import com.mecanica.oficina_api.application.insumo.OrigemNotificacaoEstoque;
 import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.ItemOrcamentoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.OrdemServicoJpaEntity;
@@ -36,17 +39,20 @@ public class OrdemServicoService {
     private final ClienteSpringDataRepository clienteRepository;
     private final InsumosSpringDataRepository insumosRepository;
     private final ServicoSpringDataRepository servicoRepository;
+    private final NotificadorEstoqueBaixo notificadorEstoqueBaixo;
 
     public OrdemServicoService(OrdemServicoSpringDataRepository ordemServicoRepository,
             VeiculoSpringDataRepository veiculoRepository,
             ClienteSpringDataRepository clienteRepository,
             InsumosSpringDataRepository insumosRepository,
-            ServicoSpringDataRepository servicoRepository) {
+            ServicoSpringDataRepository servicoRepository,
+            NotificadorEstoqueBaixo notificadorEstoqueBaixo) {
         this.ordemServicoRepository = ordemServicoRepository;
         this.veiculoRepository = veiculoRepository;
         this.clienteRepository = clienteRepository;
         this.insumosRepository = insumosRepository;
         this.servicoRepository = servicoRepository;
+        this.notificadorEstoqueBaixo = notificadorEstoqueBaixo;
     }
 
     public OrdemServicoResponse criar(CriarOrdemServicoRequest request) {
@@ -158,10 +164,23 @@ public class OrdemServicoService {
             InsumosJpaEntity insumoEntity = insumosRepository.findByIdAndAtivoTrue(item.getInsumoId())
                     .orElse(null);
             if (insumoEntity == null) continue;
+            int estoqueAnterior = insumoEntity.getEstoqueAtual();
+            int estoqueMinimoAnterior = insumoEntity.getEstoqueMinimo();
             int novoEstoque = insumoEntity.getEstoqueAtual() - item.getQuantidade();
             if (novoEstoque < 0) novoEstoque = 0;
             insumoEntity.setEstoqueAtual(novoEstoque);
             insumosRepository.save(insumoEntity);
+            if (AlertaEstoqueBaixo.deveEmitirAlerta(
+                    estoqueAnterior, estoqueMinimoAnterior, novoEstoque, insumoEntity.getEstoqueMinimo())) {
+                notificadorEstoqueBaixo.notificar(new AlertaEstoqueBaixo(
+                        insumoEntity.getId(),
+                        insumoEntity.getNome(),
+                        estoqueAnterior,
+                        novoEstoque,
+                        insumoEntity.getEstoqueMinimo(),
+                        OrigemNotificacaoEstoque.BAIXA_ORDEM_SERVICO,
+                        entity.getId()));
+            }
         }
     }
 

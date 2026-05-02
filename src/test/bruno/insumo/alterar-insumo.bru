@@ -1,0 +1,26 @@
+meta {
+  name: Alterar insumo
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/insumos/{{insumoId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "nome": "Pastilha de freio Bruno",
+      "precoUnitario": 95.00,
+      "estoqueAtual": 20,
+      "estoqueMinimo": 100,
+      "unidade": "UN"
+    }
+}

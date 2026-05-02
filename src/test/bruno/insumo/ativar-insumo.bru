@@ -1,0 +1,15 @@
+meta {
+  name: Ativar insumo
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/insumos/{{insumoId}}/ativar
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
