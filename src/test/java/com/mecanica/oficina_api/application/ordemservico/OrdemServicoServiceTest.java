@@ -10,6 +10,7 @@ import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpr
 import com.mecanica.oficina_api.infrastructure.persistence.repository.OrdemServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
+import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.ItemOrcamentoRequest;
@@ -39,6 +40,7 @@ class OrdemServicoServiceTest {
     @Mock private ClienteSpringDataRepository clienteRepository;
     @Mock private InsumosSpringDataRepository insumosRepository;
     @Mock private ServicoSpringDataRepository servicoRepository;
+    @Mock private NotificadorEstoqueBaixo notificadorEstoqueBaixo;
     @InjectMocks private OrdemServicoService service;
 
     private VeiculoJpaEntity veiculo;
@@ -222,6 +224,47 @@ class OrdemServicoServiceTest {
         assertThat(resp.getOrcamento().getStatus()).isEqualTo("APROVADO");
     }
 
+    @Test
+    void devePreservarInsumoIdAoEnviarOrcamentoParaBaixaNaFinalizacao() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
+        osEntity.setOrcamentoStatus("PENDENTE");
+        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
+        item.setDescricao("Óleo");
+        item.setQuantidade(1);
+        item.setPrecoUnitario(BigDecimal.valueOf(100.0));
+        item.setInsumoId("insumo-1");
+        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.enviarOrcamento("os-1");
+
+        verify(ordemServicoRepository).save(argThat(e ->
+                e.getItensOrcamento().size() == 1
+                        && "insumo-1".equals(e.getItensOrcamento().get(0).getInsumoId())));
+    }
+
+    @Test
+    void deveDarBaixaNoEstoqueDoInsumoAoFinalizar() {
+        osEntity.setStatus("EM_EXECUCAO");
+        osEntity.setOrcamentoStatus("APROVADO");
+        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
+        item.setDescricao("Óleo de motor");
+        item.setQuantidade(3);
+        item.setPrecoUnitario(BigDecimal.valueOf(45.90));
+        item.setInsumoId("insumo-1");
+        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
+
+        InsumosJpaEntity insumo = insumoEntity();
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumo));
+        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.finalizar("os-1");
+
+        verify(insumosRepository).save(argThat(i -> i.getEstoqueAtual() == 7));
+    }
+
     // --- entregar ---
 
     @Test
@@ -277,6 +320,7 @@ class OrdemServicoServiceTest {
         ie.setDescricao("Troca de óleo");
         ie.setQuantidade(1);
         ie.setPrecoUnitario(BigDecimal.valueOf(100.0));
+        ie.setInsumoId("insumo-1");
         return new java.util.ArrayList<>(List.of(ie));
     }
 

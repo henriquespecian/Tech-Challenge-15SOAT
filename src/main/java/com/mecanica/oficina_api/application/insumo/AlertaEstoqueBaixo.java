@@ -13,7 +13,15 @@ public record AlertaEstoqueBaixo(
         String referenciaOrigem) {
 
     /**
-     * Emite quando o par (estoque, mínimo) fica na zona crítica ({@code estoque <= mínimo})
+     * Na alteração manual do insumo (cadastro), emite sempre que após salvar o estoque
+     * estiver na zona crítica ({@code estoque <= mínimo}), independentemente de qual campo foi mudado.
+     */
+    public static boolean deveNotificarAlteracaoInsumo(int estoqueAtual, int estoqueMinimo) {
+        return estoqueAtual <= estoqueMinimo;
+    }
+
+    /**
+     * Para baixa por ordem de serviço: emite quando o par (estoque, mínimo) fica na zona crítica ({@code estoque <= mínimo})
      * e pelo menos uma destas situações ocorre:
      * <ul>
      *   <li>o estoque estava estritamente acima do mínimo antigo (baixa típica ou ajuste de quantidade);</li>

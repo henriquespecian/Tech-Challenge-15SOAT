@@ -30,6 +30,9 @@ public class InsumoServiceTest {
   @Mock
   private InsumosSpringDataRepository repository;
 
+  @Mock
+  private NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+
   @InjectMocks
   private InsumosService service;
 
@@ -127,6 +130,59 @@ public class InsumoServiceTest {
 
     verify(repository).save(entity);
     assertEquals("Filtro", entity.getNome());
+    verify(notificadorEstoqueBaixo, never()).notificar(any());
+  }
+
+  @Test
+  void deveNotificarEstoqueBaixoQuandoAposAtualizarEstoqueEstiverCritico() {
+    InsumosJpaEntity entity = new InsumosJpaEntity();
+    entity.setId("ins-1");
+    entity.setNome("Óleo");
+    entity.setAtivo(true);
+    entity.setEstoqueAtual(10);
+    entity.setEstoqueMinimo(5);
+
+    AlterarInsumosRequest request = new AlterarInsumosRequest(
+        "Óleo premium",
+        BigDecimal.valueOf(30),
+        3,
+        5,
+        "L",
+        true
+    );
+
+    when(repository.findByIdAndAtivoTrue("1"))
+        .thenReturn(Optional.of(entity));
+
+    service.atualizar("1", request);
+
+    verify(notificadorEstoqueBaixo, times(1)).notificar(any(AlertaEstoqueBaixo.class));
+  }
+
+  @Test
+  void deveNotificarEstoqueBaixoQuandoSoAlteraNomeMasPermaneceCritico() {
+    InsumosJpaEntity entity = new InsumosJpaEntity();
+    entity.setId("ins-1");
+    entity.setNome("Óleo");
+    entity.setAtivo(true);
+    entity.setEstoqueAtual(2);
+    entity.setEstoqueMinimo(5);
+
+    AlterarInsumosRequest request = new AlterarInsumosRequest(
+        "Óleo novo nome",
+        BigDecimal.valueOf(30),
+        2,
+        5,
+        "L",
+        true
+    );
+
+    when(repository.findByIdAndAtivoTrue("1"))
+        .thenReturn(Optional.of(entity));
+
+    service.atualizar("1", request);
+
+    verify(notificadorEstoqueBaixo, times(1)).notificar(any(AlertaEstoqueBaixo.class));
   }
 
   @Test

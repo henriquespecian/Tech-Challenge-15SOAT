@@ -79,7 +79,6 @@ public class InsumosService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
 
     int estoqueAnterior = entity.getEstoqueAtual();
-    int estoqueMinimoAnterior = entity.getEstoqueMinimo();
 
     var insumos = Insumos.criar(
         request.getNome(),
@@ -97,9 +96,7 @@ public class InsumosService {
 
     insumosSpringDataRepository.save(entity);
 
-    if (AlertaEstoqueBaixo.deveEmitirAlerta(
-        estoqueAnterior,
-        estoqueMinimoAnterior,
+    if (AlertaEstoqueBaixo.deveNotificarAlteracaoInsumo(
         entity.getEstoqueAtual(),
         entity.getEstoqueMinimo())) {
       notificadorEstoqueBaixo.notificar(new AlertaEstoqueBaixo(

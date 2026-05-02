@@ -255,6 +255,9 @@ public class OrdemServicoService {
             entity.setOrcamentoObservacoes(orc.getObservacoes());
             entity.setOrcamentoRespondidoEm(orc.getRespondidoEm());
             List<ItemOrcamento> domainItens = orc.getItens();
+            // Preserva insumo_id ao regravar só status do orçamento (enviar, aprovar, finalizar…).
+            // Sem isso, itensComOrigem=null zera o vínculo e darBaixaInsumos ignora o item na finalização.
+            List<ItemOrcamentoJpaEntity> anteriores = List.copyOf(entity.getItensOrcamento());
             List<ItemOrcamentoJpaEntity> itensEntity = new ArrayList<>();
             for (int idx = 0; idx < domainItens.size(); idx++) {
                 ItemOrcamento di = domainItens.get(idx);
@@ -264,6 +267,8 @@ public class OrdemServicoService {
                 ie.setPrecoUnitario(di.getPrecoUnitario());
                 if (itensComOrigem != null && idx < itensComOrigem.size()) {
                     ie.setInsumoId(itensComOrigem.get(idx).insumoId());
+                } else if (idx < anteriores.size()) {
+                    ie.setInsumoId(anteriores.get(idx).getInsumoId());
                 }
                 itensEntity.add(ie);
             }
