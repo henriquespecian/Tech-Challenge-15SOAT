@@ -5,6 +5,7 @@ import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.AlterarInsumosRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarInsumosRequest;
+import com.mecanica.oficina_api.interfaces.dto.request.ComprarInsumoSimuladoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.InsumosResponse;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -124,5 +125,33 @@ public class InsumosService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
     entity.setAtivo(false);
     insumosSpringDataRepository.save(entity);
+  }
+
+  /**
+   * Simula conclusão de compra/entrega: incrementa o estoque sem integração externa.
+   */
+  public InsumosResponse registrarCompraSimulada(String id, ComprarInsumoSimuladoRequest request) {
+    Integer quantidade = request.getQuantidade();
+    if (quantidade == null || quantidade <= 0) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Quantidade deve ser informada e ser um inteiro positivo");
+    }
+    var entity = insumosSpringDataRepository.findByIdAndAtivoTrue(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+    long novoEstoque = (long) entity.getEstoqueAtual() + quantidade;
+    if (novoEstoque > Integer.MAX_VALUE) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Quantidade excede o limite permitido para o estoque");
+    }
+    entity.setEstoqueAtual((int) novoEstoque);
+    insumosSpringDataRepository.save(entity);
+    return new InsumosResponse(
+        entity.getId(),
+        entity.getNome(),
+        entity.getPrecoUnitario(),
+        entity.getEstoqueAtual(),
+        entity.getEstoqueMinimo(),
+        entity.getUnidade(),
+        entity.getAtivo());
   }
 }

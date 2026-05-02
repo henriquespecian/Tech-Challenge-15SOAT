@@ -1,0 +1,19 @@
+meta {
+  name: 13 - Entregar Veiculo
+  type: http
+  seq: 13
+}
+
+patch {
+  url: {{baseUrl}}/ordem-servico/:id/entregar
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{ordemServicoId}}
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
