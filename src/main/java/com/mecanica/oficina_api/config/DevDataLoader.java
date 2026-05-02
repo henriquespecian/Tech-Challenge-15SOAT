@@ -145,8 +145,9 @@ public class DevDataLoader implements CommandLineRunner {
         insumosRepository.save(insumo("Fluido de Freio DOT 4", new BigDecimal("18.00"),  25, 5,  "litro"));
         insumosRepository.save(insumo("Vela de Ignição",       new BigDecimal("12.00"), 100, 20, "unidade"));
         insumosRepository.save(insumo("Correia Dentada",       new BigDecimal("120.00"), 15, 3,  "unidade"));
+        insumosRepository.save(insumo("Parafuso de Roda",      new BigDecimal("15.00"), 1, 10, "unidade"));
 
-        log.info("[DEV] 7 insumos criados.");
+        log.info("[DEV] 8 insumos criados.");
     }
 
     private void seedServicos() {

@@ -1,0 +1,31 @@
+meta {
+  name: 07 - Listar Insumos
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/insumos
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+script:post-response {
+  const insumos = res.getBody();
+  if (!insumos || insumos.length === 0) return;
+  const NOME_PARAFUSO = "Parafuso de Roda";
+  const parafuso = insumos.find(i => i.nome === NOME_PARAFUSO);
+  const outros = insumos
+    .filter(i => i.nome !== NOME_PARAFUSO)
+    .sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
+  if (parafuso) {
+    bru.setEnvVar("insumoIdParafuso", parafuso.id);
+  }
+  if (outros.length >= 1) {
+    bru.setEnvVar("insumoId2", outros[0].id);
+  }
+}

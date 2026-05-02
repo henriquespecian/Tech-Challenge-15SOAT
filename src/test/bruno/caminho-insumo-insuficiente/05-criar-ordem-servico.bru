@@ -1,0 +1,28 @@
+meta {
+  name: 05 - Criar Ordem de Servico
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/ordem-servico
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "veiculoId": "{{veiculoId}}",
+    "clienteId": "{{clienteId}}"
+  }
+}
+
+script:post-response {
+  const ordemServicoId = res.getBody().id;
+  bru.setEnvVar("ordemServicoId", ordemServicoId);
+}

@@ -1,0 +1,32 @@
+meta {
+  name: 04 - Cadastrar Veiculo
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/veiculo
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "clienteId": "{{clienteId}}",
+    "placa": "BRA2E19",
+    "marca": "Honda",
+    "modelo": "Civic",
+    "ano": 2021,
+    "cor": "Preto"
+  }
+}
+
+script:post-response {
+  const veiculoId = res.getBody().id;
+  bru.setEnvVar("veiculoId", veiculoId);
+}
