@@ -78,6 +78,13 @@ public class OrdemServicoService {
         return toResponse(encontrarOuLancar(id));
     }
 
+    public List<OrdemServicoResponse> listar(OrdemServicoStatus status) {
+        var entities = status != null
+                ? ordemServicoRepository.findByStatus(status.name())
+                : ordemServicoRepository.findAll();
+        return entities.stream().map(this::toResponse).toList();
+    }
+
     public List<OrdemServicoResponse> listarPorVeiculo(String veiculoId) {
         return ordemServicoRepository.findByVeiculoId(veiculoId).stream()
                 .map(this::toResponse)

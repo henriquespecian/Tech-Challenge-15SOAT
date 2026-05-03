@@ -1,0 +1,15 @@
+meta {
+  name: 06c - Listar OSs por Status
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/ordem-servico?status=EM_DIAGNOSTICO
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

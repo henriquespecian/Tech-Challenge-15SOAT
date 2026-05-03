@@ -1,5 +1,6 @@
 package com.mecanica.oficina_api.application.ordemservico;
 
+import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.ItemOrcamentoJpaEntity;
@@ -140,6 +141,32 @@ class OrdemServicoServiceTest {
         assertThatThrownBy(() -> service.buscarPorId("inexistente"))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    // --- listar ---
+
+    @Test
+    void deveListarTodasAsOsSemFiltro() {
+        when(ordemServicoRepository.findAll()).thenReturn(List.of(osEntity));
+
+        List<OrdemServicoResponse> lista = service.listar(null);
+
+        assertThat(lista).hasSize(1);
+        assertThat(lista.get(0).getId()).isEqualTo("os-1");
+        verify(ordemServicoRepository).findAll();
+        verify(ordemServicoRepository, never()).findByStatus(any());
+    }
+
+    @Test
+    void deveListarOsComFiltroDeStatus() {
+        when(ordemServicoRepository.findByStatus("RECEBIDA")).thenReturn(List.of(osEntity));
+
+        List<OrdemServicoResponse> lista = service.listar(OrdemServicoStatus.RECEBIDA);
+
+        assertThat(lista).hasSize(1);
+        assertThat(lista.get(0).getStatus()).isEqualTo("RECEBIDA");
+        verify(ordemServicoRepository).findByStatus("RECEBIDA");
+        verify(ordemServicoRepository, never()).findAll();
     }
 
     // --- listarPorVeiculo ---

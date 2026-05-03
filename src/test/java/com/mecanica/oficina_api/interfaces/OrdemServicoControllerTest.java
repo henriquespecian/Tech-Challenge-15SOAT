@@ -2,6 +2,7 @@ package com.mecanica.oficina_api.interfaces;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
+import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.ItemOrcamentoRequest;
@@ -39,6 +40,27 @@ class OrdemServicoControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
+
+    @Test
+    void deveListarTodasAsOsERetornar200() throws Exception {
+        when(ordemServicoService.listar(null))
+                .thenReturn(List.of(osResponse("os-1", "RECEBIDA", null), osResponse("os-2", "EM_DIAGNOSTICO", null)));
+
+        mockMvc.perform(get("/ordem-servico"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void deveListarOsComFiltroStatusERetornar200() throws Exception {
+        when(ordemServicoService.listar(OrdemServicoStatus.RECEBIDA))
+                .thenReturn(List.of(osResponse("os-1", "RECEBIDA", null)));
+
+        mockMvc.perform(get("/ordem-servico").param("status", "RECEBIDA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].status").value("RECEBIDA"));
     }
 
     @Test

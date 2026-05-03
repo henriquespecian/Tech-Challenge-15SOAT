@@ -10,4 +10,6 @@ public interface OrdemServicoSpringDataRepository extends JpaRepository<OrdemSer
     List<OrdemServicoJpaEntity> findByVeiculoId(String veiculoId);
 
     List<OrdemServicoJpaEntity> findByClienteId(String clienteId);
+
+    List<OrdemServicoJpaEntity> findByStatus(String status);
 }
