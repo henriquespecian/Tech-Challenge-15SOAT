@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("cliente")
 @Tag(name = "Cliente", description = "Gerenciamento de clientes da oficina")
@@ -38,6 +40,15 @@ public class ClienteController {
     })
     public ResponseEntity<ConsultarClienteResponse> cadastrar(@RequestBody CadastrarClienteRequest request) {
         return ResponseEntity.status(201).body(clienteService.cadastrar(request));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
+    @Operation(summary = "Listar todos os clientes",
+        description = "Retorna todos os clientes ativos cadastrados na oficina")
+    @ApiResponse(responseCode = "200", description = "Lista de clientes retornada com sucesso")
+    public ResponseEntity<List<ConsultarClienteResponse>> listar() {
+        return ResponseEntity.ok(clienteService.listar());
     }
 
     @GetMapping("/{documento}")
