@@ -57,6 +57,19 @@ public class InsumosService {
         entity.getAtivo());
   }
 
+  public InsumosResponse buscarPorId(String id) {
+    var entity = insumosSpringDataRepository.findByIdAndAtivoTrue(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+    return new InsumosResponse(
+        entity.getId(),
+        entity.getNome(),
+        entity.getPrecoUnitario(),
+        entity.getEstoqueAtual(),
+        entity.getEstoqueMinimo(),
+        entity.getUnidade(),
+        entity.getAtivo());
+  }
+
   public List<InsumosResponse> listar() {
     var entities = insumosSpringDataRepository.findAllByAtivoTrue();
 

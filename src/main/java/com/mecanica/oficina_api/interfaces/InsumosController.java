@@ -46,6 +46,19 @@ public class InsumosController {
         return ResponseEntity.ok(insumosService.listar());
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
+    @Operation(summary = "Buscar insumo por ID", description = "Retorna os dados de um insumo ativo pelo seu identificador")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Insumo encontrado",
+            content = @Content(schema = @Schema(implementation = InsumosResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Insumo não encontrado ou inativo",
+            content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<InsumosResponse> buscarInsumoPorId(@PathVariable String id) {
+        return ResponseEntity.ok(insumosService.buscarPorId(id));
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Cadastrar insumo", description = "Cadastra um novo insumo ou peça no estoque")

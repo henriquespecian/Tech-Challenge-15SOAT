@@ -84,6 +84,38 @@ public class InsumoServiceTest {
   }
 
   // ===============================
+  // BUSCAR POR ID
+  // ===============================
+
+  @Test
+  void deveBuscarInsumoPorIdComSucesso() {
+    InsumosJpaEntity entity = new InsumosJpaEntity();
+    entity.setId("insumo-uuid-1");
+    entity.setNome("Óleo");
+    entity.setPrecoUnitario(BigDecimal.valueOf(50));
+    entity.setEstoqueAtual(10);
+    entity.setEstoqueMinimo(2);
+    entity.setUnidade("LITRO");
+    entity.setAtivo(true);
+
+    when(repository.findByIdAndAtivoTrue("insumo-uuid-1")).thenReturn(Optional.of(entity));
+
+    var resultado = service.buscarPorId("insumo-uuid-1");
+
+    assertEquals("insumo-uuid-1", resultado.getId());
+    assertEquals("Óleo", resultado.getNome());
+  }
+
+  @Test
+  void deveLancarErroQuandoInsumoNaoEncontradoParaBuscar() {
+    when(repository.findByIdAndAtivoTrue("inexistente")).thenReturn(Optional.empty());
+
+    assertThrows(ResponseStatusException.class, () ->
+        service.buscarPorId("inexistente")
+    );
+  }
+
+  // ===============================
   // LISTAR
   // ===============================
 
@@ -113,6 +145,8 @@ public class InsumoServiceTest {
   void deveAtualizarInsumoComSucesso() {
     InsumosJpaEntity entity = new InsumosJpaEntity();
     entity.setAtivo(true);
+    entity.setEstoqueAtual(10);
+    entity.setEstoqueMinimo(1);
 
     AlterarInsumosRequest request = new AlterarInsumosRequest(
         "Filtro",
@@ -225,11 +259,13 @@ public class InsumoServiceTest {
   }
 
   @Test
-  void naoDeveFazerNadaQuandoInsumoNaoExistir() {
+  void deveLancarErroQuandoInsumoNaoEncontradoParaDeletar() {
     when(repository.findById("1"))
         .thenReturn(Optional.empty());
 
-    service.deletar("1");
+    assertThrows(ResponseStatusException.class, () ->
+        service.deletar("1")
+    );
 
     verify(repository, never()).save(any());
   }

@@ -1,0 +1,15 @@
+meta {
+  name: Buscar insumo por ID
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/insumos/{{insumoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
