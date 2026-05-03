@@ -36,11 +36,18 @@ public class Veiculo {
         this.ano = ano;
     }
 
+    private static final java.util.regex.Pattern FORMATO_PLACA =
+            java.util.regex.Pattern.compile("^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$");
+
     private void setPlaca(String placa) {
         if (placa == null || placa.trim().isEmpty()) {
             throw new IllegalArgumentException("Placa é obrigatória");
         }
-        this.placa = placa.toUpperCase().trim();
+        String normalizada = placa.toUpperCase().trim().replace("-", "");
+        if (!FORMATO_PLACA.matcher(normalizada).matches()) {
+            throw new IllegalArgumentException("Formato de placa inválido");
+        }
+        this.placa = normalizada;
     }
 
     public String getId() { return id; }
