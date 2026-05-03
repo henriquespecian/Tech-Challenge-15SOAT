@@ -132,6 +132,25 @@ src/test/java/com/mecanica/oficina_api/
     └── VeiculoControllerTest.java # HTTP (status codes, JSON) com MockMvc
 ```
 
+## Relatório de vulnerabilidade
+
+
+### Análise de qualidade, segurança, confiabilidade e manutenibilidade
+
+```
+docker run -d --name sonarqube -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true -p 9000:9000 sonarqube:latest
+```
+
+Seguir o passo a passo disponível em:
+
+https://docs.sonarsource.com/sonarqube-community-build/try-out-sonarqube
+
+### Relatório de cobertura de testes
+
+```
+mvn clean test jacoco:report
+```
+
 
 ## Licença
 

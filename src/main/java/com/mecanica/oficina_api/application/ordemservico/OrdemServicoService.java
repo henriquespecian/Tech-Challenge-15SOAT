@@ -44,19 +44,22 @@ public class OrdemServicoService {
     private final InsumosSpringDataRepository insumosRepository;
     private final ServicoSpringDataRepository servicoRepository;
     private final NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+    private final NotificadorCliente notificadorCliente;
 
     public OrdemServicoService(OrdemServicoSpringDataRepository ordemServicoRepository,
             VeiculoSpringDataRepository veiculoRepository,
             ClienteSpringDataRepository clienteRepository,
             InsumosSpringDataRepository insumosRepository,
             ServicoSpringDataRepository servicoRepository,
-            NotificadorEstoqueBaixo notificadorEstoqueBaixo) {
+            NotificadorEstoqueBaixo notificadorEstoqueBaixo,
+            NotificadorCliente notificadorCliente) {
         this.ordemServicoRepository = ordemServicoRepository;
         this.veiculoRepository = veiculoRepository;
         this.clienteRepository = clienteRepository;
         this.insumosRepository = insumosRepository;
         this.servicoRepository = servicoRepository;
         this.notificadorEstoqueBaixo = notificadorEstoqueBaixo;
+        this.notificadorCliente = notificadorCliente;
     }
 
     public OrdemServicoResponse criar(CriarOrdemServicoRequest request) {
@@ -152,7 +155,16 @@ public class OrdemServicoService {
     }
 
     public OrdemServicoResponse enviarOrcamento(String id) {
-        return executarTransicao(id, OrdemServico::enviarOrcamento);
+        OrdemServicoJpaEntity entity = encontrarOuLancar(id);
+        OrdemServico os = toDomain(entity);
+        try {
+            os.enviarOrcamento();
+        } catch (IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        }
+        OrdemServicoJpaEntity salva = salvarOrcamento(entity, os);
+        notificadorCliente.notificar(NotificacaoCliente.envioOrcamento(salva));
+        return toResponse(salva);
     }
 
     public OrdemServicoResponse aguardarOrcamento(String id) {
@@ -181,7 +193,9 @@ public class OrdemServicoService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
         darBaixaInsumos(entity);
-        return toResponse(salvarOrcamento(entity, os));
+        OrdemServicoJpaEntity salva = salvarOrcamento(entity, os);
+        notificadorCliente.notificar(NotificacaoCliente.finalizacao(salva));
+        return toResponse(salva);
     }
 
     public OrdemServicoResponse entregar(String id) {

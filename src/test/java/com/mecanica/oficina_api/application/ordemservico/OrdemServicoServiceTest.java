@@ -51,6 +51,7 @@ class OrdemServicoServiceTest {
     @Mock private InsumosSpringDataRepository insumosRepository;
     @Mock private ServicoSpringDataRepository servicoRepository;
     @Mock private NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+    @Mock private NotificadorCliente notificadorCliente;
     @InjectMocks private OrdemServicoService service;
 
     private VeiculoJpaEntity veiculo;
@@ -240,6 +241,11 @@ class OrdemServicoServiceTest {
         OrdemServicoResponse resp = service.enviarOrcamento("os-1");
 
         assertThat(resp.getOrcamento().getStatus()).isEqualTo("ENVIADO");
+        verify(notificadorCliente).notificar(argThat(n ->
+                n.tipo() == TipoNotificacaoCliente.ENVIO_ORCAMENTO
+                        && "os-1".equals(n.ordemServicoId())
+                        && "cliente-1".equals(n.clienteId())
+                        && "veiculo-1".equals(n.veiculoId())));
     }
 
     @Test
@@ -252,6 +258,8 @@ class OrdemServicoServiceTest {
         assertThatThrownBy(() -> service.enviarOrcamento("os-1"))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+
+        verify(notificadorCliente, never()).notificar(any());
     }
 
     // --- aprovarOrcamento ---
@@ -322,6 +330,11 @@ class OrdemServicoServiceTest {
         service.finalizar("os-1");
 
         verify(insumosRepository).save(argThat(i -> i.getEstoqueAtual() == 7));
+        verify(notificadorCliente).notificar(argThat(n ->
+                n.tipo() == TipoNotificacaoCliente.FINALIZACAO_OS
+                        && "os-1".equals(n.ordemServicoId())
+                        && "cliente-1".equals(n.clienteId())
+                        && "veiculo-1".equals(n.veiculoId())));
     }
 
     // --- entregar ---
