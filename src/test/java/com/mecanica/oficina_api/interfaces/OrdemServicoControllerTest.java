@@ -135,12 +135,23 @@ class OrdemServicoControllerTest {
     void deveAprovarOrcamentoERetornar200() throws Exception {
         OrcamentoResponse orc = new OrcamentoResponse("APROVADO", List.of(), BigDecimal.ZERO, null, null);
         when(ordemServicoService.aprovarOrcamento("os-1"))
-                .thenReturn(osResponse("os-1", "EM_EXECUCAO", orc));
+                .thenReturn(osResponse("os-1", "AGUARDANDO_APROVACAO", orc));
 
         mockMvc.perform(patch("/ordem-servico/os-1/orcamento/aprovar"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"))
+                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"))
                 .andExpect(jsonPath("$.orcamento.status").value("APROVADO"));
+    }
+
+    @Test
+    void deveIniciarExecucaoERetornar200() throws Exception {
+        OrcamentoResponse orc = new OrcamentoResponse("APROVADO", List.of(), BigDecimal.ZERO, null, null);
+        when(ordemServicoService.iniciarExecucao("os-1"))
+                .thenReturn(osResponse("os-1", "EM_EXECUCAO", orc));
+
+        mockMvc.perform(patch("/ordem-servico/os-1/iniciar-execucao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"));
     }
 
     @Test

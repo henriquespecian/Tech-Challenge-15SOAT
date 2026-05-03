@@ -91,7 +91,7 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(comToken(get("/ordem-servico/" + osId)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("EM_TRIAGEM"))
+                .andExpect(jsonPath("$.status").value("RECEBIDA"))
                 .andExpect(jsonPath("$.orcamento").doesNotExist());
 
         mockMvc.perform(comToken(post("/ordem-servico/" + osId + "/orcamento")
@@ -107,12 +107,20 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/orcamento/aprovar")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("FINALIZADO"))
+                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"))
                 .andExpect(jsonPath("$.orcamento.status").value("APROVADO"));
 
-        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/veiculo/retirar")))
+        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/iniciar-execucao")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("VEICULO_RETIRADO"));
+                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"));
+
+        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/finalizar")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("FINALIZADA"));
+
+        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/entregar")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ENTREGUE"));
     }
 
     @Test
@@ -131,9 +139,9 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/orcamento/enviar")))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/orcamento/negociar")))
+        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/orcamento/aguardar")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.orcamento.status").value("EM_NEGOCIACAO"));
+                .andExpect(jsonPath("$.orcamento.status").value("AGUARDANDO"));
 
         mockMvc.perform(comToken(put("/ordem-servico/" + osId + "/orcamento")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -146,7 +154,12 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/orcamento/aprovar")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("FINALIZADO"));
+                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"))
+                .andExpect(jsonPath("$.orcamento.status").value("APROVADO"));
+
+        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/iniciar-execucao")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"));
     }
 
     @Test
@@ -177,7 +190,7 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
         String veiculoId = cadastrarVeiculo(c.getId());
         String osId = criarOs(veiculoId, c.getId());
 
-        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/veiculo/retirar")))
+        mockMvc.perform(comToken(patch("/ordem-servico/" + osId + "/entregar")))
                 .andExpect(status().isConflict());
     }
 

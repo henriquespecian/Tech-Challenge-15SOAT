@@ -131,6 +131,10 @@ public class OrdemServicoService {
         return executarTransicao(id, OrdemServico::aprovarOrcamento);
     }
 
+    public OrdemServicoResponse iniciarExecucao(String id) {
+        return executarTransicao(id, OrdemServico::iniciarExecucao);
+    }
+
     public OrdemServicoResponse negarOrcamento(String id) {
         return executarTransicao(id, OrdemServico::negarOrcamento);
     }

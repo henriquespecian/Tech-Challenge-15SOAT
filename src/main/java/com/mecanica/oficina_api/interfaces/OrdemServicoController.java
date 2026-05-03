@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("ordem-servico")
-@Tag(name = "Ordem de Serviço", description = "Gerenciamento de ordens de serviço. Fluxo: RECEBIDA → EM_DIAGNOSTICO → (orçamento gerado) → AGUARDANDO_APROVACAO → EM_EXECUCAO → FINALIZADA → ENTREGUE")
+@Tag(name = "Ordem de Serviço", description = "Gerenciamento de ordens de serviço. Fluxo: RECEBIDA → EM_DIAGNOSTICO → (orçamento gerado) → AGUARDANDO_APROVACAO → (aprovar orçamento) → AGUARDANDO_APROVACAO(orc APROVADO) → (iniciar execução) → EM_EXECUCAO → FINALIZADA → ENTREGUE")
 @SecurityRequirement(name = "bearerAuth")
 public class OrdemServicoController {
 
@@ -177,15 +177,28 @@ public class OrdemServicoController {
 
     @PatchMapping("/{id}/orcamento/aprovar")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Aprovar orçamento", description = "Transição do orçamento: ENVIADO|AGUARDANDO → APROVADO. OS passa a EM_EXECUCAO.")
+    @Operation(summary = "Aprovar orçamento", description = "Transição do orçamento: ENVIADO|AGUARDANDO → APROVADO. OS permanece em AGUARDANDO_APROVACAO até o mecânico iniciar execução.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orçamento aprovado, OS em execução",
+            @ApiResponse(responseCode = "200", description = "Orçamento aprovado",
                     content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
             @ApiResponse(responseCode = "409", description = "Orçamento em estado inválido para aprovação",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> aprovarOrcamento(@PathVariable String id) {
         return ResponseEntity.ok(ordemServicoService.aprovarOrcamento(id));
+    }
+
+    @PatchMapping("/{id}/iniciar-execucao")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    @Operation(summary = "Iniciar execução", description = "Transição: AGUARDANDO_APROVACAO → EM_EXECUCAO. Requer orçamento aprovado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Execução iniciada",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "409", description = "OS não está aguardando aprovação ou orçamento não aprovado",
+                    content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<OrdemServicoResponse> iniciarExecucao(@PathVariable String id) {
+        return ResponseEntity.ok(ordemServicoService.iniciarExecucao(id));
     }
 
     @PatchMapping("/{id}/orcamento/negar")

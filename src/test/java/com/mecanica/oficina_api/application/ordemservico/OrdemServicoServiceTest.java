@@ -238,17 +238,30 @@ class OrdemServicoServiceTest {
     // --- aprovarOrcamento ---
 
     @Test
-    void deveAprovarOrcamentoETransicionarOsParaEmExecucao() {
+    void deveAprovarOrcamentoEManterOsEmAguardandoAprovacao() {
         osEntity.setStatus("AGUARDANDO_APROVACAO");
         osEntity.setOrcamentoStatus("ENVIADO");
         osEntity.setItensOrcamento(itensEntity());
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "EM_EXECUCAO"));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "AGUARDANDO_APROVACAO"));
 
         OrdemServicoResponse resp = service.aprovarOrcamento("os-1");
 
-        assertThat(resp.getStatus()).isEqualTo("EM_EXECUCAO");
+        assertThat(resp.getStatus()).isEqualTo("AGUARDANDO_APROVACAO");
         assertThat(resp.getOrcamento().getStatus()).isEqualTo("APROVADO");
+    }
+
+    @Test
+    void deveIniciarExecucaoComSucesso() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
+        osEntity.setOrcamentoStatus("APROVADO");
+        osEntity.setItensOrcamento(itensEntity());
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "EM_EXECUCAO"));
+
+        OrdemServicoResponse resp = service.iniciarExecucao("os-1");
+
+        assertThat(resp.getStatus()).isEqualTo("EM_EXECUCAO");
     }
 
     @Test

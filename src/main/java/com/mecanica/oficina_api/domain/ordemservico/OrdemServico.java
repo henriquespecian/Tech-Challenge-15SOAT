@@ -72,11 +72,19 @@ public class OrdemServico {
         this.orcamento = orcamento.aguardar();
     }
 
-    // Cliente aprova → OS vai a EM_EXECUCAO
+    // Cliente aprova → orçamento APROVADO, OS permanece em AGUARDANDO_APROVACAO
     public void aprovarOrcamento() {
         if (orcamento == null)
             throw new IllegalStateException("OS não possui orçamento");
         this.orcamento = orcamento.aprovar();
+    }
+
+    // Mecânico inicia execução → OS vai a EM_EXECUCAO
+    public void iniciarExecucao() {
+        if (orcamento == null || orcamento.getStatus() != OrcamentoStatus.APROVADO)
+            throw new IllegalStateException("Orçamento não aprovado");
+        if (status != OrdemServicoStatus.AGUARDANDO_APROVACAO)
+            throw new IllegalStateException("OS não está aguardando aprovação");
         this.status = OrdemServicoStatus.EM_EXECUCAO;
     }
 
