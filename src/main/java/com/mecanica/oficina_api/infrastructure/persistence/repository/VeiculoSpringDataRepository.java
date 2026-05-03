@@ -14,4 +14,5 @@ public interface VeiculoSpringDataRepository extends JpaRepository<VeiculoJpaEnt
     List<VeiculoJpaEntity> findByCliente_IdAndAtivoTrue(String clienteId);
     boolean existsByIdAndAtivoTrue(String id);
     Optional<VeiculoJpaEntity> findByIdAndAtivoTrue(String id);
+    Optional<VeiculoJpaEntity> findByPlacaIgnoreCaseAndAtivoTrue(String placa);
 }

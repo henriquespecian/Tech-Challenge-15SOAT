@@ -40,6 +40,51 @@ class VeiculoTest {
     }
 
     @Test
+    void deveAceitarPlacaPadraoAntigoSemHifen() {
+        Veiculo veiculo = Veiculo.criar("cliente-1", "ABC1234", "Ford", "Ka", 2019, "Vermelho");
+        assertThat(veiculo.getPlaca()).isEqualTo("ABC1234");
+    }
+
+    @Test
+    void deveAceitarPlacaPadraoAntigoComHifenENormalizar() {
+        Veiculo veiculo = Veiculo.criar("cliente-1", "ABC-1234", "Ford", "Ka", 2019, "Vermelho");
+        assertThat(veiculo.getPlaca()).isEqualTo("ABC1234");
+    }
+
+    @Test
+    void deveAceitarPlacaMercosul() {
+        Veiculo veiculo = Veiculo.criar("cliente-1", "ABC1D23", "Ford", "Ka", 2019, "Vermelho");
+        assertThat(veiculo.getPlaca()).isEqualTo("ABC1D23");
+    }
+
+    @Test
+    void deveAceitarPlacaMinusculaENormalizar() {
+        Veiculo veiculo = Veiculo.criar("cliente-1", "abc1d23", "Ford", "Ka", 2019, "Vermelho");
+        assertThat(veiculo.getPlaca()).isEqualTo("ABC1D23");
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoFormatoPlacaInvalido() {
+        assertThatThrownBy(() -> Veiculo.criar("cliente-1", "ABCD123", "Ford", "Ka", 2019, "Vermelho"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Formato de placa inválido");
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoPlacaCurtaDemais() {
+        assertThatThrownBy(() -> Veiculo.criar("cliente-1", "AB1234", "Ford", "Ka", 2019, "Vermelho"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Formato de placa inválido");
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoPlacaComecaComNumero() {
+        assertThatThrownBy(() -> Veiculo.criar("cliente-1", "123ABCD", "Ford", "Ka", 2019, "Vermelho"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Formato de placa inválido");
+    }
+
+    @Test
     void deveLancarExcecaoQuandoClienteIdForNulo() {
         assertThatThrownBy(() -> Veiculo.criar(null, "ABC1234", "Ford", "Ka", 2019, "Vermelho"))
                 .isInstanceOf(NullPointerException.class)

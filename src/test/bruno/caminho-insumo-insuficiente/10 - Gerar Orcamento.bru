@@ -1,0 +1,42 @@
+meta {
+  name: 10 - Gerar Orcamento
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento
+  body: json
+  auth: none
+}
+
+params:path {
+  id: {{ordemServicoId}}
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "insumos": [
+      {
+        "insumoId": "{{insumoIdParafusoConfirmado}}",
+        "quantidade": 2
+      },
+      {
+        "insumoId": "{{insumoId2}}",
+        "quantidade": 1
+      }
+    ],
+   "servicos": [
+      {
+        "servicoId": "{{serviceid1}}",
+        "quantidade": 1
+      }
+    ],
+    "observacoes": "Troca de óleo preventiva. Veículo com 10.000 km."
+  }
+}

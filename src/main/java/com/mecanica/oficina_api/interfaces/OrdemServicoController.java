@@ -1,6 +1,7 @@
 package com.mecanica.oficina_api.interfaces;
 
 import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
+import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.OrdemServicoResponse;
@@ -28,6 +29,16 @@ public class OrdemServicoController {
 
     public OrdemServicoController(OrdemServicoService ordemServicoService) {
         this.ordemServicoService = ordemServicoService;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
+    @Operation(summary = "Listar todas as ordens de serviço",
+        description = "Retorna todas as OSs. Use o parâmetro `status` para filtrar por situação.")
+    @ApiResponse(responseCode = "200", description = "Lista de OSs")
+    public ResponseEntity<List<OrdemServicoResponse>> listar(
+        @RequestParam(required = false) OrdemServicoStatus status) {
+        return ResponseEntity.ok(ordemServicoService.listar(status));
     }
 
     @PostMapping
@@ -176,6 +187,19 @@ public class OrdemServicoController {
     })
     public ResponseEntity<OrdemServicoResponse> aprovarOrcamento(@PathVariable String id) {
         return ResponseEntity.ok(ordemServicoService.aprovarOrcamento(id));
+    }
+
+    @PatchMapping("/{id}/iniciar-execucao")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    @Operation(summary = "Iniciar execução", description = "Transição: AGUARDANDO_APROVACAO → EM_EXECUCAO. Requer orçamento aprovado.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Execução iniciada",
+            content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+        @ApiResponse(responseCode = "409", description = "OS não está aguardando aprovação ou orçamento não aprovado",
+            content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<OrdemServicoResponse> iniciarExecucao(@PathVariable String id) {
+        return ResponseEntity.ok(ordemServicoService.iniciarExecucao(id));
     }
 
     @PatchMapping("/{id}/orcamento/negar")

@@ -9,7 +9,7 @@ import java.util.Objects;
 public class Cliente {
     private String id;
     private String nome;
-    private Cpf cpf;
+    private Documento documento;
     private Email email;
     private Telefone telefone;
     private final List<String> veiculoIds;
@@ -21,10 +21,10 @@ public class Cliente {
         this.veiculoIds = new ArrayList<>();
     }
 
-    public static Cliente criar(String nome, Cpf cpf, Email email, Telefone telefone) {
+    public static Cliente criar(String nome, Documento documento, Email email, Telefone telefone) {
         Cliente cliente = new Cliente();
         cliente.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
-        cliente.cpf = Objects.requireNonNull(cpf, "CPF é obrigatório");
+        cliente.documento = Objects.requireNonNull(documento, "Documento é obrigatório");
         cliente.email = Objects.requireNonNull(email, "Email é obrigatório");
         cliente.telefone = Objects.requireNonNull(telefone, "Telefone é obrigatório");
         cliente.dataCadastro = LocalDateTime.now();
@@ -39,7 +39,7 @@ public class Cliente {
 
     public String getId() { return id; }
     public String getNome() { return nome; }
-    public Cpf getCpf() { return cpf; }
+    public Documento getDocumento() { return documento; }
     public Email getEmail() { return email; }
     public Telefone getTelefone() { return telefone; }
     public LocalDateTime getDataCadastro() { return dataCadastro; }

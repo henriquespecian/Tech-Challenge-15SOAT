@@ -5,7 +5,7 @@ meta {
 }
 
 put {
-  url: {{baseUrl}}/cliente/:cpf
+  url: {{baseUrl}}/cliente/:documento
   body: json
   auth: none
 }
@@ -16,7 +16,7 @@ headers {
 }
 
 params:path {
-  cpf:
+  documento:
 }
 
 body:json {

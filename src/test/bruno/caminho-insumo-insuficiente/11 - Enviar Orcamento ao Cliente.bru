@@ -1,0 +1,19 @@
+meta {
+  name: 11 - Enviar Orcamento ao Cliente
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento/enviar
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{ordemServicoId}}
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

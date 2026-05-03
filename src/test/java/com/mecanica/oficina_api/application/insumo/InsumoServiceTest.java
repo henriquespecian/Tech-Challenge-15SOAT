@@ -30,6 +30,9 @@ public class InsumoServiceTest {
   @Mock
   private InsumosSpringDataRepository repository;
 
+  @Mock
+  private NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+
   @InjectMocks
   private InsumosService service;
 
@@ -81,6 +84,38 @@ public class InsumoServiceTest {
   }
 
   // ===============================
+  // BUSCAR POR ID
+  // ===============================
+
+  @Test
+  void deveBuscarInsumoPorIdComSucesso() {
+    InsumosJpaEntity entity = new InsumosJpaEntity();
+    entity.setId("insumo-uuid-1");
+    entity.setNome("Óleo");
+    entity.setPrecoUnitario(BigDecimal.valueOf(50));
+    entity.setEstoqueAtual(10);
+    entity.setEstoqueMinimo(2);
+    entity.setUnidade("LITRO");
+    entity.setAtivo(true);
+
+    when(repository.findByIdAndAtivoTrue("insumo-uuid-1")).thenReturn(Optional.of(entity));
+
+    var resultado = service.buscarPorId("insumo-uuid-1");
+
+    assertEquals("insumo-uuid-1", resultado.getId());
+    assertEquals("Óleo", resultado.getNome());
+  }
+
+  @Test
+  void deveLancarErroQuandoInsumoNaoEncontradoParaBuscar() {
+    when(repository.findByIdAndAtivoTrue("inexistente")).thenReturn(Optional.empty());
+
+    assertThrows(ResponseStatusException.class, () ->
+        service.buscarPorId("inexistente")
+    );
+  }
+
+  // ===============================
   // LISTAR
   // ===============================
 
@@ -110,6 +145,8 @@ public class InsumoServiceTest {
   void deveAtualizarInsumoComSucesso() {
     InsumosJpaEntity entity = new InsumosJpaEntity();
     entity.setAtivo(true);
+    entity.setEstoqueAtual(10);
+    entity.setEstoqueMinimo(1);
 
     AlterarInsumosRequest request = new AlterarInsumosRequest(
         "Filtro",
@@ -127,6 +164,59 @@ public class InsumoServiceTest {
 
     verify(repository).save(entity);
     assertEquals("Filtro", entity.getNome());
+    verify(notificadorEstoqueBaixo, never()).notificar(any());
+  }
+
+  @Test
+  void deveNotificarEstoqueBaixoQuandoAposAtualizarEstoqueEstiverCritico() {
+    InsumosJpaEntity entity = new InsumosJpaEntity();
+    entity.setId("ins-1");
+    entity.setNome("Óleo");
+    entity.setAtivo(true);
+    entity.setEstoqueAtual(10);
+    entity.setEstoqueMinimo(5);
+
+    AlterarInsumosRequest request = new AlterarInsumosRequest(
+        "Óleo premium",
+        BigDecimal.valueOf(30),
+        3,
+        5,
+        "L",
+        true
+    );
+
+    when(repository.findByIdAndAtivoTrue("1"))
+        .thenReturn(Optional.of(entity));
+
+    service.atualizar("1", request);
+
+    verify(notificadorEstoqueBaixo, times(1)).notificar(any(AlertaEstoqueBaixo.class));
+  }
+
+  @Test
+  void deveNotificarEstoqueBaixoQuandoSoAlteraNomeMasPermaneceCritico() {
+    InsumosJpaEntity entity = new InsumosJpaEntity();
+    entity.setId("ins-1");
+    entity.setNome("Óleo");
+    entity.setAtivo(true);
+    entity.setEstoqueAtual(2);
+    entity.setEstoqueMinimo(5);
+
+    AlterarInsumosRequest request = new AlterarInsumosRequest(
+        "Óleo novo nome",
+        BigDecimal.valueOf(30),
+        2,
+        5,
+        "L",
+        true
+    );
+
+    when(repository.findByIdAndAtivoTrue("1"))
+        .thenReturn(Optional.of(entity));
+
+    service.atualizar("1", request);
+
+    verify(notificadorEstoqueBaixo, times(1)).notificar(any(AlertaEstoqueBaixo.class));
   }
 
   @Test
@@ -169,11 +259,13 @@ public class InsumoServiceTest {
   }
 
   @Test
-  void naoDeveFazerNadaQuandoInsumoNaoExistir() {
+  void deveLancarErroQuandoInsumoNaoEncontradoParaDeletar() {
     when(repository.findById("1"))
         .thenReturn(Optional.empty());
 
-    service.deletar("1");
+    assertThrows(ResponseStatusException.class, () ->
+        service.deletar("1")
+    );
 
     verify(repository, never()).save(any());
   }

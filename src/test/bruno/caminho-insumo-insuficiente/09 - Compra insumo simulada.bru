@@ -1,0 +1,29 @@
+meta {
+  name: 09 - Compra insumo simulada
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/insumos/{{insumoIdParafuso}}/compra-simulada
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "quantidade": 11
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.id) {
+    bru.setEnvVar("insumoIdParafusoConfirmado", body.id);
+  }
+}

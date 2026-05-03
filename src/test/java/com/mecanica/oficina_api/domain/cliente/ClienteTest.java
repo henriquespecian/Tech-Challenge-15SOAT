@@ -24,7 +24,7 @@ public class ClienteTest {
     Cliente cliente = Cliente.criar("Cliente Novo", cpf, email, telefone);
 
     assertThat(cliente.getNome()).isEqualTo("Cliente Novo");
-    assertThat(cliente.getCpf()).isEqualTo(cpf);
+    assertThat(cliente.getDocumento()).isEqualTo(cpf);
     assertThat(cliente.getTelefone()).isEqualTo(telefone);
   }
 
@@ -53,7 +53,7 @@ public class ClienteTest {
   @Test
   void deveLancarExcecaoQuandoCpfForNulo() {
     assertThatThrownBy(() -> Cliente.criar("Cliente Novo" , null, email, telefone))
-        .isInstanceOf(NullPointerException.class).hasMessage("CPF é obrigatório");
+        .isInstanceOf(NullPointerException.class).hasMessage("Documento é obrigatório");
   }
 
   @Test

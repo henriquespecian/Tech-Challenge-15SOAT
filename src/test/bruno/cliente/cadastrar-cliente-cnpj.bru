@@ -1,0 +1,25 @@
+meta {
+  name: Cadastrar Cliente PJ (CNPJ)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/cliente
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nome": "Empresa Ltda",
+    "documento": "11222333000181",
+    "email": "empresa@email.com",
+    "telefone": "1133334444"
+  }
+}

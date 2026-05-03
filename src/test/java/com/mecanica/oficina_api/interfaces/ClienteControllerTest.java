@@ -16,6 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -36,6 +38,9 @@ class ClienteControllerTest {
     @InjectMocks
     private ClienteController clienteController;
 
+    // CPF matematicamente válido
+    private static final String CPF_VALIDO = "52998224725";
+
     private ConsultarClienteResponse clienteResponse;
 
     @BeforeEach
@@ -43,7 +48,7 @@ class ClienteControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(clienteController).build();
 
         clienteResponse = new ConsultarClienteResponse(
-            "cliente-1", "João Silva", "12345678900", "joao@email.com", "11999999999"
+            "cliente-1", "João Silva", CPF_VALIDO, "joao@email.com", "11999999999"
         );
     }
 
@@ -51,7 +56,7 @@ class ClienteControllerTest {
     void deveCadastrarClienteERetornar201() throws Exception {
         CadastrarClienteRequest request = new CadastrarClienteRequest();
         request.setNome("João Silva");
-        request.setCpf("12345678900");
+        request.setDocumento(CPF_VALIDO);
         request.setEmail("joao@email.com");
         request.setTelefone("11999999999");
 
@@ -63,30 +68,43 @@ class ClienteControllerTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value("cliente-1"))
             .andExpect(jsonPath("$.nome").value("João Silva"))
-            .andExpect(jsonPath("$.cpf").value("12345678900"))
+            .andExpect(jsonPath("$.documento").value(CPF_VALIDO))
             .andExpect(jsonPath("$.email").value("joao@email.com"))
             .andExpect(jsonPath("$.telefone").value("11999999999"));
     }
 
     @Test
     void deveConsultarClienteERetornar200ComId() throws Exception {
-        when(clienteService.consultar("12345678900")).thenReturn(clienteResponse);
+        when(clienteService.consultar(CPF_VALIDO)).thenReturn(clienteResponse);
 
-        mockMvc.perform(get("/cliente/12345678900"))
+        mockMvc.perform(get("/cliente/" + CPF_VALIDO))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("cliente-1"))
             .andExpect(jsonPath("$.nome").value("João Silva"))
-            .andExpect(jsonPath("$.cpf").value("12345678900"))
+            .andExpect(jsonPath("$.documento").value(CPF_VALIDO))
             .andExpect(jsonPath("$.email").value("joao@email.com"))
             .andExpect(jsonPath("$.telefone").value("11999999999"));
     }
 
     @Test
-    void deveRetornar404QuandoClienteNaoEncontrado() throws Exception {
-        when(clienteService.consultar("00000000000"))
-            .thenThrow(new ResponseStatusException(NOT_FOUND, "CPF inexistente"));
+    void deveListarClientesERetornar200() throws Exception {
+        when(clienteService.listar()).thenReturn(List.of(clienteResponse));
 
-        mockMvc.perform(get("/cliente/00000000000"))
+        mockMvc.perform(get("/cliente"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value("cliente-1"))
+            .andExpect(jsonPath("$[0].nome").value("João Silva"))
+            .andExpect(jsonPath("$[0].documento").value(CPF_VALIDO))
+            .andExpect(jsonPath("$[0].email").value("joao@email.com"))
+            .andExpect(jsonPath("$[0].telefone").value("11999999999"));
+    }
+
+    @Test
+    void deveRetornar404QuandoClienteNaoEncontrado() throws Exception {
+        when(clienteService.consultar("99999999999"))
+            .thenThrow(new ResponseStatusException(NOT_FOUND, "Cliente não encontrado"));
+
+        mockMvc.perform(get("/cliente/99999999999"))
             .andExpect(status().isNotFound());
     }
 
@@ -97,7 +115,7 @@ class ClienteControllerTest {
         request.setEmail("joao.novo@email.com");
         request.setTelefone("11888888888");
 
-        mockMvc.perform(put("/cliente/12345678900")
+        mockMvc.perform(put("/cliente/" + CPF_VALIDO)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNoContent());
@@ -110,10 +128,10 @@ class ClienteControllerTest {
         request.setEmail("joao.novo@email.com");
         request.setTelefone("11888888888");
 
-        doThrow(new ResponseStatusException(NOT_FOUND, "CPF inexistente"))
-            .when(clienteService).alterar(eq("00000000000"), any(AlterarClienteRequest.class));
+        doThrow(new ResponseStatusException(NOT_FOUND, "Cliente não encontrado"))
+            .when(clienteService).alterar(eq("99999999999"), any(AlterarClienteRequest.class));
 
-        mockMvc.perform(put("/cliente/00000000000")
+        mockMvc.perform(put("/cliente/99999999999")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound());
@@ -121,7 +139,7 @@ class ClienteControllerTest {
 
     @Test
     void deveDeletarClienteERetornar204() throws Exception {
-        mockMvc.perform(delete("/cliente/12345678900"))
+        mockMvc.perform(delete("/cliente/" + CPF_VALIDO))
             .andExpect(status().isNoContent());
     }
 }

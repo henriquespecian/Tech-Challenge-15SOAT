@@ -3,6 +3,7 @@ package com.mecanica.oficina_api.interfaces;
 import com.mecanica.oficina_api.application.insumo.InsumosService;
 import com.mecanica.oficina_api.interfaces.dto.request.AlterarInsumosRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarInsumosRequest;
+import com.mecanica.oficina_api.interfaces.dto.request.ComprarInsumoSimuladoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.InsumosResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -45,6 +46,19 @@ public class InsumosController {
         return ResponseEntity.ok(insumosService.listar());
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
+    @Operation(summary = "Buscar insumo por ID", description = "Retorna os dados de um insumo ativo pelo seu identificador")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Insumo encontrado",
+            content = @Content(schema = @Schema(implementation = InsumosResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Insumo não encontrado ou inativo",
+            content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<InsumosResponse> buscarInsumoPorId(@PathVariable String id) {
+        return ResponseEntity.ok(insumosService.buscarPorId(id));
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
     @Operation(summary = "Cadastrar insumo", description = "Cadastra um novo insumo ou peça no estoque")
@@ -73,6 +87,24 @@ public class InsumosController {
     public ResponseEntity<Void> alterarInsumo(@PathVariable String id, @RequestBody AlterarInsumosRequest request) {
         insumosService.atualizar(id, request);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PostMapping("/{id}/compra-simulada")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
+    @Operation(summary = "Simular compra de insumo",
+        description = "Registra uma entrega simulada: incrementa o estoque como se a compra tivesse sido concluída (sem fornecedor real)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Estoque atualizado após simulação de compra",
+            content = @Content(schema = @Schema(implementation = InsumosResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Insumo ativo não encontrado",
+            content = @Content(schema = @Schema())),
+        @ApiResponse(responseCode = "400", description = "Quantidade inválida",
+            content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<InsumosResponse> compraSimulada(
+            @PathVariable String id,
+            @RequestBody ComprarInsumoSimuladoRequest request) {
+        return ResponseEntity.ok(insumosService.registrarCompraSimulada(id, request));
     }
 
     @PatchMapping("/{id}/ativar")

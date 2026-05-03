@@ -2,6 +2,7 @@ package com.mecanica.oficina_api.interfaces;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
+import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.ItemOrcamentoRequest;
@@ -46,6 +47,27 @@ class OrdemServicoControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
+
+    @Test
+    void deveListarTodasAsOsERetornar200() throws Exception {
+        when(ordemServicoService.listar(null))
+                .thenReturn(List.of(osResponse("os-1", "RECEBIDA", null), osResponse("os-2", "EM_DIAGNOSTICO", null)));
+
+        mockMvc.perform(get("/ordem-servico"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void deveListarOsComFiltroStatusERetornar200() throws Exception {
+        when(ordemServicoService.listar(OrdemServicoStatus.RECEBIDA))
+                .thenReturn(List.of(osResponse("os-1", "RECEBIDA", null)));
+
+        mockMvc.perform(get("/ordem-servico").param("status", "RECEBIDA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].status").value("RECEBIDA"));
     }
 
     @Test
@@ -106,6 +128,8 @@ class OrdemServicoControllerTest {
         when(ordemServicoService.gerarOrcamento(eq("os-1"), any()))
                 .thenReturn(osResponse("os-1", "EM_DIAGNOSTICO", orc));
 
+        GerarOrcamentoRequest req = gerarOrcamentoRequest();
+
         mockMvc.perform(post("/ordem-servico/os-1/orcamento")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(gerarOrcamentoRequest())))
@@ -160,12 +184,23 @@ class OrdemServicoControllerTest {
     void deveAprovarOrcamentoERetornar200() throws Exception {
         OrcamentoResponse orc = new OrcamentoResponse("APROVADO", List.of(), BigDecimal.ZERO, null, null);
         when(ordemServicoService.aprovarOrcamento("os-1"))
-                .thenReturn(osResponse("os-1", "EM_EXECUCAO", orc));
+                .thenReturn(osResponse("os-1", "AGUARDANDO_APROVACAO", orc));
 
         mockMvc.perform(patch("/ordem-servico/os-1/orcamento/aprovar"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"))
+                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"))
                 .andExpect(jsonPath("$.orcamento.status").value("APROVADO"));
+    }
+
+    @Test
+    void deveIniciarExecucaoERetornar200() throws Exception {
+        OrcamentoResponse orc = new OrcamentoResponse("APROVADO", List.of(), BigDecimal.ZERO, null, null);
+        when(ordemServicoService.iniciarExecucao("os-1"))
+                .thenReturn(osResponse("os-1", "EM_EXECUCAO", orc));
+
+        mockMvc.perform(patch("/ordem-servico/os-1/iniciar-execucao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"));
     }
 
     @Test

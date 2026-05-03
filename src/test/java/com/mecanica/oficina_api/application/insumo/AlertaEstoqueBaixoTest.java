@@ -25,4 +25,19 @@ class AlertaEstoqueBaixoTest {
     void naoDeveEmitirQuandoPermaneceAcimaDoNovoMinimo() {
         assertThat(AlertaEstoqueBaixo.deveEmitirAlerta(30, 5, 30, 10)).isFalse();
     }
+
+    @Test
+    void deveNotificarAlteracaoInsumoQuandoEstoqueIgualAoMinimo() {
+        assertThat(AlertaEstoqueBaixo.deveNotificarAlteracaoInsumo(5, 5)).isTrue();
+    }
+
+    @Test
+    void deveNotificarAlteracaoInsumoQuandoEstoqueAbaixoDoMinimo() {
+        assertThat(AlertaEstoqueBaixo.deveNotificarAlteracaoInsumo(2, 10)).isTrue();
+    }
+
+    @Test
+    void naoDeveNotificarAlteracaoInsumoQuandoEstoqueAcimaDoMinimo() {
+        assertThat(AlertaEstoqueBaixo.deveNotificarAlteracaoInsumo(10, 5)).isFalse();
+    }
 }

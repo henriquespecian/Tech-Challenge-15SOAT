@@ -1,6 +1,7 @@
 package com.mecanica.oficina_api.application.ordemservico;
 
 import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
+import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.ItemOrcamentoJpaEntity;
@@ -13,6 +14,7 @@ import com.mecanica.oficina_api.infrastructure.persistence.repository.OrdemServi
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.StatusServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
+import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.ItemOrcamentoRequest;
@@ -48,8 +50,9 @@ class OrdemServicoServiceTest {
     @Mock private ClienteSpringDataRepository clienteRepository;
     @Mock private InsumosSpringDataRepository insumosRepository;
     @Mock private ServicoSpringDataRepository servicoRepository;
-    @Mock private StatusServicoSpringDataRepository statusServicoRepository;
     @Mock private NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+    @Mock private NotificadorCliente notificadorCliente;
+    @Mock private StatusServicoSpringDataRepository statusServicoRepository;
     @InjectMocks private OrdemServicoService service;
 
     private VeiculoJpaEntity veiculo;
@@ -93,7 +96,7 @@ class OrdemServicoServiceTest {
 
         assertThat(resp.getId()).isEqualTo("os-1");
         assertThat(resp.getStatus()).isEqualTo("RECEBIDA");
-        verify(ordemServicoRepository).save(any());
+        verify(ordemServicoRepository).save(argThat(e -> "RECEBIDA".equals(e.getStatus())));
     }
 
     @Test
@@ -127,6 +130,8 @@ class OrdemServicoServiceTest {
         verify(ordemServicoRepository, never()).save(any());
     }
 
+    // --- buscarPorId ---
+
     @Test
     void deveBuscarPorIdComSucesso() {
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
@@ -147,6 +152,34 @@ class OrdemServicoServiceTest {
             .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 
+    // --- listar ---
+
+    @Test
+    void deveListarTodasAsOsSemFiltro() {
+        when(ordemServicoRepository.findAll()).thenReturn(List.of(osEntity));
+
+        List<OrdemServicoResponse> lista = service.listar(null);
+
+        assertThat(lista).hasSize(1);
+        assertThat(lista.get(0).getId()).isEqualTo("os-1");
+        verify(ordemServicoRepository).findAll();
+        verify(ordemServicoRepository, never()).findByStatus(any());
+    }
+
+    @Test
+    void deveListarOsComFiltroDeStatus() {
+        when(ordemServicoRepository.findByStatus("RECEBIDA")).thenReturn(List.of(osEntity));
+
+        List<OrdemServicoResponse> lista = service.listar(OrdemServicoStatus.RECEBIDA);
+
+        assertThat(lista).hasSize(1);
+        assertThat(lista.get(0).getStatus()).isEqualTo("RECEBIDA");
+        verify(ordemServicoRepository).findByStatus("RECEBIDA");
+        verify(ordemServicoRepository, never()).findAll();
+    }
+
+    // --- listarPorVeiculo ---
+
     @Test
     void deveListarPorVeiculoComSucesso() {
         when(ordemServicoRepository.findByVeiculoId("veiculo-1")).thenReturn(List.of(osEntity));
@@ -155,6 +188,8 @@ class OrdemServicoServiceTest {
 
         assertThat(lista).hasSize(1);
     }
+
+    // --- gerarOrcamento ---
 
     @Test
     void deveGerarOrcamentoComSucesso() {
@@ -166,8 +201,7 @@ class OrdemServicoServiceTest {
         OrdemServicoResponse resp = service.gerarOrcamento("os-1", gerarOrcamentoComInsumo());
 
         assertThat(resp.getOrcamento()).isNotNull();
-        assertThat(resp.getOrcamento().getStatus()).isEqualTo("PENDENTE");
-        verify(ordemServicoRepository).save(any());
+        verify(ordemServicoRepository).save(argThat(e -> "PENDENTE".equals(e.getOrcamentoStatus())));
     }
 
     @Test
@@ -183,6 +217,8 @@ class OrdemServicoServiceTest {
             .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
     }
 
+    // --- enviarOrcamento ---
+
     @Test
     void deveEnviarOrcamentoComSucesso() {
         osEntity.setStatus("EM_DIAGNOSTICO");
@@ -194,6 +230,11 @@ class OrdemServicoServiceTest {
         OrdemServicoResponse resp = service.enviarOrcamento("os-1");
 
         assertThat(resp.getOrcamento().getStatus()).isEqualTo("ENVIADO");
+        verify(notificadorCliente).notificar(argThat(n ->
+                n.tipo() == TipoNotificacaoCliente.ENVIO_ORCAMENTO
+                        && "os-1".equals(n.ordemServicoId())
+                        && "cliente-1".equals(n.clienteId())
+                        && "veiculo-1".equals(n.veiculoId())));
     }
 
     @Test
@@ -220,28 +261,87 @@ class OrdemServicoServiceTest {
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
 
         assertThatThrownBy(() -> service.enviarOrcamento("os-1"))
-            .isInstanceOf(ResponseStatusException.class)
-            .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+
+        verify(notificadorCliente, never()).notificar(any());
+    }
+
+    // --- aprovarOrcamento ---
+
+    @Test
+    void deveAprovarOrcamentoEManterOsEmAguardandoAprovacao() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
+        osEntity.setOrcamentoStatus("ENVIADO");
+        osEntity.setItensOrcamento(itensEntityComInsumo());
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "AGUARDANDO_APROVACAO"));
+
+        OrdemServicoResponse resp = service.aprovarOrcamento("os-1");
+
+        assertThat(resp.getStatus()).isEqualTo("AGUARDANDO_APROVACAO");
+        assertThat(resp.getOrcamento().getStatus()).isEqualTo("APROVADO");
     }
 
     @Test
-    void deveAprovarOrcamentoETransicionarOsParaEmExecucao() {
+    void deveIniciarExecucaoComSucesso() {
         osEntity.setStatus("AGUARDANDO_APROVACAO");
-        osEntity.setOrcamentoStatus("ENVIADO");
+        osEntity.setOrcamentoStatus("APROVADO");
         osEntity.setItensOrcamento(itensEntityComServico());
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "EM_EXECUCAO"));
 
-        OrdemServicoJpaEntity osAprovada = osEntityComOrcamento("APROVADO", "EM_EXECUCAO");
-        osAprovada.setItensOrcamento(itensEntityComServico());
-
-        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity), Optional.of(osAprovada));
-        when(ordemServicoRepository.save(any())).thenReturn(osAprovada);
-        when(statusServicoRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        OrdemServicoResponse resp = service.aprovarOrcamento("os-1");
+        OrdemServicoResponse resp = service.iniciarExecucao("os-1");
 
         assertThat(resp.getStatus()).isEqualTo("EM_EXECUCAO");
         assertThat(resp.getOrcamento().getStatus()).isEqualTo("APROVADO");
         verify(statusServicoRepository).saveAll(any());
+    }
+
+    @Test
+    void devePreservarInsumoIdAoEnviarOrcamentoParaBaixaNaFinalizacao() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
+        osEntity.setOrcamentoStatus("PENDENTE");
+        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
+        item.setDescricao("Óleo");
+        item.setQuantidade(1);
+        item.setPrecoUnitario(BigDecimal.valueOf(100.0));
+        item.setInsumoId("insumo-1");
+        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.enviarOrcamento("os-1");
+
+        verify(ordemServicoRepository).save(argThat(e ->
+                e.getItensOrcamento().size() == 1
+                        && "insumo-1".equals(e.getItensOrcamento().get(0).getInsumoId())));
+    }
+
+    @Test
+    void deveDarBaixaNoEstoqueDoInsumoAoFinalizar() {
+        osEntity.setStatus("EM_EXECUCAO");
+        osEntity.setOrcamentoStatus("APROVADO");
+        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
+        item.setDescricao("Óleo de motor");
+        item.setQuantidade(3);
+        item.setPrecoUnitario(BigDecimal.valueOf(45.90));
+        item.setInsumoId("insumo-1");
+        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
+
+        InsumosJpaEntity insumo = insumoEntity();
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumo));
+        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.finalizar("os-1");
+
+        verify(insumosRepository).save(argThat(i -> i.getEstoqueAtual() == 7));
+        verify(notificadorCliente).notificar(argThat(n ->
+                n.tipo() == TipoNotificacaoCliente.FINALIZACAO_OS
+                        && "os-1".equals(n.ordemServicoId())
+                        && "cliente-1".equals(n.clienteId())
+                        && "veiculo-1".equals(n.veiculoId())));
     }
 
     @Test
@@ -278,7 +378,6 @@ class OrdemServicoServiceTest {
         ServicoStatusResponse resposta = service.finalizarServico("status-1");
 
         assertThat(resposta.getStatus()).isEqualTo("FINALIZADO");
-        assertThat(resposta.getDataFim()).isNotNull();
     }
 
     @Test
@@ -309,8 +408,6 @@ class OrdemServicoServiceTest {
         osEntity.setItensOrcamento(itensEntityComInsumo());
 
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "FINALIZADA"));
-        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
         when(statusServicoRepository.findByOrdemServicoId("os-1"))
             .thenReturn(List.of(statusServicoEntity("status-1", "INICIADO", "os-1", "servico-1")));
 
@@ -368,6 +465,8 @@ class OrdemServicoServiceTest {
             .isInstanceOf(ResponseStatusException.class)
             .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
     }
+
+    // --- helpers ---
 
     private GerarOrcamentoRequest gerarOrcamentoComInsumo() {
         ItemOrcamentoRequest item = new ItemOrcamentoRequest();

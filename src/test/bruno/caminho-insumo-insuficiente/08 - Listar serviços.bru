@@ -1,0 +1,28 @@
+meta {
+  name: 08 - Listar serviços
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/servico
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+script:post-response {
+  const service = res.getBody();
+  if (!service || service.length === 0) return;
+  const sorted = [...service].sort((a, b) =>
+    String(a.nome).localeCompare(String(b.nome), "pt-BR"));
+  if (sorted.length >= 1) {
+    bru.setEnvVar("serviceid1", sorted[0].id);
+  }
+  if (sorted.length >= 2) {
+    bru.setEnvVar("serviceid2", sorted[1].id);
+  }
+}

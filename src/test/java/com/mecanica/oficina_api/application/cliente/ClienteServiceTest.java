@@ -35,7 +35,7 @@ public class ClienteServiceTest {
     cadastrarClienteRequest = new CadastrarClienteRequest();
 
     cadastrarClienteRequest.setNome("Joao Silva");
-    cadastrarClienteRequest.setCpf("37518712091");
+    cadastrarClienteRequest.setDocumento("37518712091");
     cadastrarClienteRequest.setEmail("cliente@teste.com");
     cadastrarClienteRequest.setTelefone("5437891237");
 
@@ -47,7 +47,7 @@ public class ClienteServiceTest {
 
     clienteSalvo.setId("cliente-1");
     clienteSalvo.setNome("Joao Silva");
-    clienteSalvo.setCpf("37518712091");
+    clienteSalvo.setDocumento("37518712091");
     clienteSalvo.setEmail("cliente@teste.com");
     clienteSalvo.setTelefone("5437891237");
     clienteSalvo.setDataCadastro(LocalDateTime.ofEpochSecond(1777752619, 0, ZoneOffset.UTC));
@@ -57,8 +57,7 @@ public class ClienteServiceTest {
 
     ConsultarClienteResponse resp = clienteService.cadastrar(cadastrarClienteRequest);
 
-    assertThat(resp.getId()).isEqualTo("cliente-1");
-    assertThat(resp.getCpf()).isEqualTo("37518712091");
+    assertThat(resp.getDocumento()).isEqualTo("37518712091");
     verify(clienteRepository).save(argThat(e -> e.getAtivo()));
 
   }

@@ -21,7 +21,7 @@ public class ClienteJpaEntity {
 
     private String nome;
     @Column(unique = true, nullable = false)
-    private String cpf;
+    private String documento;
     private String email;
     private String telefone;
     @Column(updatable = false)

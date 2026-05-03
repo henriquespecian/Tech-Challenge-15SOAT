@@ -1,0 +1,15 @@
+meta {
+  name: 06b - Listar Todas as OSs
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/ordem-servico
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

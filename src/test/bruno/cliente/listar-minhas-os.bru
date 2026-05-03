@@ -1,0 +1,15 @@
+meta {
+  name: Listar Minhas OS
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/cliente/minhas-os
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
