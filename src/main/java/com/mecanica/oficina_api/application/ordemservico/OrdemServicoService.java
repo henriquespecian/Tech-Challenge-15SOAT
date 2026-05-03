@@ -19,10 +19,14 @@ import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpr
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
+import com.mecanica.oficina_api.infrastructure.persistence.VeiculoJpaEntity;
+import com.mecanica.oficina_api.infrastructure.security.UsuarioPrincipal;
 import com.mecanica.oficina_api.interfaces.dto.response.ItemOrcamentoResponse;
+import com.mecanica.oficina_api.interfaces.dto.response.MinhaOrdemServicoResponse;
 import com.mecanica.oficina_api.interfaces.dto.response.OrcamentoResponse;
 import com.mecanica.oficina_api.interfaces.dto.response.OrdemServicoResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -89,6 +93,34 @@ public class OrdemServicoService {
         return ordemServicoRepository.findByVeiculoId(veiculoId).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public List<MinhaOrdemServicoResponse> listarMinhasOs(OrdemServicoStatus status, String placa) {
+        UsuarioPrincipal principal = (UsuarioPrincipal)
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String clienteId = principal.clienteId();
+
+        List<OrdemServicoJpaEntity> osList = ordemServicoRepository.findByClienteId(clienteId);
+
+        if (status != null) {
+            osList = osList.stream().filter(os -> os.getStatus().equals(status.name())).toList();
+        }
+
+        if (placa != null && !placa.isBlank()) {
+            String veiculoIdFiltro = veiculoRepository.findByPlacaIgnoreCaseAndAtivoTrue(placa)
+                    .map(VeiculoJpaEntity::getId).orElse(null);
+            if (veiculoIdFiltro == null) return List.of();
+            final String vid = veiculoIdFiltro;
+            osList = osList.stream().filter(os -> os.getVeiculoId().equals(vid)).toList();
+        }
+
+        return osList.stream().map(os -> {
+            VeiculoJpaEntity v = veiculoRepository.findById(os.getVeiculoId()).orElse(null);
+            MinhaOrdemServicoResponse.VeiculoResumo vr = v == null ? null
+                    : new MinhaOrdemServicoResponse.VeiculoResumo(
+                            v.getId(), v.getPlaca(), v.getMarca(), v.getModelo(), v.getAno(), v.getCor());
+            return new MinhaOrdemServicoResponse(os.getId(), os.getStatus(), os.getOrcamentoStatus(), vr);
+        }).toList();
     }
 
     public OrdemServicoResponse iniciarDiagnostico(String id) {

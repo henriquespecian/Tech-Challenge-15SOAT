@@ -1,0 +1,19 @@
+meta {
+  name: Listar Minhas OS por Placa
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/cliente/minhas-os
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+params:query {
+  placa: ABC1234
+}

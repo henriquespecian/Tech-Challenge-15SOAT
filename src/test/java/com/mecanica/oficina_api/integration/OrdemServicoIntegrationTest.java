@@ -27,7 +27,7 @@ class OrdemServicoIntegrationTest extends BaseIntegrationTest {
     private String cadastrarVeiculo(String clienteId) throws Exception {
         CadastrarVeiculoRequest req = new CadastrarVeiculoRequest();
         req.setClienteId(clienteId);
-        req.setPlaca("ABC" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
+        req.setPlaca(String.format("TST%04d", Math.abs(UUID.randomUUID().hashCode()) % 10000));
         req.setMarca("Toyota");
         req.setModelo("Corolla");
         req.setAno(2022);

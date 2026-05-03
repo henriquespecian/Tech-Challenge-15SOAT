@@ -1,0 +1,19 @@
+meta {
+  name: Listar Minhas OS por Status
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/cliente/minhas-os
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+params:query {
+  status: RECEBIDA
+}

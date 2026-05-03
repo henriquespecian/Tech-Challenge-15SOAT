@@ -3,7 +3,6 @@ package com.mecanica.oficina_api.infrastructure.security;
 import com.mecanica.oficina_api.infrastructure.persistence.UsuarioJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.UsuarioSpringDataRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,9 +23,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .filter(UsuarioJpaEntity::getAtivo)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
 
-        return new User(
+        return new UsuarioPrincipal(
+                usuario.getId(),
                 usuario.getEmail(),
                 usuario.getSenha(),
+                usuario.getClienteId(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getPerfil().name()))
         );
     }
