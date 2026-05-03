@@ -1,0 +1,29 @@
+package com.mecanica.oficina_api.application.ordemservico;
+
+import com.mecanica.oficina_api.infrastructure.persistence.OrdemServicoJpaEntity;
+
+/**
+ * Carga útil da notificação — campos pensados para template de e-mail futuro.
+ */
+public record NotificacaoCliente(
+        TipoNotificacaoCliente tipo,
+        String ordemServicoId,
+        String clienteId,
+        String veiculoId) {
+
+    public static NotificacaoCliente envioOrcamento(OrdemServicoJpaEntity os) {
+        return new NotificacaoCliente(
+                TipoNotificacaoCliente.ENVIO_ORCAMENTO,
+                os.getId(),
+                os.getClienteId(),
+                os.getVeiculoId());
+    }
+
+    public static NotificacaoCliente finalizacao(OrdemServicoJpaEntity os) {
+        return new NotificacaoCliente(
+                TipoNotificacaoCliente.FINALIZACAO_OS,
+                os.getId(),
+                os.getClienteId(),
+                os.getVeiculoId());
+    }
+}
