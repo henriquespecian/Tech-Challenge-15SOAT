@@ -7,6 +7,7 @@ import com.mecanica.oficina_api.infrastructure.persistence.UsuarioJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.OrdemServicoSpringDataRepository;
+import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.UsuarioSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.LoginRequest;
@@ -40,6 +41,7 @@ public abstract class BaseIntegrationTest {
     @Autowired protected VeiculoSpringDataRepository veiculoRepository;
     @Autowired protected OrdemServicoSpringDataRepository ordemServicoRepository;
     @Autowired protected InsumosSpringDataRepository insumosRepository;
+    @Autowired protected ServicoSpringDataRepository servicoRepository;
     @Autowired protected PasswordEncoder passwordEncoder;
 
     protected MockMvc mockMvc;
@@ -54,6 +56,7 @@ public abstract class BaseIntegrationTest {
 
         ordemServicoRepository.deleteAll();
         insumosRepository.deleteAllInBatch();
+        servicoRepository.deleteAllInBatch();
         veiculoRepository.deleteAllInBatch();
         clienteRepository.deleteAllInBatch();
         usuarioRepository.deleteAllInBatch();

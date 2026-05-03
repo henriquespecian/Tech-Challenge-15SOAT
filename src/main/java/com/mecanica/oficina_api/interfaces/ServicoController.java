@@ -4,6 +4,7 @@ import com.mecanica.oficina_api.application.servico.ServicoService;
 import com.mecanica.oficina_api.interfaces.dto.request.AlterarServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.ServicoResponse;
+import com.mecanica.oficina_api.interfaces.dto.response.TempoMedioServicoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,6 +54,19 @@ public class ServicoController {
     })
     public ResponseEntity<ServicoResponse> buscar(@PathVariable String id) {
         return ResponseEntity.ok(servicoService.buscar(id));
+    }
+
+    @GetMapping("/{id}/tempo-medio")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
+    @Operation(summary = "Buscar tempo médio de execução de um serviço por ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Serviço encontrado",
+            content = @Content(schema = @Schema())),
+        @ApiResponse(responseCode = "404", description = "Serviço não encontrado",
+            content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<TempoMedioServicoResponse> buscarTempoMedio(@PathVariable String id) {
+        return ResponseEntity.ok(servicoService.buscarTempoMedio(id));
     }
 
     @GetMapping

@@ -1,20 +1,20 @@
 package com.mecanica.oficina_api.domain.ordemservico;
 
-import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrcamentoTest {
 
     private ItemOrcamento item(String desc, int qtd, double preco) {
-        return new ItemOrcamento(desc, qtd, BigDecimal.valueOf(preco));
+        return new ItemOrcamento(null, null, desc, qtd, BigDecimal.valueOf(preco));
     }
 
     private Orcamento orcamentoSimples() {
-        return new Orcamento(List.of(item("Troca de óleo", 1, 50.0), item("Filtro", 2, 30.0)), "obs");
+        return new Orcamento(List.of(item("Troca de oleo", 1, 50.0), item("Filtro", 2, 30.0)), "obs");
     }
 
     @Test
@@ -29,61 +29,71 @@ class OrcamentoTest {
     @Test
     void deveLancarExcecaoQuandoListaDeItensForVazia() {
         assertThatThrownBy(() -> new Orcamento(List.of(), null))
-                .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void deveTransicionarDePendenteParaEnviado() {
-        Orcamento o = orcamentoSimples();
-        Orcamento enviado = o.enviar();
+        Orcamento enviado = orcamentoSimples().enviar();
+
         assertThat(enviado.getStatus()).isEqualTo(OrcamentoStatus.ENVIADO);
     }
 
     @Test
     void deveLancarExcecaoAoEnviarOrcamentoNaoPendente() {
         Orcamento enviado = orcamentoSimples().enviar();
+
         assertThatThrownBy(enviado::enviar).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void deveTransicionarDeEnviadoParaAguardando() {
-        Orcamento o = orcamentoSimples();
-        Orcamento enviado = o.enviar();
-        Orcamento aguardando = enviado.aguardar();
+        Orcamento aguardando = orcamentoSimples().enviar().aguardar();
+
         assertThat(aguardando.getStatus()).isEqualTo(OrcamentoStatus.AGUARDANDO);
     }
 
     @Test
     void deveLancarExcecaoAoAguardarOrcamentoNaoEnviado() {
         Orcamento o = orcamentoSimples();
+
         assertThatThrownBy(o::aguardar).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void deveAprovarOrcamentoEnviado() {
-        Orcamento enviado = orcamentoSimples().enviar();
-        Orcamento aprovado = enviado.aprovar();
+        Orcamento aprovado = orcamentoSimples().enviar().aprovar();
+
         assertThat(aprovado.getStatus()).isEqualTo(OrcamentoStatus.APROVADO);
         assertThat(aprovado.getRespondidoEm()).isNotNull();
     }
 
     @Test
     void deveAprovarOrcamentoAguardando() {
-        Orcamento aguardando = orcamentoSimples().enviar().aguardar();
-        Orcamento aprovado = aguardando.aprovar();
+        Orcamento aprovado = orcamentoSimples().enviar().aguardar().aprovar();
+
         assertThat(aprovado.getStatus()).isEqualTo(OrcamentoStatus.APROVADO);
     }
 
     @Test
     void deveLancarExcecaoAoAprovarOrcamentoPendente() {
         Orcamento o = orcamentoSimples();
+
         assertThatThrownBy(o::aprovar).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void deveNegarOrcamentoEnviado() {
-        Orcamento enviado = orcamentoSimples().enviar();
-        Orcamento negado = enviado.negar();
+        Orcamento negado = orcamentoSimples().enviar().negar();
+
+        assertThat(negado.getStatus()).isEqualTo(OrcamentoStatus.NEGADO);
+        assertThat(negado.getRespondidoEm()).isNotNull();
+    }
+
+    @Test
+    void deveNegarOrcamentoAguardando() {
+        Orcamento negado = orcamentoSimples().enviar().aguardar().negar();
+
         assertThat(negado.getStatus()).isEqualTo(OrcamentoStatus.NEGADO);
         assertThat(negado.getRespondidoEm()).isNotNull();
     }
@@ -91,18 +101,19 @@ class OrcamentoTest {
     @Test
     void deveLancarExcecaoAoNegarOrcamentoPendente() {
         Orcamento o = orcamentoSimples();
+
         assertThatThrownBy(o::negar).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void itemOrcamento_deveLancarExcecaoQuantidadeZero() {
+    void itemOrcamentoDeveLancarExcecaoQuantidadeZero() {
         assertThatThrownBy(() -> item("desc", 0, 10.0))
-                .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void itemOrcamento_deveLancarExcecaoPrecoZero() {
+    void itemOrcamentoDeveLancarExcecaoPrecoZero() {
         assertThatThrownBy(() -> item("desc", 1, 0.0))
-                .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(IllegalArgumentException.class);
     }
 }

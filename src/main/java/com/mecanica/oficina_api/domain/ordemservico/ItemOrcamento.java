@@ -2,14 +2,19 @@ package com.mecanica.oficina_api.domain.ordemservico;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import lombok.Getter;
 
+@Getter
 public class ItemOrcamento {
-
+    private final String insumoId;
+    private final String servicoId;
     private final String descricao;
     private final int quantidade;
     private final BigDecimal precoUnitario;
 
-    public ItemOrcamento(String descricao, int quantidade, BigDecimal precoUnitario) {
+    public ItemOrcamento(String insumoId, String servicoId, String descricao, int quantidade, BigDecimal precoUnitario) {
+        this.insumoId = insumoId;
+        this.servicoId = servicoId;
         this.descricao = Objects.requireNonNull(descricao, "Descrição é obrigatória");
         Objects.requireNonNull(precoUnitario, "Preço unitário é obrigatório");
         if (quantidade <= 0) throw new IllegalArgumentException("Quantidade deve ser maior que zero");
@@ -21,8 +26,4 @@ public class ItemOrcamento {
     public BigDecimal getValorTotal() {
         return precoUnitario.multiply(BigDecimal.valueOf(quantidade));
     }
-
-    public String getDescricao() { return descricao; }
-    public int getQuantidade() { return quantidade; }
-    public BigDecimal getPrecoUnitario() { return precoUnitario; }
 }

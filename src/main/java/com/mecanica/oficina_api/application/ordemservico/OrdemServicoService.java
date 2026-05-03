@@ -8,20 +8,28 @@ import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.application.insumo.AlertaEstoqueBaixo;
 import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
 import com.mecanica.oficina_api.application.insumo.OrigemNotificacaoEstoque;
+import com.mecanica.oficina_api.domain.ordemservico.ServicoStatus;
+import com.mecanica.oficina_api.domain.ordemservico.StatusServico;
+import com.mecanica.oficina_api.domain.servico.Servico;
 import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.ItemOrcamentoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.OrdemServicoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.ServicoJpaEntity;
+import com.mecanica.oficina_api.infrastructure.persistence.StatusServicoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.OrdemServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpringDataRepository;
+import com.mecanica.oficina_api.infrastructure.persistence.repository.StatusServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.ItemOrcamentoResponse;
 import com.mecanica.oficina_api.interfaces.dto.response.OrcamentoResponse;
 import com.mecanica.oficina_api.interfaces.dto.response.OrdemServicoResponse;
+import com.mecanica.oficina_api.interfaces.dto.response.ServicoStatusResponse;
+import java.util.Objects;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +47,7 @@ public class OrdemServicoService {
     private final ClienteSpringDataRepository clienteRepository;
     private final InsumosSpringDataRepository insumosRepository;
     private final ServicoSpringDataRepository servicoRepository;
+    private final StatusServicoSpringDataRepository statusServicoRepository;
     private final NotificadorEstoqueBaixo notificadorEstoqueBaixo;
 
     public OrdemServicoService(OrdemServicoSpringDataRepository ordemServicoRepository,
@@ -46,12 +55,14 @@ public class OrdemServicoService {
             ClienteSpringDataRepository clienteRepository,
             InsumosSpringDataRepository insumosRepository,
             ServicoSpringDataRepository servicoRepository,
+            StatusServicoSpringDataRepository statusServicoRepository,
             NotificadorEstoqueBaixo notificadorEstoqueBaixo) {
         this.ordemServicoRepository = ordemServicoRepository;
         this.veiculoRepository = veiculoRepository;
         this.clienteRepository = clienteRepository;
         this.insumosRepository = insumosRepository;
         this.servicoRepository = servicoRepository;
+        this.statusServicoRepository = statusServicoRepository;
         this.notificadorEstoqueBaixo = notificadorEstoqueBaixo;
     }
 
@@ -92,6 +103,7 @@ public class OrdemServicoService {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
         OrdemServico os = toDomain(entity);
         List<ItemComOrigem> itensComOrigem = toItensComOrigem(request);
+
         try {
             os.gerarOrcamento(itensComOrigem.stream().map(ItemComOrigem::item).toList(), request.getObservacoes());
         } catch (IllegalStateException e) {
@@ -121,23 +133,109 @@ public class OrdemServicoService {
     }
 
     public OrdemServicoResponse aprovarOrcamento(String id) {
-        return executarTransicao(id, OrdemServico::aprovarOrcamento);
+        var response = executarTransicao(id, OrdemServico::aprovarOrcamento);
+
+        OrdemServicoJpaEntity entity = encontrarOuLancar(id);
+        OrdemServico os = toDomain(entity);
+
+        criarStatusIndividuaisPorServico(os.getOrcamento().getItens(), os.getId());
+
+        return response;
     }
 
     public OrdemServicoResponse negarOrcamento(String id) {
         return executarTransicao(id, OrdemServico::negarOrcamento);
     }
 
+    public List<ServicoStatusResponse> listarServicos(String id) {
+        List<ServicoStatusResponse> response = statusServicoRepository.findByOrdemServicoId(id).stream().map(servico ->
+            new ServicoStatusResponse(
+                servico.getId(),
+                servico.getStatus(),
+                servico.getOrdemServicoId(),
+                servico.getServicoId(),
+                servico.getDataInicio(),
+                servico.getDataFim()
+            )
+        ).toList();
+
+
+        return response;
+    }
+
+    public ServicoStatusResponse iniciarServico(String servico_id) {
+        var servicoEntity = statusServicoRepository.findByIdAndStatus(servico_id, ServicoStatus.AGUARDANDO.toString()).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Servico não encontrado"));
+
+        var servico = StatusServico.recriar(
+            servicoEntity.getId(),
+            ServicoStatus.valueOf(servicoEntity.getStatus()),
+            servicoEntity.getOrdemServicoId(),
+            servicoEntity.getServicoId(),
+            servicoEntity.getDataInicio(),
+            servicoEntity.getDataFim()
+        );
+
+        servico.iniciarServico();
+
+        servicoEntity.setStatus(servico.getStatus().toString());
+        servicoEntity.setDataInicio(servico.getDataInicio());
+
+        var servicoResponse = statusServicoRepository.save(servicoEntity);
+
+        return new ServicoStatusResponse(
+            servicoResponse.getId().toString(),
+            servicoResponse.getStatus(),
+            servicoResponse.getOrdemServicoId(),
+            servicoResponse.getServicoId(),
+            servicoResponse.getDataInicio(),
+            servicoResponse.getDataFim()
+        );
+    }
+
+    public ServicoStatusResponse finalizarServico(String servico_id){
+        var servicoEntity = statusServicoRepository.findByIdAndStatus(servico_id, ServicoStatus.INICIADO.toString()).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Servico não encontrado"));
+
+        var servico = StatusServico.recriar(
+            servicoEntity.getId(),
+            ServicoStatus.valueOf(servicoEntity.getStatus()),
+            servicoEntity.getOrdemServicoId(),
+            servicoEntity.getServicoId(),
+            servicoEntity.getDataInicio(),
+            servicoEntity.getDataFim()
+        );
+
+        servico.finalizarServico();
+
+        servicoEntity.setStatus(servico.getStatus().toString());
+        servicoEntity.setDataInicio(servico.getDataInicio());
+
+        var servicoResponse = statusServicoRepository.save(servicoEntity);
+
+        return new ServicoStatusResponse(
+            servicoResponse.getId().toString(),
+            servicoResponse.getStatus(),
+            servicoResponse.getOrdemServicoId(),
+            servicoResponse.getServicoId(),
+            servicoResponse.getDataInicio(),
+            servicoResponse.getDataFim()
+        );
+    }
+
     @Transactional
     public OrdemServicoResponse finalizar(String id) {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
         OrdemServico os = toDomain(entity);
+
         try {
             os.finalizar();
         } catch (IllegalStateException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
         darBaixaInsumos(entity);
+        verificarServicosFinalizados(os.getId());
+
         return toResponse(salvarOrcamento(entity, os));
     }
 
@@ -146,6 +244,45 @@ public class OrdemServicoService {
     }
 
     // --- helpers ---
+
+    private void verificarServicosFinalizados(String ordemServicoId) {
+        List<StatusServicoJpaEntity> servicoEntityList = statusServicoRepository.findByOrdemServicoId(ordemServicoId);
+
+        int servicoFinalizadoContador = 0;
+        for(StatusServicoJpaEntity servicoEntity : servicoEntityList){
+            if(servicoEntity.getStatus().equals(ServicoStatus.FINALIZADO.toString())) {
+                servicoFinalizadoContador++;
+            }
+        }
+
+        if(servicoFinalizadoContador != servicoEntityList.size()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ainda há serviços para serem realizados na OS");
+        }
+    }
+
+    private List<StatusServicoJpaEntity> criarStatusIndividuaisPorServico(List<ItemOrcamento> itemOrcamentoList, String ordemServicoId) {
+        List<ItemOrcamento> itensOrcamento = itemOrcamentoList;
+        List<StatusServico> statusServicoList = new ArrayList<>();
+        itensOrcamento.forEach(item -> {
+            if(!Objects.isNull(item.getServicoId())){
+                StatusServico statusServico = StatusServico.criar(ordemServicoId, item.getServicoId());
+                statusServicoList.add(statusServico);
+            }
+        });
+
+        List<StatusServicoJpaEntity> servicoEntity = statusServicoList.stream().map(servico -> {
+            StatusServicoJpaEntity servicoJpaEntity = new StatusServicoJpaEntity();
+            servicoJpaEntity.setServicoId(servico.getServicoId());
+            servicoJpaEntity.setOrdemServicoId(servico.getOrdemServicoId());
+            servicoJpaEntity.setStatus(servico.getStatus().toString());
+            servicoJpaEntity.setDataFim(servico.getDataInicio());
+            servicoJpaEntity.setDataFim(servico.getDataFim());
+
+            return servicoJpaEntity;
+        }).toList();
+
+        return statusServicoRepository.saveAll(servicoEntity);
+    }
 
     private OrdemServicoResponse executarTransicao(String id, java.util.function.Consumer<OrdemServico> acao) {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
@@ -190,7 +327,7 @@ public class OrdemServicoService {
                         "Ordem de serviço não encontrada: " + id));
     }
 
-    private record ItemComOrigem(ItemOrcamento item, String insumoId) {}
+    private record ItemComOrigem(ItemOrcamento item, Boolean EhInsumo) {}
 
     private List<ItemComOrigem> toItensComOrigem(GerarOrcamentoRequest request) {
         List<ItemComOrigem> itens = new ArrayList<>();
@@ -201,8 +338,8 @@ public class OrdemServicoService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                 "Insumo não encontrado: " + i.getInsumoId()));
                 itens.add(new ItemComOrigem(
-                        new ItemOrcamento(insumo.getNome(), i.getQuantidade(), insumo.getPrecoUnitario()),
-                        insumo.getId()));
+                        new ItemOrcamento(insumo.getId(), null, insumo.getNome(), i.getQuantidade(), insumo.getPrecoUnitario()),
+                        true));
             }
         }
 
@@ -212,8 +349,8 @@ public class OrdemServicoService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                 "Serviço não encontrado: " + s.getServicoId()));
                 itens.add(new ItemComOrigem(
-                        new ItemOrcamento(servico.getNome(), s.getQuantidade(), servico.getPreco()),
-                        null));
+                        new ItemOrcamento(null, servico.getId(), servico.getNome(), s.getQuantidade(), servico.getPreco()),
+                        false));
             }
         }
 
@@ -230,7 +367,7 @@ public class OrdemServicoService {
         Orcamento orcamento = null;
         if (orcStatus != null && !entity.getItensOrcamento().isEmpty()) {
             List<ItemOrcamento> itens = entity.getItensOrcamento().stream()
-                    .map(i -> new ItemOrcamento(i.getDescricao(), i.getQuantidade(), i.getPrecoUnitario()))
+                    .map(i -> new ItemOrcamento(i.getInsumoId(), i.getServicoId(), i.getDescricao(), i.getQuantidade(), i.getPrecoUnitario()))
                     .toList();
             orcamento = Orcamento.reconstituir(itens, orcStatus, entity.getOrcamentoObservacoes(),
                     entity.getOrcamentoRespondidoEm());
@@ -263,7 +400,18 @@ public class OrdemServicoService {
                 ie.setQuantidade(di.getQuantidade());
                 ie.setPrecoUnitario(di.getPrecoUnitario());
                 if (itensComOrigem != null && idx < itensComOrigem.size()) {
-                    ie.setInsumoId(itensComOrigem.get(idx).insumoId());
+                    if(itensComOrigem.get(idx).EhInsumo()){
+                        ie.setInsumoId(di.getInsumoId());
+                    } else {
+                        ie.setServicoId(di.getServicoId());
+                    }
+                }
+                if(di.getServicoId() != null){
+                    ie.setServicoId(di.getServicoId());
+                }
+
+                if(di.getInsumoId() != null){
+                    ie.setInsumoId(di.getInsumoId());
                 }
                 itensEntity.add(ie);
             }
@@ -278,7 +426,7 @@ public class OrdemServicoService {
         if (entity.getOrcamentoStatus() != null) {
             List<ItemOrcamentoResponse> itensResp = entity.getItensOrcamento().stream()
                     .map(i -> new ItemOrcamentoResponse(
-                            i.getDescricao(), i.getQuantidade(), i.getPrecoUnitario(),
+                            i.getInsumoId(), i.getServicoId(), i.getDescricao(), i.getQuantidade(), i.getPrecoUnitario(),
                             i.getPrecoUnitario().multiply(BigDecimal.valueOf(i.getQuantidade()))))
                     .toList();
             BigDecimal total = itensResp.stream()

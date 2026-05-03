@@ -4,6 +4,7 @@ import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.OrdemServicoResponse;
+import com.mecanica.oficina_api.interfaces.dto.response.ServicoStatusResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -189,4 +190,25 @@ public class OrdemServicoController {
     public ResponseEntity<OrdemServicoResponse> negarOrcamento(@PathVariable String id) {
         return ResponseEntity.ok(ordemServicoService.negarOrcamento(id));
     }
+
+    // --- Serviços ---
+    @GetMapping("/{id}/servico/listar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    public ResponseEntity<List<ServicoStatusResponse>> listarServicos(@PathVariable String id) {
+        return ResponseEntity.ok(ordemServicoService.listarServicos(id));
+    }
+
+
+    @PatchMapping("/servico/{servico_id}/iniciar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    public ResponseEntity<ServicoStatusResponse> iniciarServico(@PathVariable String servico_id) {
+        return ResponseEntity.ok(ordemServicoService.iniciarServico(servico_id));
+    }
+
+    @PatchMapping("/servico/{servico_id}/finalizar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    public ResponseEntity<ServicoStatusResponse> finalizarServico(@PathVariable String servico_id) {
+        return ResponseEntity.ok(ordemServicoService.finalizarServico(servico_id));
+    }
+
 }

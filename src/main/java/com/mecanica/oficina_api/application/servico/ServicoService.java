@@ -1,11 +1,17 @@
 package com.mecanica.oficina_api.application.servico;
 
+import com.mecanica.oficina_api.domain.ordemservico.ServicoStatus;
 import com.mecanica.oficina_api.domain.servico.Servico;
 import com.mecanica.oficina_api.infrastructure.persistence.ServicoJpaEntity;
+import com.mecanica.oficina_api.infrastructure.persistence.StatusServicoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpringDataRepository;
+import com.mecanica.oficina_api.infrastructure.persistence.repository.StatusServicoSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.AlterarServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.ServicoResponse;
+import com.mecanica.oficina_api.interfaces.dto.response.TempoMedioServicoResponse;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,9 +23,11 @@ import java.util.List;
 public class ServicoService {
 
     private final ServicoSpringDataRepository repository;
+    private final StatusServicoSpringDataRepository statusRepository;
 
-    public ServicoService(ServicoSpringDataRepository repository) {
+    public ServicoService(ServicoSpringDataRepository repository, StatusServicoSpringDataRepository statusRepository) {
         this.repository = repository;
+        this.statusRepository = statusRepository;
     }
 
     public ServicoResponse cadastrar(CadastrarServicoRequest request) {
@@ -30,6 +38,22 @@ public class ServicoService {
 
     public ServicoResponse buscar(String id) {
         return toResponse(encontrarOuLancar(id));
+    }
+
+    public TempoMedioServicoResponse buscarTempoMedio(String id) {
+        var servicoEntity = encontrarOuLancar(id);
+
+        var servicosFinalizados = statusRepository.findByServicoIdAndStatus(servicoEntity.getId(), ServicoStatus.FINALIZADO.toString());
+
+        double mediaMinutos = servicosFinalizados.stream().mapToLong(servicoFinalizado ->
+            Duration.between(servicoFinalizado.getDataInicio(), servicoFinalizado.getDataFim()).toMinutes()
+        ).average().orElse(0);
+
+        return TempoMedioServicoResponse.builder()
+            .servicoId(id)
+            .nome(servicoEntity.getNome())
+            .tempoMedioEmMinutos(mediaMinutos)
+            .build();
     }
 
     public List<ServicoResponse> listar() {

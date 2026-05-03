@@ -2,7 +2,11 @@ package com.mecanica.oficina_api.domain.insumo;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class Insumos {
 
   private String id;
@@ -10,7 +14,7 @@ public class Insumos {
   private BigDecimal precoUnitario;
   private Integer estoqueAtual;
   private Integer estoqueMinimo;
-  private String unidade; // Faz sentido?
+  private String unidade;
   private Boolean ativo;
 
   protected Insumos() {}
@@ -59,12 +63,4 @@ public class Insumos {
       throw new IllegalStateException("Estoque insuficiente para o insumo: " + nome);
     this.estoqueAtual -= quantidade;
   }
-
-  public String getId() {return id;}
-  public String getNome() {return nome;}
-  public BigDecimal getPrecoUnitario() {return precoUnitario;}
-  public Integer getEstoqueAtual() {return estoqueAtual;}
-  public Integer getEstoqueMinimo() {return estoqueMinimo;}
-  public String getUnidade() {return unidade;}
-  public Boolean getAtivo() {return ativo;}
 }

@@ -1,16 +1,16 @@
 package com.mecanica.oficina_api.domain.ordemservico;
 
-import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrdemServicoTest {
 
     private List<ItemOrcamento> itens() {
-        return List.of(new ItemOrcamento("Troca de óleo", 1, BigDecimal.valueOf(100.0)));
+        return List.of(new ItemOrcamento(null, null, "Troca de oleo", 1, BigDecimal.valueOf(100.0)));
     }
 
     @Test
@@ -28,13 +28,13 @@ class OrdemServicoTest {
     @Test
     void deveLancarExcecaoQuandoVeiculoIdForNulo() {
         assertThatThrownBy(() -> OrdemServico.criar(null, "cliente-1"))
-                .isInstanceOf(NullPointerException.class);
+            .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void deveLancarExcecaoQuandoClienteIdForNulo() {
         assertThatThrownBy(() -> OrdemServico.criar("veiculo-1", null))
-                .isInstanceOf(NullPointerException.class);
+            .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -86,6 +86,19 @@ class OrdemServicoTest {
     }
 
     @Test
+    void deveAtualizarOrcamentoEAjustarStatusParaPendente() {
+        OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+        os.iniciarDiagnostico();
+        os.gerarOrcamento(itens(), null);
+        os.enviarOrcamento();
+        os.aguardarOrcamento();
+        os.atualizarOrcamento(itens(), "ajuste");
+
+        assertThat(os.getOrcamento().getStatus()).isEqualTo(OrcamentoStatus.PENDENTE);
+        assertThat(os.getOrcamento().getObservacoes()).isEqualTo("ajuste");
+    }
+
+    @Test
     void deveAprovarOrcamentoETransicionarOsParaEmExecucao() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
         os.iniciarDiagnostico();
@@ -128,6 +141,7 @@ class OrdemServicoTest {
     @Test
     void deveLancarExcecaoAoFinalizarOsNaoEmExecucao() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+
         assertThatThrownBy(os::finalizar).isInstanceOf(IllegalStateException.class);
     }
 
@@ -147,6 +161,7 @@ class OrdemServicoTest {
     @Test
     void deveLancarExcecaoAoEntregarVeiculoDeOsNaoFinalizada() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+
         assertThatThrownBy(os::entregar).isInstanceOf(IllegalStateException.class);
     }
 
@@ -160,7 +175,7 @@ class OrdemServicoTest {
         os.finalizar();
 
         assertThatThrownBy(() -> os.gerarOrcamento(itens(), null))
-                .isInstanceOf(IllegalStateException.class);
+            .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -174,12 +189,13 @@ class OrdemServicoTest {
         os.entregar();
 
         assertThatThrownBy(() -> os.gerarOrcamento(itens(), null))
-                .isInstanceOf(IllegalStateException.class);
+            .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void deveLancarExcecaoAoAprovarSemOrcamento() {
         OrdemServico os = OrdemServico.criar("veiculo-1", "cliente-1");
+
         assertThatThrownBy(os::aprovarOrcamento).isInstanceOf(IllegalStateException.class);
     }
 }

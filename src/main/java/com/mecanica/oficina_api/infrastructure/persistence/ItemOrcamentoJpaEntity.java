@@ -28,4 +28,7 @@ public class ItemOrcamentoJpaEntity {
 
     @Column(name = "insumo_id")
     private String insumoId;
+
+    @Column(name = "servico_id")
+    private String servicoId;
 }
