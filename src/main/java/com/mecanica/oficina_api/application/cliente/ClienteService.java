@@ -9,6 +9,7 @@ import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpr
 import com.mecanica.oficina_api.interfaces.dto.request.AlterarClienteRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarClienteRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.ConsultarClienteResponse;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -61,6 +62,13 @@ public class ClienteService {
 
         return new ConsultarClienteResponse(
             entity.getId(), entity.getNome(), entity.getDocumento(), entity.getEmail(), entity.getTelefone());
+    }
+
+    public List<ConsultarClienteResponse> listar() {
+        return repository.findAllByAtivoTrue().stream()
+            .map(e -> new ConsultarClienteResponse(
+                e.getId(), e.getNome(), e.getDocumento(), e.getEmail(), e.getTelefone()))
+            .toList();
     }
 
     public void alterar(String documento, AlterarClienteRequest request) {

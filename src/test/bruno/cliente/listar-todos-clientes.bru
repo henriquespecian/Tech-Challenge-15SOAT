@@ -1,0 +1,15 @@
+meta {
+  name: Listar Todos os Clientes
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/cliente
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
