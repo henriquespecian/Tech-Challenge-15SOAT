@@ -102,7 +102,7 @@ public abstract class BaseIntegrationTest {
         ClienteJpaEntity c = new ClienteJpaEntity();
         c.setId(UUID.randomUUID().toString());
         c.setNome(nome);
-        c.setCpf(cpf);
+        c.setDocumento(cpf);
         c.setEmail(email);
         c.setTelefone("11999990000");
         c.setDataCadastro(LocalDateTime.now());

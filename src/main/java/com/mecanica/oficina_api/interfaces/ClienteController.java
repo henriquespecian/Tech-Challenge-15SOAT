@@ -29,7 +29,7 @@ public class ClienteController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Cadastrar um novo cliente", description = "Permite cadastrar um novo cliente na oficina")
+    @Operation(summary = "Cadastrar um novo cliente", description = "Permite cadastrar um novo cliente na oficina. Aceita CPF (11 dígitos) ou CNPJ (14 dígitos)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Cliente criado com sucesso",
                     content = @Content(schema = @Schema(implementation = ConsultarClienteResponse.class))),
@@ -40,42 +40,40 @@ public class ClienteController {
         return ResponseEntity.status(201).body(clienteService.cadastrar(request));
     }
 
-    @GetMapping("/{cpf}")
+    @GetMapping("/{documento}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
-    @Operation(summary = "Consultar cliente por CPF", description = "Permite consultar os detalhes de um cliente específico usando seu CPF")
+    @Operation(summary = "Consultar cliente por CPF ou CNPJ", description = "Permite consultar os detalhes de um cliente específico usando seu CPF ou CNPJ")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Cliente encontrado com sucesso",
             content = @Content(schema = @Schema(implementation = ConsultarClienteResponse.class))),
         @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
             content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<ConsultarClienteResponse> consultar(@PathVariable String cpf) {
-        var cliente_encontrado = clienteService.consultar(cpf);
-        return ResponseEntity.status(200).body(cliente_encontrado);
+    public ResponseEntity<ConsultarClienteResponse> consultar(@PathVariable String documento) {
+        return ResponseEntity.status(200).body(clienteService.consultar(documento));
     }
 
-    @PutMapping("/{cpf}")
+    @PutMapping("/{documento}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE')")
-    @Operation(summary = "Alterar um cliente por CPF", description = "Permite alterar os dados de um cliente específico usando seu CPF")
+    @Operation(summary = "Alterar um cliente por CPF ou CNPJ", description = "Permite alterar os dados de um cliente específico usando seu CPF ou CNPJ")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Cliente alterado com sucesso"),
         @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
             content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<Void> alterar(@PathVariable String cpf, @RequestBody AlterarClienteRequest request) {
-        clienteService.alterar(cpf, request);
+    public ResponseEntity<Void> alterar(@PathVariable String documento, @RequestBody AlterarClienteRequest request) {
+        clienteService.alterar(documento, request);
         return ResponseEntity.status(204).build();
     }
 
-    @DeleteMapping("/{cpf}")
+    @DeleteMapping("/{documento}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Desativar um cliente por CPF", description = "Permite desativar um cliente específico usando seu CPF")
+    @Operation(summary = "Desativar um cliente por CPF ou CNPJ", description = "Permite desativar um cliente específico usando seu CPF ou CNPJ")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Cliente desativado com sucesso")
     })
-    public ResponseEntity<Void> deletar(@PathVariable String cpf) {
-        clienteService.deletar(cpf);
+    public ResponseEntity<Void> deletar(@PathVariable String documento) {
+        clienteService.deletar(documento);
         return ResponseEntity.status(204).build();
     }
-
 }

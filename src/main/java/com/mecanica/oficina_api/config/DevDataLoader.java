@@ -74,7 +74,7 @@ public class DevDataLoader implements CommandLineRunner {
     private ClienteJpaEntity seedClientes() {
         if (clienteRepository.count() > 0) {
             log.info("[DEV] Clientes já existem, pulando.");
-            return clienteRepository.findByCpf("52998224725").orElse(null);
+            return clienteRepository.findByDocumento("52998224725").orElse(null);
         }
 
         ClienteJpaEntity ana = cliente("Ana Souza",      "52998224725", "ana@teste.com",   "11999991111");
@@ -95,9 +95,9 @@ public class DevDataLoader implements CommandLineRunner {
             return;
         }
 
-        ClienteJpaEntity ana   = clienteRepository.findByCpf("52998224725").orElse(null);
-        ClienteJpaEntity bruno = clienteRepository.findByCpf("11144477735").orElse(null);
-        ClienteJpaEntity carla = clienteRepository.findByCpf("45317828791").orElse(null);
+        ClienteJpaEntity ana   = clienteRepository.findByDocumento("52998224725").orElse(null);
+        ClienteJpaEntity bruno = clienteRepository.findByDocumento("11144477735").orElse(null);
+        ClienteJpaEntity carla = clienteRepository.findByDocumento("45317828791").orElse(null);
 
         if (ana == null || bruno == null || carla == null) {
             log.warn("[DEV] Clientes não encontrados, veículos não serão criados.");
@@ -173,7 +173,7 @@ public class DevDataLoader implements CommandLineRunner {
         ClienteJpaEntity e = new ClienteJpaEntity();
         e.setId(UUID.randomUUID().toString());
         e.setNome(nome);
-        e.setCpf(cpf);
+        e.setDocumento(cpf);
         e.setEmail(email);
         e.setTelefone(telefone);
         e.setDataCadastro(LocalDateTime.now());

@@ -3,7 +3,7 @@ package com.mecanica.oficina_api.interfaces.dto.request;
 public class CadastrarClienteRequest {
 
     private String nome;
-    private String cpf;
+    private String documento;
     private String email;
     private String telefone;
 
@@ -12,8 +12,8 @@ public class CadastrarClienteRequest {
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
 
-    public String getCpf() { return cpf; }
-    public void setCpf(String cpf) { this.cpf = cpf; }
+    public String getDocumento() { return documento; }
+    public void setDocumento(String documento) { this.documento = documento; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

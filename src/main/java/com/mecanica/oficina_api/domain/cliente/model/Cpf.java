@@ -2,7 +2,7 @@ package com.mecanica.oficina_api.domain.cliente.model;
 
 import java.util.Objects;
 
-public class Cpf {
+public final class Cpf implements Documento {
         private final String value;
 
     public Cpf(String value) {

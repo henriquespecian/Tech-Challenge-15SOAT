@@ -1,7 +1,7 @@
 package com.mecanica.oficina_api.application.cliente;
 
 import com.mecanica.oficina_api.domain.cliente.model.Cliente;
-import com.mecanica.oficina_api.domain.cliente.model.Cpf;
+import com.mecanica.oficina_api.domain.cliente.model.Documento;
 import com.mecanica.oficina_api.domain.cliente.model.Email;
 import com.mecanica.oficina_api.domain.cliente.model.Telefone;
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
@@ -26,13 +26,15 @@ public class ClienteService {
     }
 
     public ConsultarClienteResponse cadastrar(CadastrarClienteRequest request) {
-        if (repository.existsByCpf(request.getCpf())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado");
+        Documento doc = Documento.parse(request.getDocumento());
+
+        if (repository.existsByDocumento(doc.getValue())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Documento já cadastrado");
         }
 
         Cliente cliente = Cliente.criar(
             request.getNome(),
-            new Cpf(request.getCpf()),
+            doc,
             new Email(request.getEmail()),
             new Telefone(request.getTelefone())
         );
@@ -40,7 +42,7 @@ public class ClienteService {
         ClienteJpaEntity entity = new ClienteJpaEntity();
         entity.setId(UUID.randomUUID().toString());
         entity.setNome(cliente.getNome());
-        entity.setCpf(cliente.getCpf().getValue());
+        entity.setDocumento(cliente.getDocumento().getValue());
         entity.setEmail(cliente.getEmail().getValue());
         entity.setTelefone(cliente.getTelefone().getValue());
         entity.setDataCadastro(cliente.getDataCadastro());
@@ -48,30 +50,28 @@ public class ClienteService {
 
         repository.save(entity);
         return new ConsultarClienteResponse(
-            entity.getId(), entity.getNome(), entity.getCpf(), entity.getEmail(), entity.getTelefone());
+            entity.getId(), entity.getNome(), entity.getDocumento(), entity.getEmail(), entity.getTelefone());
     }
 
-    public ConsultarClienteResponse consultar(String cpf) {
+    public ConsultarClienteResponse consultar(String documento) {
+        Documento doc = Documento.parse(documento);
 
-        Cpf cpf_cliente = new Cpf(cpf);
+        ClienteJpaEntity entity = repository.findByDocumentoAndAtivoTrue(doc.getValue())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado"));
 
-        ClienteJpaEntity entity = repository.findByCpfAndAtivoTrue(cpf_cliente.getValue())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CPF inexistente"));
-
-        var response = new ConsultarClienteResponse(entity.getId(), entity.getNome(), entity.getCpf(), entity.getEmail(), entity.getTelefone());
-
-        return response;
+        return new ConsultarClienteResponse(
+            entity.getId(), entity.getNome(), entity.getDocumento(), entity.getEmail(), entity.getTelefone());
     }
 
-    public void alterar(String cpf, AlterarClienteRequest request) {
-        Cpf cpf_cliente = new Cpf(cpf);
+    public void alterar(String documento, AlterarClienteRequest request) {
+        Documento doc = Documento.parse(documento);
 
-        ClienteJpaEntity entity = repository.findByCpfAndAtivoTrue(cpf_cliente.getValue())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CPF inexistente"));
+        ClienteJpaEntity entity = repository.findByDocumentoAndAtivoTrue(doc.getValue())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado"));
 
         Cliente cliente = Cliente.criar(
             request.getNome(),
-            new Cpf(cpf_cliente.getValue()),
+            doc,
             new Email(request.getEmail()),
             new Telefone(request.getTelefone())
         );
@@ -83,12 +83,12 @@ public class ClienteService {
         repository.save(entity);
     }
 
-    public void deletar(String cpf) {
-        Cpf cpf_cliente = new Cpf(cpf);
+    public void deletar(String documento) {
+        Documento doc = Documento.parse(documento);
 
-        Optional<ClienteJpaEntity> entity = repository.findByCpfAndAtivoTrue(cpf_cliente.getValue());
+        Optional<ClienteJpaEntity> entity = repository.findByDocumentoAndAtivoTrue(doc.getValue());
 
-        if(entity.isPresent()) {
+        if (entity.isPresent()) {
             entity.get().setAtivo(false);
             repository.save(entity.get());
         }

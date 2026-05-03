@@ -7,11 +7,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClienteSpringDataRepository extends JpaRepository<ClienteJpaEntity, String> {
-    boolean existsByCpf(String cpf);
+    boolean existsByDocumento(String documento);
 
-    Optional<ClienteJpaEntity> findByCpf(String cpf);
+    Optional<ClienteJpaEntity> findByDocumento(String documento);
 
-    Optional<ClienteJpaEntity> findByCpfAndAtivoTrue(String cpf);
+    Optional<ClienteJpaEntity> findByDocumentoAndAtivoTrue(String documento);
 
     ClienteJpaEntity findByAtivo(boolean ativo);
 }
