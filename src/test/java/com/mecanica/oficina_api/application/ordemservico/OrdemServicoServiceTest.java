@@ -545,7 +545,7 @@ class OrdemServicoServiceTest {
         when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
         when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("PENDENTE", "EM_DIAGNOSTICO"));
 
-        OrdemServicoResponse resp = service.atualizarOrcamento("os-1", gerarOrcamentoComServicoRequest());
+        OrdemServicoResponse resp = service.atualizarOrcamento("os-1", gerarOrcamentoComInsumo());
 
         assertThat(resp.getOrcamento()).isNotNull();
         verify(ordemServicoRepository).save(any());
@@ -559,7 +559,7 @@ class OrdemServicoServiceTest {
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
         when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
 
-        assertThatThrownBy(() -> service.atualizarOrcamento("os-1", gerarOrcamentoComServicoRequest()))
+        assertThatThrownBy(() -> service.atualizarOrcamento("os-1", gerarOrcamentoComInsumo()))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
     }
@@ -841,6 +841,16 @@ class OrdemServicoServiceTest {
     private GerarOrcamentoRequest gerarOrcamentoComServicoRequest() {
         ItemServicoRequest item = new ItemServicoRequest();
         item.setServicoId("servico-1");
+        item.setQuantidade(1);
+        GerarOrcamentoRequest req = new GerarOrcamentoRequest();
+        req.setServicos(List.of(item));
+        req.setObservacoes("obs");
+        return req;
+    }
+
+    private GerarOrcamentoRequest gerarOrcamentoComInsumoRequest() {
+        ItemServicoRequest item = new ItemServicoRequest();
+        item.setServicoId("insumo-1");
         item.setQuantidade(1);
         GerarOrcamentoRequest req = new GerarOrcamentoRequest();
         req.setServicos(List.of(item));
