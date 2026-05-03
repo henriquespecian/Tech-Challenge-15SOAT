@@ -16,6 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -82,6 +84,19 @@ class ClienteControllerTest {
             .andExpect(jsonPath("$.documento").value(CPF_VALIDO))
             .andExpect(jsonPath("$.email").value("joao@email.com"))
             .andExpect(jsonPath("$.telefone").value("11999999999"));
+    }
+
+    @Test
+    void deveListarClientesERetornar200() throws Exception {
+        when(clienteService.listar()).thenReturn(List.of(clienteResponse));
+
+        mockMvc.perform(get("/cliente"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value("cliente-1"))
+            .andExpect(jsonPath("$[0].nome").value("João Silva"))
+            .andExpect(jsonPath("$[0].documento").value(CPF_VALIDO))
+            .andExpect(jsonPath("$[0].email").value("joao@email.com"))
+            .andExpect(jsonPath("$[0].telefone").value("11999999999"));
     }
 
     @Test
