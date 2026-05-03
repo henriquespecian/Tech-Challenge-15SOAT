@@ -55,4 +55,79 @@ public class InsumoTest {
         .isInstanceOf(NullPointerException.class)
         .hasMessage("Unidade é obrigatório");
   }
+
+  @Test
+  void deveRetornarIdNuloQuandoCriadoSemPersistencia() {
+    Insumos insumo = Insumos.criar("Óleo", BigDecimal.valueOf(50), 10, 2, "LITRO");
+
+    assertThat(insumo.getId()).isNull();
+  }
+
+  @Test
+  void deveLancarExcecaoQuandoPrecoForNulo() {
+    assertThatThrownBy(() -> Insumos.criar("Óleo", null, 10, 2, "LITRO"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Preço Unitário deve ser um número positivo");
+  }
+
+  @Test
+  void deveLancarExcecaoQuandoEstoqueAtualForNulo() {
+    assertThatThrownBy(() -> Insumos.criar("Óleo", BigDecimal.valueOf(50), null, 2, "LITRO"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Estoque Atual deve ser um número inteiro positivo");
+  }
+
+  @Test
+  void deveLancarExcecaoQuandoEstoqueMinimoForNulo() {
+    assertThatThrownBy(() -> Insumos.criar("Óleo", BigDecimal.valueOf(50), 10, null, "LITRO"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Estoque Mínimo deve ser um número inteiro positivo");
+  }
+
+  // --- darBaixa ---
+
+  @Test
+  void deveDarBaixaNoEstoqueComSucesso() {
+    Insumos insumo = Insumos.criar("Óleo", BigDecimal.valueOf(50), 10, 2, "LITRO");
+
+    insumo.darBaixa(3);
+
+    assertThat(insumo.getEstoqueAtual()).isEqualTo(7);
+  }
+
+  @Test
+  void deveDarBaixaConsumindoEstoqueTotalComSucesso() {
+    Insumos insumo = Insumos.criar("Óleo", BigDecimal.valueOf(50), 5, 0, "LITRO");
+
+    insumo.darBaixa(5);
+
+    assertThat(insumo.getEstoqueAtual()).isEqualTo(0);
+  }
+
+  @Test
+  void deveLancarExcecaoQuandoQuantidadeDarBaixaForZero() {
+    Insumos insumo = Insumos.criar("Óleo", BigDecimal.valueOf(50), 10, 2, "LITRO");
+
+    assertThatThrownBy(() -> insumo.darBaixa(0))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Quantidade para baixa deve ser positiva");
+  }
+
+  @Test
+  void deveLancarExcecaoQuandoQuantidadeDarBaixaForNegativa() {
+    Insumos insumo = Insumos.criar("Óleo", BigDecimal.valueOf(50), 10, 2, "LITRO");
+
+    assertThatThrownBy(() -> insumo.darBaixa(-1))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Quantidade para baixa deve ser positiva");
+  }
+
+  @Test
+  void deveLancarExcecaoQuandoEstoqueInsuficienteParaDarBaixa() {
+    Insumos insumo = Insumos.criar("Óleo", BigDecimal.valueOf(50), 3, 0, "LITRO");
+
+    assertThatThrownBy(() -> insumo.darBaixa(5))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Estoque insuficiente para o insumo");
+  }
 }
