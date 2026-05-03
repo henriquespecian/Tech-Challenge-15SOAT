@@ -5,6 +5,7 @@ import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.ItemOrcamentoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.OrdemServicoJpaEntity;
+import com.mecanica.oficina_api.infrastructure.persistence.ServicoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.VeiculoJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
@@ -12,10 +13,14 @@ import com.mecanica.oficina_api.infrastructure.persistence.repository.OrdemServi
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ServicoSpringDataRepository;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.VeiculoSpringDataRepository;
 import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
+import com.mecanica.oficina_api.infrastructure.security.UsuarioPrincipal;
 import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.ItemOrcamentoRequest;
+import com.mecanica.oficina_api.interfaces.dto.request.ItemServicoRequest;
+import com.mecanica.oficina_api.interfaces.dto.response.MinhaOrdemServicoResponse;
 import com.mecanica.oficina_api.interfaces.dto.response.OrdemServicoResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,9 +28,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,10 +57,20 @@ class OrdemServicoServiceTest {
     private ClienteJpaEntity cliente;
     private OrdemServicoJpaEntity osEntity;
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @BeforeEach
     void setUp() {
         veiculo = new VeiculoJpaEntity();
         veiculo.setId("veiculo-1");
+        veiculo.setPlaca("ABC1234");
+        veiculo.setMarca("Toyota");
+        veiculo.setModelo("Corolla");
+        veiculo.setAno(2020);
+        veiculo.setCor("Branco");
         veiculo.setAtivo(true);
 
         cliente = new ClienteJpaEntity();
@@ -330,6 +349,280 @@ class OrdemServicoServiceTest {
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
     }
 
+    // --- iniciarDiagnostico ---
+
+    @Test
+    void deveIniciarDiagnosticoComSucesso() {
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComStatus("EM_DIAGNOSTICO"));
+
+        OrdemServicoResponse resp = service.iniciarDiagnostico("os-1");
+
+        assertThat(resp.getStatus()).isEqualTo("EM_DIAGNOSTICO");
+    }
+
+    @Test
+    void deveLancarConflictAoIniciarDiagnosticoEmStatusInvalido() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+
+        assertThatThrownBy(() -> service.iniciarDiagnostico("os-1"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    // --- negarOrcamento ---
+
+    @Test
+    void deveNegarOrcamentoComSucesso() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
+        osEntity.setOrcamentoStatus("ENVIADO");
+        osEntity.setItensOrcamento(itensEntity());
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("REJEITADO", "EM_DIAGNOSTICO"));
+
+        OrdemServicoResponse resp = service.negarOrcamento("os-1");
+
+        assertThat(resp.getOrcamento().getStatus()).isEqualTo("REJEITADO");
+    }
+
+    @Test
+    void deveLancarConflictAoNegarOrcamentoEmStatusInvalido() {
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+
+        assertThatThrownBy(() -> service.negarOrcamento("os-1"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    // --- atualizarOrcamento ---
+
+    @Test
+    void deveAtualizarOrcamentoComSucesso() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
+        osEntity.setOrcamentoStatus("AGUARDANDO");
+        osEntity.setItensOrcamento(itensEntity());
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("PENDENTE", "EM_DIAGNOSTICO"));
+
+        OrdemServicoResponse resp = service.atualizarOrcamento("os-1", gerarOrcamentoRequest());
+
+        assertThat(resp.getOrcamento()).isNotNull();
+        verify(ordemServicoRepository).save(any());
+    }
+
+    @Test
+    void deveLancarConflictAoAtualizarOrcamentoJaAprovado() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
+        osEntity.setOrcamentoStatus("APROVADO");
+        osEntity.setItensOrcamento(itensEntity());
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
+
+        assertThatThrownBy(() -> service.atualizarOrcamento("os-1", gerarOrcamentoRequest()))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    // --- finalizar ---
+
+    @Test
+    void deveLancarConflictAoFinalizarOsEmStatusInvalido() {
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+
+        assertThatThrownBy(() -> service.finalizar("os-1"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    // --- toItensComOrigem: servicos e erros ---
+
+    @Test
+    void deveGerarOrcamentoComServicoComSucesso() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(servicoRepository.findByIdAndAtivoTrue("servico-1")).thenReturn(Optional.of(servicoEntity()));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("PENDENTE", "EM_DIAGNOSTICO"));
+
+        OrdemServicoResponse resp = service.gerarOrcamento("os-1", gerarOrcamentoComServicoRequest());
+
+        assertThat(resp.getOrcamento()).isNotNull();
+    }
+
+    @Test
+    void deveLancarNotFoundQuandoInsumoNaoEncontradoAoGerarOrcamento() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-x")).thenReturn(Optional.empty());
+
+        ItemOrcamentoRequest item = new ItemOrcamentoRequest();
+        item.setInsumoId("insumo-x");
+        item.setQuantidade(1);
+        GerarOrcamentoRequest req = new GerarOrcamentoRequest();
+        req.setInsumos(List.of(item));
+
+        assertThatThrownBy(() -> service.gerarOrcamento("os-1", req))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void deveLancarNotFoundQuandoServicoNaoEncontradoAoGerarOrcamento() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(servicoRepository.findByIdAndAtivoTrue("servico-x")).thenReturn(Optional.empty());
+
+        ItemServicoRequest item = new ItemServicoRequest();
+        item.setServicoId("servico-x");
+        item.setQuantidade(1);
+        GerarOrcamentoRequest req = new GerarOrcamentoRequest();
+        req.setServicos(List.of(item));
+
+        assertThatThrownBy(() -> service.gerarOrcamento("os-1", req))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void deveLancarBadRequestQuandoOrcamentoSemItens() {
+        osEntity.setStatus("EM_DIAGNOSTICO");
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+
+        assertThatThrownBy(() -> service.gerarOrcamento("os-1", new GerarOrcamentoRequest()))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    // --- darBaixaInsumos: branches ---
+
+    @Test
+    void deveIgnorarItemSemInsumoIdNaFinalizacao() {
+        osEntity.setStatus("EM_EXECUCAO");
+        osEntity.setOrcamentoStatus("APROVADO");
+        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
+        item.setDescricao("Serviço sem insumo");
+        item.setQuantidade(1);
+        item.setPrecoUnitario(BigDecimal.valueOf(100));
+        item.setInsumoId(null);
+        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.finalizar("os-1");
+
+        verify(insumosRepository, never()).save(any());
+    }
+
+    @Test
+    void deveIgnorarItemQuandoInsumoNaoEncontradoNaFinalizacao() {
+        osEntity.setStatus("EM_EXECUCAO");
+        osEntity.setOrcamentoStatus("APROVADO");
+        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
+        item.setDescricao("Óleo");
+        item.setQuantidade(1);
+        item.setPrecoUnitario(BigDecimal.valueOf(100));
+        item.setInsumoId("insumo-inexistente");
+        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-inexistente")).thenReturn(Optional.empty());
+        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.finalizar("os-1");
+
+        verify(insumosRepository, never()).save(any());
+    }
+
+    @Test
+    void deveZerarEstoqueQuandoQuantidadeSuperaEstoqueNaFinalizacao() {
+        osEntity.setStatus("EM_EXECUCAO");
+        osEntity.setOrcamentoStatus("APROVADO");
+        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
+        item.setDescricao("Óleo");
+        item.setQuantidade(20);
+        item.setPrecoUnitario(BigDecimal.valueOf(100));
+        item.setInsumoId("insumo-1");
+        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
+        InsumosJpaEntity insumo = insumoEntity();
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumo));
+        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.finalizar("os-1");
+
+        verify(insumosRepository).save(argThat(i -> i.getEstoqueAtual() == 0));
+    }
+
+    // --- listarMinhasOs ---
+
+    @Test
+    void deveListarMinhasOsSemFiltros() {
+        configurarSecurityContext("cliente-1");
+        when(ordemServicoRepository.findByClienteId("cliente-1")).thenReturn(List.of(osEntity));
+        when(veiculoRepository.findById("veiculo-1")).thenReturn(Optional.of(veiculo));
+
+        List<MinhaOrdemServicoResponse> lista = service.listarMinhasOs(null, null);
+
+        assertThat(lista).hasSize(1);
+        assertThat(lista.get(0).id()).isEqualTo("os-1");
+    }
+
+    @Test
+    void deveListarMinhasOsComFiltroDeStatus() {
+        configurarSecurityContext("cliente-1");
+        when(ordemServicoRepository.findByClienteId("cliente-1")).thenReturn(List.of(osEntity));
+        when(veiculoRepository.findById("veiculo-1")).thenReturn(Optional.of(veiculo));
+
+        List<MinhaOrdemServicoResponse> lista = service.listarMinhasOs(OrdemServicoStatus.RECEBIDA, null);
+
+        assertThat(lista).hasSize(1);
+    }
+
+    @Test
+    void deveListarMinhasOsComFiltroDeStatusDiferenteRetornaVazio() {
+        configurarSecurityContext("cliente-1");
+        when(ordemServicoRepository.findByClienteId("cliente-1")).thenReturn(List.of(osEntity));
+
+        List<MinhaOrdemServicoResponse> lista = service.listarMinhasOs(OrdemServicoStatus.FINALIZADA, null);
+
+        assertThat(lista).isEmpty();
+    }
+
+    @Test
+    void deveListarMinhasOsComFiltroDePlacaEncontrada() {
+        configurarSecurityContext("cliente-1");
+        when(ordemServicoRepository.findByClienteId("cliente-1")).thenReturn(List.of(osEntity));
+        when(veiculoRepository.findByPlacaIgnoreCaseAndAtivoTrue("ABC1234")).thenReturn(Optional.of(veiculo));
+        when(veiculoRepository.findById("veiculo-1")).thenReturn(Optional.of(veiculo));
+
+        List<MinhaOrdemServicoResponse> lista = service.listarMinhasOs(null, "ABC1234");
+
+        assertThat(lista).hasSize(1);
+    }
+
+    @Test
+    void deveRetornarVazioQuandoPlacaNaoEncontradaEmListarMinhasOs() {
+        configurarSecurityContext("cliente-1");
+        when(ordemServicoRepository.findByClienteId("cliente-1")).thenReturn(List.of(osEntity));
+        when(veiculoRepository.findByPlacaIgnoreCaseAndAtivoTrue("XYZ9999")).thenReturn(Optional.empty());
+
+        List<MinhaOrdemServicoResponse> lista = service.listarMinhasOs(null, "XYZ9999");
+
+        assertThat(lista).isEmpty();
+    }
+
+    @Test
+    void deveListarMinhasOsComVeiculoNaoEncontradoNoResponse() {
+        configurarSecurityContext("cliente-1");
+        when(ordemServicoRepository.findByClienteId("cliente-1")).thenReturn(List.of(osEntity));
+        when(veiculoRepository.findById("veiculo-1")).thenReturn(Optional.empty());
+
+        List<MinhaOrdemServicoResponse> lista = service.listarMinhasOs(null, null);
+
+        assertThat(lista).hasSize(1);
+        assertThat(lista.get(0).veiculo()).isNull();
+    }
+
     // --- helpers ---
 
     private GerarOrcamentoRequest gerarOrcamentoRequest() {
@@ -362,6 +655,45 @@ class OrdemServicoServiceTest {
         ie.setPrecoUnitario(BigDecimal.valueOf(100.0));
         ie.setInsumoId("insumo-1");
         return new java.util.ArrayList<>(List.of(ie));
+    }
+
+    private void configurarSecurityContext(String clienteId) {
+        UsuarioPrincipal principal = new UsuarioPrincipal("id", "email", "senha", clienteId, List.of());
+        Authentication auth = mock(Authentication.class);
+        SecurityContext ctx = mock(SecurityContext.class);
+        when(ctx.getAuthentication()).thenReturn(auth);
+        when(auth.getPrincipal()).thenReturn(principal);
+        SecurityContextHolder.setContext(ctx);
+    }
+
+    private OrdemServicoJpaEntity osEntityComStatus(String osStatus) {
+        OrdemServicoJpaEntity e = new OrdemServicoJpaEntity();
+        e.setId("os-1");
+        e.setVeiculoId("veiculo-1");
+        e.setClienteId("cliente-1");
+        e.setStatus(osStatus);
+        return e;
+    }
+
+    private ServicoJpaEntity servicoEntity() {
+        ServicoJpaEntity e = new ServicoJpaEntity();
+        e.setId("servico-1");
+        e.setNome("Alinhamento");
+        e.setDescricao("Alinhamento e balanceamento");
+        e.setPreco(BigDecimal.valueOf(150));
+        e.setTempoEstimadoHoras(Duration.ofHours(1));
+        e.setAtivo(true);
+        return e;
+    }
+
+    private GerarOrcamentoRequest gerarOrcamentoComServicoRequest() {
+        ItemServicoRequest item = new ItemServicoRequest();
+        item.setServicoId("servico-1");
+        item.setQuantidade(1);
+        GerarOrcamentoRequest req = new GerarOrcamentoRequest();
+        req.setServicos(List.of(item));
+        req.setObservacoes("obs");
+        return req;
     }
 
     private OrdemServicoJpaEntity osEntityComOrcamento(String orcStatus, String osStatus) {
