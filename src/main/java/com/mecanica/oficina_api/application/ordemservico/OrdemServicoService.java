@@ -187,8 +187,7 @@ public class OrdemServicoService {
     }
 
     public OrdemServicoResponse aprovarOrcamento(String id) {
-        var response = executarTransicao(id, OrdemServico::aprovarOrcamento);
-        return response;
+        return executarTransicao(id, OrdemServico::aprovarOrcamento);
     }
 
     public OrdemServicoResponse iniciarExecucao(String id) {
@@ -204,7 +203,7 @@ public class OrdemServicoService {
     }
 
     public List<ServicoStatusResponse> listarServicos(String id) {
-        List<ServicoStatusResponse> response = statusServicoSpringDataRepository.findByOrdemServicoId(id).stream().map(servico ->
+        return statusServicoSpringDataRepository.findByOrdemServicoId(id).stream().map(servico ->
             new ServicoStatusResponse(
                 servico.getId(),
                 servico.getStatus(),
@@ -214,14 +213,11 @@ public class OrdemServicoService {
                 servico.getDataFim()
             )
         ).toList();
-
-
-        return response;
     }
 
-    public ServicoStatusResponse iniciarServico(String servico_id) {
-        var servicoEntity = statusServicoSpringDataRepository.findByIdAndStatus(servico_id, ServicoStatus.AGUARDANDO.toString()).orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.NOT_FOUND, SERVICO_NAO_ENCONTRADO + servico_id));
+    public ServicoStatusResponse iniciarServico(String servicoId) {
+        var servicoEntity = statusServicoSpringDataRepository.findByIdAndStatus(servicoId, ServicoStatus.AGUARDANDO.toString()).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, SERVICO_NAO_ENCONTRADO + servicoId));
 
         var servico = StatusServico.recriar(
             servicoEntity.getId(),
@@ -249,8 +245,8 @@ public class OrdemServicoService {
         );
     }
 
-    public ServicoStatusResponse finalizarServico(String servico_id){
-        var servicoEntity = statusServicoSpringDataRepository.findByIdAndStatus(servico_id, ServicoStatus.INICIADO.toString()).orElseThrow(() ->
+    public ServicoStatusResponse finalizarServico(String servicoId){
+        var servicoEntity = statusServicoSpringDataRepository.findByIdAndStatus(servicoId, ServicoStatus.INICIADO.toString()).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND, SERVICO_NAO_ENCONTRADO));
 
         var servico = StatusServico.recriar(

@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    private static final String USUARIO_NAO_ENCONTRADO = "Usuário não encontrado: ";
 
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
@@ -54,7 +55,7 @@ public class UsuarioController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Usuário encontrado",
             content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
+        @ApiResponse(responseCode = "404", description = USUARIO_NAO_ENCONTRADO,
             content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
     })
     public ResponseEntity<UsuarioResponse> buscar(@PathVariable String id) {
@@ -67,7 +68,7 @@ public class UsuarioController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Usuário alterado com sucesso",
             content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
+        @ApiResponse(responseCode = "404", description = USUARIO_NAO_ENCONTRADO,
             content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
     })
     public ResponseEntity<UsuarioResponse> alterar(@PathVariable String id, @RequestBody AlterarUsuarioRequest request) {
@@ -79,7 +80,7 @@ public class UsuarioController {
     @Operation(summary = "Desativar usuário por ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Usuário desativado com sucesso"),
-        @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
+        @ApiResponse(responseCode = "404", description = USUARIO_NAO_ENCONTRADO,
             content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
     })
     public ResponseEntity<Void> deletar(@PathVariable String id) {

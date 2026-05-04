@@ -74,19 +74,15 @@ public class InsumosService {
   public List<InsumosResponse> listar() {
     var entities = insumosSpringDataRepository.findAllByAtivoTrue();
 
-    List<InsumosResponse> response_list = entities.stream().map((entity) -> {
-        return new InsumosResponse(
-            entity.getId(),
-            entity.getNome(),
-            entity.getPrecoUnitario(),
-            entity.getEstoqueAtual(),
-            entity.getEstoqueMinimo(),
-            entity.getUnidade(),
-            entity.getAtivo()
-        );
-    }).toList();
-
-    return response_list;
+    return entities.stream().map(entity -> new InsumosResponse(
+        entity.getId(),
+        entity.getNome(),
+        entity.getPrecoUnitario(),
+        entity.getEstoqueAtual(),
+        entity.getEstoqueMinimo(),
+        entity.getUnidade(),
+        entity.getAtivo()
+    )).toList();
   }
 
   public void atualizar(String id, AlterarInsumosRequest request) {

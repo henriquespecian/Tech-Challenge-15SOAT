@@ -21,6 +21,7 @@ public class UsuarioService {
     private final UsuarioSpringDataRepository usuarioRepository;
     private final ClienteSpringDataRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
+    private static final String USUARIO_NAO_ENCONTRADO = "Usuário não encontrado: ";
 
     public UsuarioService(UsuarioSpringDataRepository usuarioRepository,
                           ClienteSpringDataRepository clienteRepository,
@@ -58,13 +59,13 @@ public class UsuarioService {
 
     public UsuarioResponse buscar(String id) {
         UsuarioJpaEntity entity = usuarioRepository.findByIdAndAtivoTrue(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, USUARIO_NAO_ENCONTRADO));
         return toResponse(entity);
     }
 
     public UsuarioResponse alterar(String id, AlterarUsuarioRequest request) {
         UsuarioJpaEntity entity = usuarioRepository.findByIdAndAtivoTrue(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, USUARIO_NAO_ENCONTRADO));
 
         Perfil perfil = parsePerfil(request.getPerfil());
         validarClienteId(perfil, request.getClienteId());
@@ -81,7 +82,7 @@ public class UsuarioService {
 
     public void deletar(String id) {
         UsuarioJpaEntity entity = usuarioRepository.findByIdAndAtivoTrue(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, USUARIO_NAO_ENCONTRADO));
         entity.setAtivo(false);
         usuarioRepository.save(entity);
     }
