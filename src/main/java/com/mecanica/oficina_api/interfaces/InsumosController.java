@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class InsumosController {
 
     private final InsumosService insumosService;
+    private static final String INSUMO_NAO_ENCONTRADO = "Insumo não encontrado: ";
 
     public InsumosController(InsumosService insumosService) {
         this.insumosService = insumosService;
@@ -52,7 +53,7 @@ public class InsumosController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Insumo encontrado",
             content = @Content(schema = @Schema(implementation = InsumosResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Insumo não encontrado ou inativo",
+        @ApiResponse(responseCode = "404", description = INSUMO_NAO_ENCONTRADO + " ou inativo",
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<InsumosResponse> buscarInsumoPorId(@PathVariable String id) {
@@ -79,7 +80,7 @@ public class InsumosController {
     @Operation(summary = "Alterar insumo", description = "Atualiza os dados de um insumo ativo")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Insumo alterado com sucesso"),
-        @ApiResponse(responseCode = "404", description = "Insumo não encontrado",
+        @ApiResponse(responseCode = "404", description = INSUMO_NAO_ENCONTRADO,
             content = @Content(schema = @Schema())),
         @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
             content = @Content(schema = @Schema()))
@@ -113,7 +114,7 @@ public class InsumosController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Insumo reativado",
             content = @Content(schema = @Schema(implementation = InsumosResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Insumo não encontrado",
+        @ApiResponse(responseCode = "404", description = INSUMO_NAO_ENCONTRADO,
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<InsumosResponse> ativarInsumo(@PathVariable String id) {
@@ -125,7 +126,7 @@ public class InsumosController {
     @Operation(summary = "Desativar insumo", description = "Inativa um insumo do estoque (soft delete)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Insumo desativado com sucesso"),
-        @ApiResponse(responseCode = "404", description = "Insumo não encontrado",
+        @ApiResponse(responseCode = "404", description = INSUMO_NAO_ENCONTRADO,
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<Void> desativarInsumo(@PathVariable String id) {

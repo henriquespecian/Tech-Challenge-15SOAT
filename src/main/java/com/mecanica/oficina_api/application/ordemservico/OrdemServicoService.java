@@ -52,7 +52,13 @@ public class OrdemServicoService {
     private final NotificadorEstoqueBaixo notificadorEstoqueBaixo;
     private final NotificadorCliente notificadorCliente;
     private final StatusServicoSpringDataRepository statusServicoSpringDataRepository;
+    private static final String ORDEM_SERVICO_NAO_ENCONTRADA = "Ordem de serviço não encontrada: ";
+    private static final String INSUMO_NAO_ENCONTRADO = "Insumo não encontrado: ";
+    private static final String VEICULO_NAO_ENCONTRADO = "Veículo não encontrado: ";
+    private static final String CLIENTE_NAO_ENCONTRADO = "Cliente não encontrado: ";
+    private static final String SERVICO_NAO_ENCONTRADO = "Serviço não encontrado: ";
 
+    
     public OrdemServicoService(OrdemServicoSpringDataRepository ordemServicoRepository,
             VeiculoSpringDataRepository veiculoRepository,
             ClienteSpringDataRepository clienteRepository,
@@ -74,11 +80,11 @@ public class OrdemServicoService {
     public OrdemServicoResponse criar(CriarOrdemServicoRequest request) {
         veiculoRepository.findByIdAndAtivoTrue(request.getVeiculoId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Veículo não encontrado: " + request.getVeiculoId()));
+                        VEICULO_NAO_ENCONTRADO + request.getVeiculoId()));
         clienteRepository.findById(request.getClienteId())
                 .filter(c -> c.getAtivo())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Cliente não encontrado: " + request.getClienteId()));
+                        CLIENTE_NAO_ENCONTRADO + request.getClienteId()));
 
         OrdemServico os = OrdemServico.criar(request.getVeiculoId(), request.getClienteId());
 
@@ -215,7 +221,7 @@ public class OrdemServicoService {
 
     public ServicoStatusResponse iniciarServico(String servico_id) {
         var servicoEntity = statusServicoSpringDataRepository.findByIdAndStatus(servico_id, ServicoStatus.AGUARDANDO.toString()).orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.NOT_FOUND, "Servico não encontrado"));
+            new ResponseStatusException(HttpStatus.NOT_FOUND, SERVICO_NAO_ENCONTRADO + servico_id));
 
         var servico = StatusServico.recriar(
             servicoEntity.getId(),
@@ -245,7 +251,7 @@ public class OrdemServicoService {
 
     public ServicoStatusResponse finalizarServico(String servico_id){
         var servicoEntity = statusServicoSpringDataRepository.findByIdAndStatus(servico_id, ServicoStatus.INICIADO.toString()).orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.NOT_FOUND, "Servico não encontrado"));
+            new ResponseStatusException(HttpStatus.NOT_FOUND, SERVICO_NAO_ENCONTRADO));
 
         var servico = StatusServico.recriar(
             servicoEntity.getId(),
@@ -375,7 +381,7 @@ public class OrdemServicoService {
     private OrdemServicoJpaEntity encontrarOuLancar(String id) {
         return ordemServicoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Ordem de serviço não encontrada: " + id));
+                        ORDEM_SERVICO_NAO_ENCONTRADA + id));
     }
 
     private record ItemComOrigem(ItemOrcamento item, Boolean EhInsumo) {}
@@ -387,7 +393,7 @@ public class OrdemServicoService {
             for (var i : request.getInsumos()) {
                 InsumosJpaEntity insumo = insumosRepository.findByIdAndAtivoTrue(i.getInsumoId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                "Insumo não encontrado: " + i.getInsumoId()));
+                                INSUMO_NAO_ENCONTRADO + i.getInsumoId()));
                 itens.add(new ItemComOrigem(
                         new ItemOrcamento(insumo.getId(), null, insumo.getNome(), i.getQuantidade(), insumo.getPrecoUnitario()),
                         true));
@@ -398,7 +404,7 @@ public class OrdemServicoService {
             for (var s : request.getServicos()) {
                 ServicoJpaEntity servico = servicoRepository.findByIdAndAtivoTrue(s.getServicoId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                "Serviço não encontrado: " + s.getServicoId()));
+                                SERVICO_NAO_ENCONTRADO + s.getServicoId()));
                 itens.add(new ItemComOrigem(
                         new ItemOrcamento(null, servico.getId(), servico.getNome(), s.getQuantidade(), servico.getPreco()),
                         false));

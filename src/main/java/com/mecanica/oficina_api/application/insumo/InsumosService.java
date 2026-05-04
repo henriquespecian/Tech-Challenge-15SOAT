@@ -17,6 +17,7 @@ public class InsumosService {
 
   private final InsumosSpringDataRepository insumosSpringDataRepository;
   private final NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+  private static final String INSUMO_NAO_ENCONTRADO = "Insumo não encontrado: ";
 
   public InsumosService(InsumosSpringDataRepository insumosSpringDataRepository,
       NotificadorEstoqueBaixo notificadorEstoqueBaixo) {
@@ -59,7 +60,7 @@ public class InsumosService {
 
   public InsumosResponse buscarPorId(String id) {
     var entity = insumosSpringDataRepository.findByIdAndAtivoTrue(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, INSUMO_NAO_ENCONTRADO));
     return new InsumosResponse(
         entity.getId(),
         entity.getNome(),
@@ -90,7 +91,7 @@ public class InsumosService {
 
   public void atualizar(String id, AlterarInsumosRequest request) {
     var entity = insumosSpringDataRepository.findByIdAndAtivoTrue(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, INSUMO_NAO_ENCONTRADO));
 
     int estoqueAnterior = entity.getEstoqueAtual();
 
@@ -126,7 +127,7 @@ public class InsumosService {
 
   public InsumosResponse ativar(String id) {
     var entity = insumosSpringDataRepository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, INSUMO_NAO_ENCONTRADO));
     entity.setAtivo(true);
     insumosSpringDataRepository.save(entity);
     return new InsumosResponse(entity.getId(), entity.getNome(), entity.getPrecoUnitario(),
@@ -135,7 +136,7 @@ public class InsumosService {
 
   public void deletar(String id) {
     var entity = insumosSpringDataRepository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, INSUMO_NAO_ENCONTRADO));
     entity.setAtivo(false);
     insumosSpringDataRepository.save(entity);
   }
@@ -150,7 +151,7 @@ public class InsumosService {
           "Quantidade deve ser informada e ser um inteiro positivo");
     }
     var entity = insumosSpringDataRepository.findByIdAndAtivoTrue(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, INSUMO_NAO_ENCONTRADO));
     long novoEstoque = (long) entity.getEstoqueAtual() + quantidade;
     if (novoEstoque > Integer.MAX_VALUE) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

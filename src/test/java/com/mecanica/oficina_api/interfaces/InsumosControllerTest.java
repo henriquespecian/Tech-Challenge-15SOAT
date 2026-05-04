@@ -35,6 +35,7 @@ class InsumosControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String INSUMO_NAO_ENCONTRADO = "Insumo não encontrado: ";
 
     @Mock
     private InsumosService insumosService;
@@ -85,7 +86,7 @@ class InsumosControllerTest {
     @Test
     void deveRetornar404QuandoInsumoNaoEncontrado() throws Exception {
         when(insumosService.buscarPorId("inexistente"))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, INSUMO_NAO_ENCONTRADO));
 
         mockMvc.perform(get("/insumos/inexistente"))
                 .andExpect(status().isNotFound());
@@ -122,7 +123,7 @@ class InsumosControllerTest {
     void deveRetornar404AoAlterarInsumoInexistente() throws Exception {
         AlterarInsumosRequest req = new AlterarInsumosRequest(
                 "Óleo", BigDecimal.valueOf(50), 10, 2, "LITRO", null);
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"))
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, INSUMO_NAO_ENCONTRADO))
                 .when(insumosService).atualizar(eq("inexistente"), any(AlterarInsumosRequest.class));
 
         mockMvc.perform(put("/insumos/inexistente")
@@ -166,7 +167,7 @@ class InsumosControllerTest {
 
     @Test
     void deveRetornar404AoDesativarInsumoInexistente() throws Exception {
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"))
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, INSUMO_NAO_ENCONTRADO))
                 .when(insumosService).deletar("inexistente");
 
         mockMvc.perform(delete("/insumos/inexistente"))
