@@ -1,6 +1,7 @@
 # Documento de entrega
 
 ## Nome do grupo
+
 Grupo ABC
 
 ## Participantes e usernames no Discord
@@ -9,7 +10,12 @@ Grupo ABC
 Henrique Specian Leite - henriquespecian (rm374176)
 ```
 
+```
+Gabriel Machado - Peter PLinio (rm370711)
+```
+
 ## Link da documentação
+
 ```
 https://miro.com/app/board/uXjVGrnYnzM=/ (Miro)
 ```
