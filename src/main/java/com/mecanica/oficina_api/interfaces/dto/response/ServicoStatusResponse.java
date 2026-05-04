@@ -1,6 +1,5 @@
 package com.mecanica.oficina_api.interfaces.dto.response;
 
-import com.mecanica.oficina_api.domain.ordemservico.ServicoStatus;
 import java.time.LocalDateTime;
 import lombok.Getter;
 

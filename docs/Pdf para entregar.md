@@ -8,9 +8,6 @@ Grupo ABC
 
 ```
 Henrique Specian Leite - henriquespecian (rm374176)
-```
-
-```
 Gabriel Machado - Peter PLinio (rm370711)
 ```
 

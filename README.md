@@ -78,6 +78,7 @@ Isso remove tudo que existia, reconstrói a imagem e sobe a aplicação com os l
 | Comando | Descrição |
 |---|---|
 | `make start` | Limpa tudo e sobe do zero com logs |
+| `make dev` | Sobe apenas o PostgreSQL (para rodar a aplicação pela IDE) |
 
 ### Sem Make
 
@@ -97,6 +98,26 @@ A documentação interativa (Swagger UI) está disponível em:
 ```
 http://localhost:8080/swagger-ui.html
 ```
+
+## Autenticação
+
+A API usa JWT stateless. O `DevDataLoader` cria automaticamente um usuário ADMIN ao subir em perfil de desenvolvimento:
+
+- **Email:** `admin@email.com`
+- **Senha:** `123456`
+
+Fluxo:
+1. `POST /auth/login` com `{ "email": "...", "senha": "..." }` → retorna `token`
+2. Nos demais requests: header `Authorization: Bearer <token>`
+
+## Perfis de usuário
+
+| Perfil | Acesso |
+|---|---|
+| `ADMIN` | Acesso total — gerencia usuários, serviços, insumos e todas as operações |
+| `ATENDENTE` | Cadastra e consulta clientes/veículos, abre e acompanha ordens de serviço |
+| `MECANICO` | Consulta e executa ordens de serviço, registra peças e serviços realizados |
+| `CLIENTE` | Consulta apenas as próprias ordens de serviço |
 
 ## Testes
 
