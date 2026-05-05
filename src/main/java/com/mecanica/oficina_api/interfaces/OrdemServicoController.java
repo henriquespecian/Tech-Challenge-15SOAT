@@ -96,6 +96,8 @@ public class OrdemServicoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OS finalizada",
                     content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Serviços atrelados à OS não estão FINALIZADOS",
+                content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "409", description = "OS não está EM_EXECUCAO",
                     content = @Content(schema = @Schema()))
     })
@@ -191,7 +193,7 @@ public class OrdemServicoController {
 
     @PatchMapping("/{id}/iniciar-execucao")
     @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
-    @Operation(summary = "Iniciar execução", description = "Transição: AGUARDANDO_APROVACAO → EM_EXECUCAO. Requer orçamento aprovado.")
+    @Operation(summary = "Iniciar execução", description = "Transição: AGUARDANDO_APROVACAO → EM_EXECUCAO. Requer orçamento aprovado. Cria os serviços com status AGUARDANDO")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Execução iniciada",
             content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
@@ -218,6 +220,10 @@ public class OrdemServicoController {
     // --- Serviços ---
     @GetMapping("/{id}/servico/listar")
     @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    @Operation(summary = "Listar todos os serviços atrelados à OS", description = "Mostra todos os serviços atrelados à uma OS e seus status")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Listado com sucesso", content = @Content(schema = @Schema()))
+    })
     public ResponseEntity<List<ServicoStatusResponse>> listarServicos(@PathVariable String id) {
         return ResponseEntity.ok(ordemServicoService.listarServicos(id));
     }
@@ -225,12 +231,22 @@ public class OrdemServicoController {
 
     @PatchMapping("/servico/{servico_id}/iniciar")
     @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    @Operation(summary = "Iniciar um serviço por ID", description = "Altera o status do serviço específicado para: INICIADO")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Serviço iniciado com sucesso", content = @Content(schema = @Schema())),
+        @ApiResponse(responseCode = "404", description = "Serviço não encontrado", content = @Content(schema = @Schema()))
+    })
     public ResponseEntity<ServicoStatusResponse> iniciarServico(@PathVariable String servico_id) {
         return ResponseEntity.ok(ordemServicoService.iniciarServico(servico_id));
     }
 
     @PatchMapping("/servico/{servico_id}/finalizar")
     @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO')")
+    @Operation(summary = "Finalizar um serviço por ID", description = "Altera o status do serviço específicado para: FINALIZADO")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Serviço finalizado com sucesso", content = @Content(schema = @Schema())),
+        @ApiResponse(responseCode = "404", description = "Serviço não encontrado", content = @Content(schema = @Schema()))
+    })
     public ResponseEntity<ServicoStatusResponse> finalizarServico(@PathVariable String servico_id) {
         return ResponseEntity.ok(ordemServicoService.finalizarServico(servico_id));
     }

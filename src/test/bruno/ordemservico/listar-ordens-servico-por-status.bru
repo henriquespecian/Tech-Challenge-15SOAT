@@ -1,0 +1,19 @@
+meta {
+  name: Listar Ordens por Status
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/ordem-servico
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+params:query {
+  status: {{statusOs}}
+}

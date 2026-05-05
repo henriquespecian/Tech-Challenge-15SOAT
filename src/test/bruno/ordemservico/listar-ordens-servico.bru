@@ -1,0 +1,15 @@
+meta {
+  name: Listar Ordens de Servico
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/ordem-servico
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

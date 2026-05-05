@@ -1,0 +1,19 @@
+meta {
+  name: Finalizar Servico da OS
+  type: http
+  seq: 18
+}
+
+patch {
+  url: {{baseUrl}}/ordem-servico/servico/:servicoStatusId/finalizar
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+params:path {
+  servicoStatusId: {{servicoStatusId}}
+}

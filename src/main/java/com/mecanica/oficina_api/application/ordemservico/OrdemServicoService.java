@@ -181,7 +181,11 @@ public class OrdemServicoService {
     }
 
     public OrdemServicoResponse aprovarOrcamento(String id) {
+        OrdemServicoJpaEntity entity = encontrarOuLancar(id);
+
         var response = executarTransicao(id, OrdemServico::aprovarOrcamento);
+        darBaixaInsumos(entity);
+
         return response;
     }
 
@@ -282,7 +286,6 @@ public class OrdemServicoService {
         } catch (IllegalStateException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
-        darBaixaInsumos(entity);
         verificarServicosFinalizados(os.getId());
 
         OrdemServicoJpaEntity salva = salvarOrcamento(entity, os);

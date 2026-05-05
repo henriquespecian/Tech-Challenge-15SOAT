@@ -7,6 +7,7 @@ Grupo ABC
 
 ```
 Henrique Specian Leite - henriquespecian (rm374176)
+Matheus Fuzari - fuzari (RM 372366)
 ```
 
 ## Link da documentação
