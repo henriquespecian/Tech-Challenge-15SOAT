@@ -3,7 +3,6 @@ package com.mecanica.oficina_api.infrastructure.persistence.repository;
 import com.mecanica.oficina_api.infrastructure.persistence.StatusServicoJpaEntity;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StatusServicoSpringDataRepository extends JpaRepository<StatusServicoJpaEntity, String> {

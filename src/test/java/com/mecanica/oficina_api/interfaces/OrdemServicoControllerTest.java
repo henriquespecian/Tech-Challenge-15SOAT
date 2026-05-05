@@ -128,8 +128,6 @@ class OrdemServicoControllerTest {
         when(ordemServicoService.gerarOrcamento(eq("os-1"), any()))
                 .thenReturn(osResponse("os-1", "EM_DIAGNOSTICO", orc));
 
-        GerarOrcamentoRequest req = gerarOrcamentoRequest();
-
         mockMvc.perform(post("/ordem-servico/os-1/orcamento")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(gerarOrcamentoRequest())))

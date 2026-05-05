@@ -848,16 +848,6 @@ class OrdemServicoServiceTest {
         return req;
     }
 
-    private GerarOrcamentoRequest gerarOrcamentoComInsumoRequest() {
-        ItemServicoRequest item = new ItemServicoRequest();
-        item.setServicoId("insumo-1");
-        item.setQuantidade(1);
-        GerarOrcamentoRequest req = new GerarOrcamentoRequest();
-        req.setServicos(List.of(item));
-        req.setObservacoes("obs");
-        return req;
-    }
-
     private OrdemServicoJpaEntity osEntityComOrcamento(String orcStatus, String osStatus) {
         OrdemServicoJpaEntity e = new OrdemServicoJpaEntity();
         e.setId("os-1");

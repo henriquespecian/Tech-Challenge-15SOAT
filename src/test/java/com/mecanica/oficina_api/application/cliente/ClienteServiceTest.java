@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.ClienteSpringDataRepository;
-import com.mecanica.oficina_api.interfaces.dto.request.AlterarClienteRequest;
 import com.mecanica.oficina_api.interfaces.dto.request.CadastrarClienteRequest;
 import com.mecanica.oficina_api.interfaces.dto.response.ConsultarClienteResponse;
 import java.time.LocalDateTime;
@@ -25,10 +24,7 @@ public class ClienteServiceTest {
 
   @InjectMocks
   private ClienteService clienteService;
-
-  private ClienteJpaEntity  clienteEntity;
   private CadastrarClienteRequest cadastrarClienteRequest;
-  private AlterarClienteRequest alterarClienteRequest;
 
   @BeforeEach
   void setUp() {
