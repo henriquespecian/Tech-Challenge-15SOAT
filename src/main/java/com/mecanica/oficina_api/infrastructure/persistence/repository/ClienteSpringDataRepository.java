@@ -1,6 +1,7 @@
 package com.mecanica.oficina_api.infrastructure.persistence.repository;
 
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,4 +18,6 @@ public interface ClienteSpringDataRepository extends JpaRepository<ClienteJpaEnt
     List<ClienteJpaEntity> findAllByAtivoTrue();
 
     ClienteJpaEntity findByAtivo(boolean ativo);
+
+    Collection<Object> findAllByAtivoTrue(Boolean ativo);
 }

@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("servico")
-@Tag(name = "Servico", description = "Catálogo de serviços oferecidos pela oficina")
+@Tag(name = "Serviço", description = "Catálogo de serviços oferecidos pela oficina")
 @SecurityRequirement(name = "bearerAuth")
 public class ServicoController {
 
