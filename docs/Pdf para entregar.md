@@ -4,11 +4,15 @@
 
 Grupo ABC
 
-## Participantes e usernames no Discord
+## Participantes
 
 ```
 Henrique Specian Leite - henriquespecian (rm374176)
-Gabriel Machado - Peter PLinio (rm370711)
+Gabriel Machado - g4abriel_plinio (rm370711)
+Weyler Kleber Venancio Santos - weylersantos (rm372581)
+Romario serafim da Silva - romarioss4143 (rm371940)
+Matheus Fuzari - fuzari (rm372366)
+
 ```
 
 ## Link da documentação
