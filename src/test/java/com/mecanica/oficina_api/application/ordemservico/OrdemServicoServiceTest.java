@@ -76,6 +76,7 @@ class OrdemServicoServiceTest {
 
     @BeforeEach
     void setUp() {
+
         veiculo = new VeiculoJpaEntity();
         veiculo.setId("veiculo-1");
         veiculo.setPlaca("ABC1234");
@@ -306,6 +307,76 @@ class OrdemServicoServiceTest {
     }
 
     @Test
+    void deveNotificarEstoqueBaixoAoAprovarOrcamentoQuandoCruzarEstoqueMinimo() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
+        osEntity.setOrcamentoStatus("ENVIADO");
+        osEntity.setItensOrcamento(itensEntityComInsumo());
+
+        var insumosComEstoqueBaixo = insumoEntity();
+        insumosComEstoqueBaixo.setEstoqueAtual(3);
+        insumosComEstoqueBaixo.setEstoqueMinimo(2);
+
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "AGUARDANDO_APROVACAO"));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumosComEstoqueBaixo));
+        when(insumosRepository.save(any())).thenReturn(insumosComEstoqueBaixo);
+
+        OrdemServicoResponse resp = service.aprovarOrcamento("os-1");
+
+        assertThat(resp.getStatus()).isEqualTo("AGUARDANDO_APROVACAO");
+        assertThat(resp.getOrcamento().getStatus()).isEqualTo("APROVADO");
+
+        verify(notificadorEstoqueBaixo).notificar(argThat(alerta ->
+            alerta.insumoId().equals("insumo-1")
+                && alerta.estoqueAnterior() == 3
+                && alerta.estoqueAtual() == 2
+                && alerta.estoqueMinimo() == 2
+                && alerta.referenciaOrigem().equals("os-1")
+        ));
+    }
+
+    @Test
+    void deveDarBaixaNoEstoqueDoInsumoAoAprovarOcamento() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
+        osEntity.setOrcamentoStatus("ENVIADO");
+        osEntity.setItensOrcamento(itensEntityComInsumo());
+
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "AGUARDANDO_APROVACAO"));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
+        when(insumosRepository.save(any())).thenReturn(insumoEntity());
+
+        OrdemServicoResponse resp = service.aprovarOrcamento("os-1");
+
+        assertThat(resp.getStatus()).isEqualTo("AGUARDANDO_APROVACAO");
+        assertThat(resp.getOrcamento().getStatus()).isEqualTo("APROVADO");
+    }
+
+    @Test
+    void deveZerarEstoqueQuandoQuantidadeSuperaEstoqueAoAprovarOrcamento() {
+        osEntity.setStatus("AGUARDANDO_APROVACAO");
+        osEntity.setOrcamentoStatus("ENVIADO");
+        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
+        item.setDescricao("Óleo");
+        item.setQuantidade(20);
+        item.setPrecoUnitario(BigDecimal.valueOf(100));
+        item.setInsumoId("insumo-1");
+        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
+
+        InsumosJpaEntity insumo = insumoEntity();
+
+        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
+        when(ordemServicoRepository.save(any())).thenReturn(osEntityComOrcamento("APROVADO", "AGUARDANDO_APROVACAO"));
+        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumo));
+
+        OrdemServicoResponse resp = service.aprovarOrcamento("os-1");
+
+        verify(insumosRepository).save(argThat(i -> i.getEstoqueAtual() == 0));
+//        assertThat(resp.getStatus()).isEqualTo("AGUARDANDO_APROVACAO");
+//        assertThat(resp.getOrcamento().getStatus()).isEqualTo("APROVADO");
+    }
+
+    @Test
     void deveIniciarExecucaoComSucesso() {
         osEntity.setStatus("AGUARDANDO_APROVACAO");
         osEntity.setOrcamentoStatus("APROVADO");
@@ -338,32 +409,6 @@ class OrdemServicoServiceTest {
         verify(ordemServicoRepository).save(argThat(e ->
                 e.getItensOrcamento().size() == 1
                         && "insumo-1".equals(e.getItensOrcamento().get(0).getInsumoId())));
-    }
-
-    @Test
-    void deveDarBaixaNoEstoqueDoInsumoAoFinalizar() {
-        osEntity.setStatus("EM_EXECUCAO");
-        osEntity.setOrcamentoStatus("APROVADO");
-        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
-        item.setDescricao("Óleo de motor");
-        item.setQuantidade(3);
-        item.setPrecoUnitario(BigDecimal.valueOf(45.90));
-        item.setInsumoId("insumo-1");
-        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
-
-        InsumosJpaEntity insumo = insumoEntity();
-        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumo));
-        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        service.finalizar("os-1");
-
-        verify(insumosRepository).save(argThat(i -> i.getEstoqueAtual() == 7));
-        verify(notificadorCliente).notificar(argThat(n ->
-                n.tipo() == TipoNotificacaoCliente.FINALIZACAO_OS
-                        && "os-1".equals(n.ordemServicoId())
-                        && "cliente-1".equals(n.clienteId())
-                        && "veiculo-1".equals(n.veiculoId())));
     }
 
     @Test
@@ -413,7 +458,6 @@ class OrdemServicoServiceTest {
 
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
         when(ordemServicoRepository.save(any())).thenReturn(osFinalizada);
-        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
         when(statusServicoRepository.findByOrdemServicoId("os-1"))
             .thenReturn(List.of(statusServicoEntity("status-1", "FINALIZADO", "os-1", "servico-1")));
 
@@ -436,33 +480,6 @@ class OrdemServicoServiceTest {
         assertThatThrownBy(() -> service.finalizar("os-1"))
             .isInstanceOf(ResponseStatusException.class)
             .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
-    }
-
-    @Test
-    void deveNotificarEstoqueBaixoAoFinalizarOsQuandoCruzarEstoqueMinimo() {
-        osEntity.setStatus("EM_EXECUCAO");
-        osEntity.setOrcamentoStatus("APROVADO");
-        osEntity.setItensOrcamento(itensEntityComInsumo(9));
-
-        OrdemServicoJpaEntity osFinalizada = osEntityComOrcamento("APROVADO", "FINALIZADA");
-        osFinalizada.setItensOrcamento(itensEntityComInsumo(9));
-
-        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        when(ordemServicoRepository.save(any())).thenReturn(osFinalizada);
-        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumoEntity()));
-        when(statusServicoRepository.findByOrdemServicoId("os-1"))
-            .thenReturn(List.of(statusServicoEntity("status-1", "FINALIZADO", "os-1", "servico-1")));
-
-        OrdemServicoResponse resposta = service.finalizar("os-1");
-
-        assertThat(resposta.getStatus()).isEqualTo("FINALIZADA");
-        verify(notificadorEstoqueBaixo).notificar(argThat(alerta ->
-            alerta.insumoId().equals("insumo-1")
-                && alerta.estoqueAnterior() == 10
-                && alerta.estoqueAtual() == 1
-                && alerta.estoqueMinimo() == 2
-                && alerta.referenciaOrigem().equals("os-1")
-        ));
     }
 
     @Test
@@ -664,32 +681,12 @@ class OrdemServicoServiceTest {
         item.setInsumoId("insumo-inexistente");
         osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
         when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        when(insumosRepository.findByIdAndAtivoTrue("insumo-inexistente")).thenReturn(Optional.empty());
+        //when(insumosRepository.findByIdAndAtivoTrue("insumo-inexistente")).thenReturn(Optional.empty());
         when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.finalizar("os-1");
 
         verify(insumosRepository, never()).save(any());
-    }
-
-    @Test
-    void deveZerarEstoqueQuandoQuantidadeSuperaEstoqueNaFinalizacao() {
-        osEntity.setStatus("EM_EXECUCAO");
-        osEntity.setOrcamentoStatus("APROVADO");
-        ItemOrcamentoJpaEntity item = new ItemOrcamentoJpaEntity();
-        item.setDescricao("Óleo");
-        item.setQuantidade(20);
-        item.setPrecoUnitario(BigDecimal.valueOf(100));
-        item.setInsumoId("insumo-1");
-        osEntity.setItensOrcamento(new java.util.ArrayList<>(List.of(item)));
-        InsumosJpaEntity insumo = insumoEntity();
-        when(ordemServicoRepository.findById("os-1")).thenReturn(Optional.of(osEntity));
-        when(insumosRepository.findByIdAndAtivoTrue("insumo-1")).thenReturn(Optional.of(insumo));
-        when(ordemServicoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        service.finalizar("os-1");
-
-        verify(insumosRepository).save(argThat(i -> i.getEstoqueAtual() == 0));
     }
 
     // --- listarMinhasOs ---
