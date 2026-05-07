@@ -21,6 +21,11 @@ Matheus Fuzari - fuzari (rm372366)
 https://miro.com/app/board/uXjVGrnYnzM=/ (Miro)
 ```
 
+## Link do vídeo
+```
+https://youtu.be/ErhqqlafBAU
+```
+
 ## Link do repositório
 
 ```

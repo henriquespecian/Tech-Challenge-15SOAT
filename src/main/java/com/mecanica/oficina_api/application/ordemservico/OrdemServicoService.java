@@ -263,7 +263,7 @@ public class OrdemServicoService {
         servico.finalizarServico();
 
         servicoEntity.setStatus(servico.getStatus().toString());
-        servicoEntity.setDataInicio(servico.getDataInicio());
+        servicoEntity.setDataFim(servico.getDataFim());
 
         var servicoResponse = statusServicoSpringDataRepository.save(servicoEntity);
 

@@ -44,7 +44,7 @@ public class ServicoService {
 
         double mediaMinutos = servicosFinalizados.stream().mapToLong(servicoFinalizado ->
             Duration.between(servicoFinalizado.getDataInicio(), servicoFinalizado.getDataFim()).toMinutes()
-        ).average().orElse(0);
+        ).average().orElse(0L);
 
         return TempoMedioServicoResponse.builder()
             .servicoId(id)

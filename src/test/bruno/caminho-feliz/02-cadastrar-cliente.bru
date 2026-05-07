@@ -18,8 +18,12 @@ headers {
 body:json {
   {
     "nome": "João da Silva",
-    "documento": "{{cpf}}",
+    "documento": "885.355.780-05",
     "email": "joao.slva@email.com",
     "telefone": "11988887777"
   }
+}
+
+vars:pre-request {
+  baseUrl: http://localhost:8080
 }
