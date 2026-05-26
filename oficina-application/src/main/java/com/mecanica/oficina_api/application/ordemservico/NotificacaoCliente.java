@@ -1,6 +1,6 @@
 package com.mecanica.oficina_api.application.ordemservico;
 
-import com.mecanica.oficina_api.infrastructure.persistence.OrdemServicoJpaEntity;
+import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 
 /**
  * Carga útil da notificação — campos pensados para template de e-mail futuro.
@@ -11,7 +11,7 @@ public record NotificacaoCliente(
         String clienteId,
         String veiculoId) {
 
-    public static NotificacaoCliente envioOrcamento(OrdemServicoJpaEntity os) {
+    public static NotificacaoCliente envioOrcamento(OrdemServico os) {
         return new NotificacaoCliente(
                 TipoNotificacaoCliente.ENVIO_ORCAMENTO,
                 os.getId(),
@@ -19,7 +19,7 @@ public record NotificacaoCliente(
                 os.getVeiculoId());
     }
 
-    public static NotificacaoCliente finalizacao(OrdemServicoJpaEntity os) {
+    public static NotificacaoCliente finalizacao(OrdemServico os) {
         return new NotificacaoCliente(
                 TipoNotificacaoCliente.FINALIZACAO_OS,
                 os.getId(),

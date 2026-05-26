@@ -5,9 +5,16 @@ import com.mecanica.oficina_api.domain.ordemservico.Orcamento;
 import com.mecanica.oficina_api.domain.ordemservico.OrcamentoStatus;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
+import com.mecanica.oficina_api.application.cliente.gateway.ClienteGateway;
 import com.mecanica.oficina_api.application.insumo.AlertaEstoqueBaixo;
 import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
 import com.mecanica.oficina_api.application.insumo.OrigemNotificacaoEstoque;
+import com.mecanica.oficina_api.application.insumo.gateway.InsumosGateway;
+import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
+import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
+import com.mecanica.oficina_api.application.servico.gateway.ServicoGateway;
+import com.mecanica.oficina_api.application.servico.gateway.StatusServicoGateway;
+import com.mecanica.oficina_api.application.veiculo.gateway.VeiculoGateway;
 import com.mecanica.oficina_api.domain.ordemservico.ServicoStatus;
 import com.mecanica.oficina_api.domain.ordemservico.StatusServico;
 import java.util.Objects;
@@ -19,69 +26,62 @@ import java.util.List;
 
 public class OrdemServicoService {
 
-    private final OrdemServicoSpringDataRepository ordemServicoRepository;
-    private final VeiculoSpringDataRepository veiculoRepository;
-    private final ClienteSpringDataRepository clienteRepository;
-    private final InsumosSpringDataRepository insumosRepository;
-    private final ServicoSpringDataRepository servicoRepository;
+    private final OrdemServicoGateway ordemServicoGateway;
+    private final VeiculoGateway veiculoGateway;
+    private final ClienteGateway clienteGateway;
+    private final InsumosGateway insumosGateway;
+    private final ServicoGateway servicoGateway;
     private final NotificadorEstoqueBaixo notificadorEstoqueBaixo;
     private final NotificadorCliente notificadorCliente;
-    private final StatusServicoSpringDataRepository statusServicoSpringDataRepository;
+    private final StatusServicoGateway statusServicoGateway;
 
-    public OrdemServicoService(OrdemServicoSpringDataRepository ordemServicoRepository,
-            VeiculoSpringDataRepository veiculoRepository,
-            ClienteSpringDataRepository clienteRepository,
-            InsumosSpringDataRepository insumosRepository,
-            ServicoSpringDataRepository servicoRepository,
+    public OrdemServicoService(OrdemServicoGateway ordemServicoGateway,
+            VeiculoGateway veiculoGateway,
+            ClienteGateway clienteGateway,
+            InsumosGateway insumosGateway,
+            ServicoGateway servicoGateway,
             NotificadorEstoqueBaixo notificadorEstoqueBaixo,
             NotificadorCliente notificadorCliente,
-            StatusServicoSpringDataRepository statusServicoSpringDataRepository) {
-        this.ordemServicoRepository = ordemServicoRepository;
-        this.veiculoRepository = veiculoRepository;
-        this.clienteRepository = clienteRepository;
-        this.insumosRepository = insumosRepository;
-        this.servicoRepository = servicoRepository;
+            StatusServicoGateway statusServicoGateway) {
+        this.ordemServicoGateway = ordemServicoGateway;
+        this.veiculoGateway = veiculoGateway;
+        this.clienteGateway = clienteGateway;
+        this.insumosGateway = insumosGateway;
+        this.servicoGateway = servicoGateway;
         this.notificadorEstoqueBaixo = notificadorEstoqueBaixo;
         this.notificadorCliente = notificadorCliente;
-        this.statusServicoSpringDataRepository = statusServicoSpringDataRepository;
+        this.statusServicoGateway = statusServicoGateway;
     }
 
-    public OrdemServicoResponse criar(CriarOrdemServicoRequest request) {
-        veiculoRepository.findByIdAndAtivoTrue(request.getVeiculoId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Veículo não encontrado: " + request.getVeiculoId()));
-        clienteRepository.findById(request.getClienteId())
-                .filter(c -> c.getAtivo())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Cliente não encontrado: " + request.getClienteId()));
+    public OrdemServico criar(String veiculoId, String clienteId) {
+        veiculoGateway.buscar(veiculoId)
+                .orElseThrow(() -> new IllegalArgumentException("Veículo não encontrado: " + veiculoId));
+        clienteGateway.findByIdAtivo(clienteId)
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + clienteId));
 
-        OrdemServico os = OrdemServico.criar(request.getVeiculoId(), request.getClienteId());
+        OrdemServico os = OrdemServico.criar(veiculoId, clienteId);
 
-        OrdemServicoJpaEntity entity = new OrdemServicoJpaEntity();
-        entity.setVeiculoId(os.getVeiculoId());
-        entity.setClienteId(os.getClienteId());
-        entity.setStatus(os.getStatus().name());
-
-        return toResponse(ordemServicoRepository.save(entity));
+        return ordemServicoGateway.cadastrar(veiculoId, clienteId);
     }
 
-    public OrdemServicoResponse buscarPorId(String id) {
+/* 
+    public OrdemServico buscarPorId(String id) {
         return toResponse(encontrarOuLancar(id));
     }
 
-    public List<OrdemServicoResponse> listar(OrdemServicoStatus status) {
+    public List<OrdemServico> listar(OrdemServicoStatus status) {
         var entities = status != null
                 ? ordemServicoRepository.findByStatus(status.name())
                 : ordemServicoRepository.findAll();
         return entities.stream().map(this::toResponse).toList();
     }
 
-    public List<OrdemServicoResponse> listarPorVeiculo(String veiculoId) {
+    public List<OrdemServico> listarPorVeiculo(String veiculoId) {
         return ordemServicoRepository.findByVeiculoId(veiculoId).stream()
                 .map(this::toResponse)
                 .toList();
     }
-
+*/
     public List<MinhaOrdemServicoResponse> listarMinhasOs(OrdemServicoStatus status, String placa) {
         UsuarioPrincipal principal = (UsuarioPrincipal)
                 SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -94,7 +94,7 @@ public class OrdemServicoService {
         }
 
         if (placa != null && !placa.isBlank()) {
-            String veiculoIdFiltro = veiculoRepository.findByPlacaIgnoreCaseAndAtivoTrue(placa)
+            String veiculoIdFiltro = veiculoGateway.findByPlacaIgnoreCaseAndAtivoTrue(placa)
                     .map(VeiculoJpaEntity::getId).orElse(null);
             if (veiculoIdFiltro == null) return List.of();
             final String vid = veiculoIdFiltro;
@@ -102,7 +102,7 @@ public class OrdemServicoService {
         }
 
         return osList.stream().map(os -> {
-            VeiculoJpaEntity v = veiculoRepository.findById(os.getVeiculoId()).orElse(null);
+            VeiculoJpaEntity v = veiculoGateway.findById(os.getVeiculoId()).orElse(null);
             MinhaOrdemServicoResponse.VeiculoResumo vr = v == null ? null
                     : new MinhaOrdemServicoResponse.VeiculoResumo(
                             v.getId(), v.getPlaca(), v.getMarca(), v.getModelo(), v.getAno(), v.getCor());
@@ -110,11 +110,11 @@ public class OrdemServicoService {
         }).toList();
     }
 
-    public OrdemServicoResponse iniciarDiagnostico(String id) {
+    public OrdemServico iniciarDiagnostico(String id) {
         return executarTransicao(id, OrdemServico::iniciarDiagnostico);
     }
 
-    public OrdemServicoResponse gerarOrcamento(String id, GerarOrcamentoRequest request) {
+    public OrdemServico gerarOrcamento(String id, GerarOrcamentoRequest request) {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
         OrdemServico os = toDomain(entity);
         List<ItemComOrigem> itensComOrigem = toItensComOrigem(request);
@@ -126,7 +126,7 @@ public class OrdemServicoService {
         return toResponse(salvarOrcamento(entity, os, itensComOrigem));
     }
 
-    public OrdemServicoResponse atualizarOrcamento(String id, GerarOrcamentoRequest request) {
+    public OrdemServico atualizarOrcamento(String id, GerarOrcamentoRequest request) {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
         OrdemServico os = toDomain(entity);
         List<ItemComOrigem> itensComOrigem = toItensComOrigem(request);
@@ -138,7 +138,7 @@ public class OrdemServicoService {
         return toResponse(salvarOrcamento(entity, os, itensComOrigem));
     }
 
-    public OrdemServicoResponse enviarOrcamento(String id) {
+    public OrdemServico enviarOrcamento(String id) {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
         OrdemServico os = toDomain(entity);
         try {
@@ -151,11 +151,11 @@ public class OrdemServicoService {
         return toResponse(salva);
     }
 
-    public OrdemServicoResponse aguardarOrcamento(String id) {
+    public OrdemServico aguardarOrcamento(String id) {
         return executarTransicao(id, OrdemServico::aguardarOrcamento);
     }
 
-    public OrdemServicoResponse aprovarOrcamento(String id) {
+    public OrdemServico aprovarOrcamento(String id) {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
 
         var response = executarTransicao(id, OrdemServico::aprovarOrcamento);
@@ -164,7 +164,7 @@ public class OrdemServicoService {
         return response;
     }
 
-    public OrdemServicoResponse iniciarExecucao(String id) {
+    public OrdemServico iniciarExecucao(String id) {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
         OrdemServico os = toDomain(entity);
 
@@ -172,7 +172,7 @@ public class OrdemServicoService {
         return executarTransicao(id, OrdemServico::iniciarExecucao);
     }
 
-    public OrdemServicoResponse negarOrcamento(String id) {
+    public OrdemServico negarOrcamento(String id) {
         return executarTransicao(id, OrdemServico::negarOrcamento);
     }
 
@@ -313,7 +313,7 @@ public class OrdemServicoService {
         return statusServicoSpringDataRepository.saveAll(servicoEntity);
     }
 
-    private OrdemServicoResponse executarTransicao(String id, java.util.function.Consumer<OrdemServico> acao) {
+    private OrdemServico executarTransicao(String id, java.util.function.Consumer<OrdemServico> acao) {
         OrdemServicoJpaEntity entity = encontrarOuLancar(id);
         OrdemServico os = toDomain(entity);
         try {
@@ -350,10 +350,9 @@ public class OrdemServicoService {
         }
     }
 
-    private OrdemServicoJpaEntity encontrarOuLancar(String id) {
-        return ordemServicoRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Ordem de serviço não encontrada: " + id));
+    private OrdemServico encontrarOuLancar(String id) {
+        return ordemServicoGateway.buscar(id)
+                .orElseThrow(() -> new IllegalStateException("Ordem de serviço não encontrada: " + id));
     }
 
     private record ItemComOrigem(ItemOrcamento item, Boolean EhInsumo) {}

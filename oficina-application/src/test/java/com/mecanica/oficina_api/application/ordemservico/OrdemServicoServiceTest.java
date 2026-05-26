@@ -1,6 +1,7 @@
 package com.mecanica.oficina_api.application.ordemservico;
 
 import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
+import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;

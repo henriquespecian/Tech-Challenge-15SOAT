@@ -1,7 +1,8 @@
 package com.mecanica.oficina_api.adapters.notification;
 
 import com.mecanica.oficina_api.application.ordemservico.NotificacaoCliente;
-import com.mecanica.oficina_api.application.ordemservico.NotificadorCliente;
+import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
