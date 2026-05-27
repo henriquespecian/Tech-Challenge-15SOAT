@@ -53,7 +53,7 @@ public class Insumos {
     this.precoUnitario = precoUnitario;
   }
 
-  private void setEstoqueAtual(Integer estoqueAtual) {
+  public void setEstoqueAtual(Integer estoqueAtual) {
     if(Objects.isNull(estoqueAtual) || estoqueAtual < 0) {
       throw new IllegalArgumentException("Estoque Atual deve ser um número inteiro positivo");
     }

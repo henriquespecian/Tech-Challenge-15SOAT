@@ -1,5 +1,6 @@
 package com.mecanica.oficina_api.application.ordemservico;
 
+import com.mecanica.oficina_api.domain.insumo.Insumos;
 import com.mecanica.oficina_api.domain.ordemservico.ItemOrcamento;
 import com.mecanica.oficina_api.domain.ordemservico.Orcamento;
 import com.mecanica.oficina_api.domain.ordemservico.OrcamentoStatus;
@@ -12,6 +13,7 @@ import com.mecanica.oficina_api.application.insumo.OrigemNotificacaoEstoque;
 import com.mecanica.oficina_api.application.insumo.gateway.InsumosGateway;
 import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
+import com.mecanica.oficina_api.application.ordemservico.output.MinhaOrdemServicoOutput;
 import com.mecanica.oficina_api.application.servico.gateway.ServicoGateway;
 import com.mecanica.oficina_api.application.servico.gateway.StatusServicoGateway;
 import com.mecanica.oficina_api.application.veiculo.gateway.VeiculoGateway;
@@ -82,32 +84,21 @@ public class OrdemServicoService {
                 .toList();
     }
 */
-    public List<MinhaOrdemServicoResponse> listarMinhasOs(OrdemServicoStatus status, String placa) {
-        UsuarioPrincipal principal = (UsuarioPrincipal)
-                SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String clienteId = principal.clienteId();
+    public List<MinhaOrdemServicoOutput> listarMinhasOs(String clienteId, OrdemServicoStatus status, String placa) {
 
-        List<OrdemServicoJpaEntity> osList = ordemServicoRepository.findByClienteId(clienteId);
-
+        List<MinhaOrdemServicoOutput> osList = ordemServicoGateway.buscarPorCliente(clienteId);
+        
         if (status != null) {
-            osList = osList.stream().filter(os -> os.getStatus().equals(status.name())).toList();
+            osList = osList.stream()
+                .filter(os -> os.getStatus().equals(status.name()))
+                .toList();
         }
 
         if (placa != null && !placa.isBlank()) {
-            String veiculoIdFiltro = veiculoGateway.findByPlacaIgnoreCaseAndAtivoTrue(placa)
-                    .map(VeiculoJpaEntity::getId).orElse(null);
-            if (veiculoIdFiltro == null) return List.of();
-            final String vid = veiculoIdFiltro;
-            osList = osList.stream().filter(os -> os.getVeiculoId().equals(vid)).toList();
+            osList = osList.stream().filter(os -> os.getPlaca().equals(placa)).toList();
         }
 
-        return osList.stream().map(os -> {
-            VeiculoJpaEntity v = veiculoGateway.findById(os.getVeiculoId()).orElse(null);
-            MinhaOrdemServicoResponse.VeiculoResumo vr = v == null ? null
-                    : new MinhaOrdemServicoResponse.VeiculoResumo(
-                            v.getId(), v.getPlaca(), v.getMarca(), v.getModelo(), v.getAno(), v.getCor());
-            return new MinhaOrdemServicoResponse(os.getId(), os.getStatus(), os.getOrcamentoStatus(), vr);
-        }).toList();
+        return osList;
     }
 
     public OrdemServico iniciarDiagnostico(String id) {
@@ -115,8 +106,7 @@ public class OrdemServicoService {
     }
 
     public OrdemServico gerarOrcamento(String id, GerarOrcamentoRequest request) {
-        OrdemServicoJpaEntity entity = encontrarOuLancar(id);
-        OrdemServico os = toDomain(entity);
+        OrdemServico entity = encontrarOuLancar(id);
         List<ItemComOrigem> itensComOrigem = toItensComOrigem(request);
         try {
             os.gerarOrcamento(itensComOrigem.stream().map(ItemComOrigem::item).toList(), request.getObservacoes());
@@ -156,7 +146,7 @@ public class OrdemServicoService {
     }
 
     public OrdemServico aprovarOrcamento(String id) {
-        OrdemServicoJpaEntity entity = encontrarOuLancar(id);
+        OrdemServico entity = encontrarOuLancar(id);
 
         var response = executarTransicao(id, OrdemServico::aprovarOrcamento);
         darBaixaInsumos(entity);
@@ -165,8 +155,7 @@ public class OrdemServicoService {
     }
 
     public OrdemServico iniciarExecucao(String id) {
-        OrdemServicoJpaEntity entity = encontrarOuLancar(id);
-        OrdemServico os = toDomain(entity);
+        OrdemServico os = encontrarOuLancar(id);
 
         criarStatusIndividuaisPorServico(os.getOrcamento().getItens(), os.getId());
         return executarTransicao(id, OrdemServico::iniciarExecucao);
@@ -289,7 +278,7 @@ public class OrdemServicoService {
         }
     }
 
-    private List<StatusServicoJpaEntity> criarStatusIndividuaisPorServico(List<ItemOrcamento> itemOrcamentoList, String ordemServicoId) {
+    private List<StatusServico> criarStatusIndividuaisPorServico(List<ItemOrcamento> itemOrcamentoList, String ordemServicoId) {
         List<ItemOrcamento> itensOrcamento = itemOrcamentoList;
         List<StatusServico> statusServicoList = new ArrayList<>();
         itensOrcamento.forEach(item -> {
@@ -299,53 +288,53 @@ public class OrdemServicoService {
             }
         });
 
-        List<StatusServicoJpaEntity> servicoEntity = statusServicoList.stream().map(servico -> {
-            StatusServicoJpaEntity servicoJpaEntity = new StatusServicoJpaEntity();
-            servicoJpaEntity.setServicoId(servico.getServicoId());
-            servicoJpaEntity.setOrdemServicoId(servico.getOrdemServicoId());
-            servicoJpaEntity.setStatus(servico.getStatus().toString());
-            servicoJpaEntity.setDataFim(servico.getDataInicio());
-            servicoJpaEntity.setDataFim(servico.getDataFim());
-
-            return servicoJpaEntity;
-        }).toList();
-
-        return statusServicoSpringDataRepository.saveAll(servicoEntity);
+       return statusServicoGateway.salvarLista(statusServicoList);
     }
 
     private OrdemServico executarTransicao(String id, java.util.function.Consumer<OrdemServico> acao) {
-        OrdemServicoJpaEntity entity = encontrarOuLancar(id);
-        OrdemServico os = toDomain(entity);
+        OrdemServico os = encontrarOuLancar(id);
         try {
             acao.accept(os);
         } catch (IllegalStateException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            throw new IllegalArgumentException(e.getMessage());
         }
         return toResponse(salvarOrcamento(entity, os));
     }
 
-    private void darBaixaInsumos(OrdemServicoJpaEntity entity) {
-        for (ItemOrcamentoJpaEntity item : entity.getItensOrcamento()) {
-            if (item.getInsumoId() == null) continue;
-            InsumosJpaEntity insumoEntity = insumosRepository.findByIdAndAtivoTrue(item.getInsumoId())
-                    .orElse(null);
-            if (insumoEntity == null) continue;
-            int estoqueAnterior = insumoEntity.getEstoqueAtual();
-            int estoqueMinimoAnterior = insumoEntity.getEstoqueMinimo();
-            int novoEstoque = insumoEntity.getEstoqueAtual() - item.getQuantidade();
-            if (novoEstoque < 0) novoEstoque = 0;
-            insumoEntity.setEstoqueAtual(novoEstoque);
-            insumosRepository.save(insumoEntity);
-            if (AlertaEstoqueBaixo.deveEmitirAlerta(
-                    estoqueAnterior, estoqueMinimoAnterior, novoEstoque, insumoEntity.getEstoqueMinimo())) {
+    private void darBaixaInsumos(OrdemServico ordemServico) {
+        for (ItemOrcamento item : ordemServico.getOrcamento().getItens()) {
+
+            if (item.getInsumoId() == null) {
+                continue;
+            }
+                
+            Insumos insumo = insumosGateway.buscar(item.getInsumoId()).orElse(null);
+
+            if (insumo == null) {
+                continue;
+            }
+
+            //Calcula o estoque
+            int estoqueAnterior = insumo.getEstoqueAtual();
+            int estoqueMinimoAnterior = insumo.getEstoqueMinimo();
+            int novoEstoque = insumo.getEstoqueAtual() - item.getQuantidade();
+            
+            if (novoEstoque < 0) {
+                throw new IllegalStateException("Estoque insuficiente para o insumo: " + insumo.getNome());
+            } 
+
+            insumo.setEstoqueAtual(novoEstoque);
+            insumosGateway.alterar(insumo.getId(), insumo);
+
+            if (AlertaEstoqueBaixo.deveEmitirAlerta(estoqueAnterior, estoqueMinimoAnterior, novoEstoque, insumo.getEstoqueMinimo())) {
                 notificadorEstoqueBaixo.notificar(new AlertaEstoqueBaixo(
-                        insumoEntity.getId(),
-                        insumoEntity.getNome(),
+                        insumo.getId(),
+                        insumo.getNome(),
                         estoqueAnterior,
                         novoEstoque,
-                        insumoEntity.getEstoqueMinimo(),
+                        insumo.getEstoqueMinimo(),
                         OrigemNotificacaoEstoque.BAIXA_ORDEM_SERVICO,
-                        entity.getId()));
+                        insumo.getId()));
             }
         }
     }
