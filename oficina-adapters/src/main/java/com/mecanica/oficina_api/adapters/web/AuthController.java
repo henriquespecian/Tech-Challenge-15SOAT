@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mecanica.oficina_api.adapters.persistence.repository.UsuarioSpringDataRepository;
+import com.mecanica.oficina_api.adapters.security.JwtService;
 import com.mecanica.oficina_api.adapters.web.dto.request.LoginRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.LoginResponse;
 

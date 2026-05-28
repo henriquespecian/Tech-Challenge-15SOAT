@@ -5,6 +5,9 @@ import com.mecanica.oficina_api.application.cliente.gateway.ClienteGateway;
 import com.mecanica.oficina_api.application.insumo.InsumosService;
 import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
 import com.mecanica.oficina_api.application.insumo.gateway.InsumosGateway;
+import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
+import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
+import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
 import com.mecanica.oficina_api.application.servico.ServicoService;
 import com.mecanica.oficina_api.application.servico.gateway.ServicoGateway;
 import com.mecanica.oficina_api.application.servico.gateway.StatusServicoGateway;
@@ -42,5 +45,18 @@ public class ApplicationConfig {
     @Bean
     VeiculoService veiculoService(VeiculoGateway veiculoGateway, ClienteGateway clienteGateway) {
         return new VeiculoService(veiculoGateway, clienteGateway);
+    }
+
+    @Bean
+    OrdemServicoService ordemServicoService(OrdemServicoGateway ordemServicoGateway,
+            VeiculoGateway veiculoGateway,
+            ClienteGateway clienteGateway,
+            InsumosGateway insumosGateway,
+            ServicoGateway servicoGateway,
+            NotificadorEstoqueBaixo notificadorEstoqueBaixo,
+            NotificadorCliente notificadorCliente,
+            StatusServicoGateway statusServicoGateway) {
+        return new OrdemServicoService(ordemServicoGateway, veiculoGateway, clienteGateway, insumosGateway,
+                servicoGateway, notificadorEstoqueBaixo, notificadorCliente, statusServicoGateway);
     }
 }

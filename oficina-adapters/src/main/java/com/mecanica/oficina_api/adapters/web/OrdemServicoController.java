@@ -1,11 +1,18 @@
 package com.mecanica.oficina_api.adapters.web;
 
 import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
+import com.mecanica.oficina_api.application.ordemservico.input.GerarOrcamentoInput;
+import com.mecanica.oficina_api.domain.ordemservico.ItemOrcamento;
+import com.mecanica.oficina_api.domain.ordemservico.Orcamento;
+import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
-import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
-import com.mecanica.oficina_api.interfaces.dto.response.OrdemServicoResponse;
-import com.mecanica.oficina_api.interfaces.dto.response.ServicoStatusResponse;
+import com.mecanica.oficina_api.domain.ordemservico.StatusServico;
+import com.mecanica.oficina_api.adapters.web.dto.request.CriarOrdemServicoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.GerarOrcamentoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.response.ItemOrcamentoResponse;
+import com.mecanica.oficina_api.adapters.web.dto.response.OrcamentoResponse;
+import com.mecanica.oficina_api.adapters.web.dto.response.OrdemServicoResponse;
+import com.mecanica.oficina_api.adapters.web.dto.response.ServicoStatusResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,7 +45,7 @@ public class OrdemServicoController {
     @ApiResponse(responseCode = "200", description = "Lista de OSs")
     public ResponseEntity<List<OrdemServicoResponse>> listar(
         @RequestParam(required = false) OrdemServicoStatus status) {
-        return ResponseEntity.ok(ordemServicoService.listar(status));
+        return ResponseEntity.ok(ordemServicoService.listar(status).stream().map(this::toResponse).toList());
     }
 
     @PostMapping
@@ -51,7 +58,8 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> criar(@RequestBody CriarOrdemServicoRequest request) {
-        return ResponseEntity.status(201).body(ordemServicoService.criar(request));
+        OrdemServico os = ordemServicoService.criar(request.getVeiculoId(), request.getClienteId());
+        return ResponseEntity.status(201).body(toResponse(os));
     }
 
     @GetMapping("/{id}")
@@ -64,7 +72,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> buscarPorId(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.buscarPorId(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.buscarPorId(id)));
     }
 
     @GetMapping("/veiculo/{veiculoId}")
@@ -72,7 +80,7 @@ public class OrdemServicoController {
     @Operation(summary = "Listar OSs por veículo")
     @ApiResponse(responseCode = "200", description = "Lista de OSs do veículo")
     public ResponseEntity<List<OrdemServicoResponse>> listarPorVeiculo(@PathVariable String veiculoId) {
-        return ResponseEntity.ok(ordemServicoService.listarPorVeiculo(veiculoId));
+        return ResponseEntity.ok(ordemServicoService.listarPorVeiculo(veiculoId).stream().map(this::toResponse).toList());
     }
 
     // --- Transições de status da OS ---
@@ -87,7 +95,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> iniciarDiagnostico(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.iniciarDiagnostico(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.iniciarDiagnostico(id)));
     }
 
     @PatchMapping("/{id}/finalizar")
@@ -102,7 +110,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> finalizar(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.finalizar(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.finalizar(id)));
     }
 
     @PatchMapping("/{id}/entregar")
@@ -115,7 +123,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> entregar(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.entregar(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.entregar(id)));
     }
 
     // --- Orçamento ---
@@ -135,7 +143,7 @@ public class OrdemServicoController {
     })
     public ResponseEntity<OrdemServicoResponse> gerarOrcamento(@PathVariable String id,
                                                                 @RequestBody GerarOrcamentoRequest request) {
-        return ResponseEntity.ok(ordemServicoService.gerarOrcamento(id, request));
+        return ResponseEntity.ok(toResponse(ordemServicoService.gerarOrcamento(id, toInput(request))));
     }
 
     @PutMapping("/{id}/orcamento")
@@ -149,7 +157,7 @@ public class OrdemServicoController {
     })
     public ResponseEntity<OrdemServicoResponse> atualizarOrcamento(@PathVariable String id,
                                                                     @RequestBody GerarOrcamentoRequest request) {
-        return ResponseEntity.ok(ordemServicoService.atualizarOrcamento(id, request));
+        return ResponseEntity.ok(toResponse(ordemServicoService.atualizarOrcamento(id, toInput(request))));
     }
 
     @PatchMapping("/{id}/orcamento/enviar")
@@ -162,7 +170,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> enviarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.enviarOrcamento(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.enviarOrcamento(id)));
     }
 
     @PatchMapping("/{id}/orcamento/aguardar")
@@ -175,7 +183,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> aguardarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.aguardarOrcamento(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.aguardarOrcamento(id)));
     }
 
     @PatchMapping("/{id}/orcamento/aprovar")
@@ -188,7 +196,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> aprovarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.aprovarOrcamento(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.aprovarOrcamento(id)));
     }
 
     @PatchMapping("/{id}/iniciar-execucao")
@@ -201,7 +209,7 @@ public class OrdemServicoController {
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> iniciarExecucao(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.iniciarExecucao(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.iniciarExecucao(id)));
     }
 
     @PatchMapping("/{id}/orcamento/negar")
@@ -214,7 +222,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> negarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.negarOrcamento(id));
+        return ResponseEntity.ok(toResponse(ordemServicoService.negarOrcamento(id)));
     }
 
     // --- Serviços ---
@@ -225,7 +233,7 @@ public class OrdemServicoController {
         @ApiResponse(responseCode = "200", description = "Listado com sucesso", content = @Content(schema = @Schema()))
     })
     public ResponseEntity<List<ServicoStatusResponse>> listarServicos(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.listarServicos(id));
+        return ResponseEntity.ok(ordemServicoService.listarServicos(id).stream().map(this::toServicoStatusResponse).toList());
     }
 
 
@@ -237,7 +245,7 @@ public class OrdemServicoController {
         @ApiResponse(responseCode = "404", description = "Serviço não encontrado", content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ServicoStatusResponse> iniciarServico(@PathVariable String servico_id) {
-        return ResponseEntity.ok(ordemServicoService.iniciarServico(servico_id));
+        return ResponseEntity.ok(toServicoStatusResponse(ordemServicoService.iniciarServico(servico_id)));
     }
 
     @PatchMapping("/servico/{servico_id}/finalizar")
@@ -248,7 +256,43 @@ public class OrdemServicoController {
         @ApiResponse(responseCode = "404", description = "Serviço não encontrado", content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ServicoStatusResponse> finalizarServico(@PathVariable String servico_id) {
-        return ResponseEntity.ok(ordemServicoService.finalizarServico(servico_id));
+        return ResponseEntity.ok(toServicoStatusResponse(ordemServicoService.finalizarServico(servico_id)));
+    }
+
+    // --- mapeamento domínio → response/input ---
+
+    private OrdemServicoResponse toResponse(OrdemServico os) {
+        OrcamentoResponse orcamento = os.getOrcamento() != null ? toOrcamentoResponse(os.getOrcamento()) : null;
+        return new OrdemServicoResponse(os.getId(), os.getVeiculoId(), os.getClienteId(),
+                os.getStatus().name(), os.getValorFinal(), os.getDataFinal(), orcamento);
+    }
+
+    private OrcamentoResponse toOrcamentoResponse(Orcamento orc) {
+        List<ItemOrcamentoResponse> itens = orc.getItens().stream().map(this::toItemResponse).toList();
+        return new OrcamentoResponse(orc.getStatus().name(), itens, orc.getValorTotal(),
+                orc.getObservacoes(), orc.getRespondidoEm());
+    }
+
+    private ItemOrcamentoResponse toItemResponse(ItemOrcamento i) {
+        return new ItemOrcamentoResponse(i.getInsumoId(), i.getServicoId(), i.getDescricao(),
+                i.getQuantidade(), i.getPrecoUnitario(), i.getValorTotal());
+    }
+
+    private ServicoStatusResponse toServicoStatusResponse(StatusServico s) {
+        return new ServicoStatusResponse(s.getId(), s.getStatus().name(), s.getOrdemServicoId(),
+                s.getServicoId(), s.getDataInicio(), s.getDataFim());
+    }
+
+    private GerarOrcamentoInput toInput(GerarOrcamentoRequest request) {
+        List<GerarOrcamentoInput.ItemInsumoInput> insumos = request.getInsumos() == null ? List.of()
+                : request.getInsumos().stream()
+                        .map(i -> new GerarOrcamentoInput.ItemInsumoInput(i.getInsumoId(), i.getQuantidade()))
+                        .toList();
+        List<GerarOrcamentoInput.ItemServicoInput> servicos = request.getServicos() == null ? List.of()
+                : request.getServicos().stream()
+                        .map(s -> new GerarOrcamentoInput.ItemServicoInput(s.getServicoId(), s.getQuantidade()))
+                        .toList();
+        return new GerarOrcamentoInput(insumos, servicos, request.getObservacoes());
     }
 
 }
