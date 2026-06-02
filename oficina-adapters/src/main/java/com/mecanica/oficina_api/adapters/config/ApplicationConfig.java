@@ -1,7 +1,11 @@
 package com.mecanica.oficina_api.adapters.config;
 
-import com.mecanica.oficina_api.application.cliente.ClienteService;
 import com.mecanica.oficina_api.application.cliente.gateway.ClienteGateway;
+import com.mecanica.oficina_api.application.cliente.usecase.AlterarClienteUseCase;
+import com.mecanica.oficina_api.application.cliente.usecase.CadastrarClienteUseCase;
+import com.mecanica.oficina_api.application.cliente.usecase.ConsultarClienteUseCase;
+import com.mecanica.oficina_api.application.cliente.usecase.DeletarClienteUseCase;
+import com.mecanica.oficina_api.application.cliente.usecase.ListarClientesUseCase;
 import com.mecanica.oficina_api.application.insumo.InsumosService;
 import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
 import com.mecanica.oficina_api.application.insumo.gateway.InsumosGateway;
@@ -22,11 +26,29 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ApplicationConfig {
 
+    /* Cliente */
     @Bean
-    ClienteService clienteService(ClienteGateway gateway) {
-        return new ClienteService(gateway);
+    CadastrarClienteUseCase cadastrarClienteUseCase(ClienteGateway gateway) {
+        return new CadastrarClienteUseCase(gateway);
+    }
+    @Bean
+    ConsultarClienteUseCase consultarClienteUseCase(ClienteGateway gateway) {
+        return new ConsultarClienteUseCase(gateway);
+    }
+    @Bean
+    ListarClientesUseCase listarClientesUseCase(ClienteGateway gateway) {
+        return new ListarClientesUseCase(gateway);
+    }
+    @Bean
+    AlterarClienteUseCase alterarClienteUseCase(ClienteGateway gateway) {
+        return new AlterarClienteUseCase(gateway);
+    }
+    @Bean
+    DeletarClienteUseCase deletarClienteUseCase(ClienteGateway gateway) {
+        return new DeletarClienteUseCase(gateway);
     }
 
+    /* Insumos */
     @Bean
     InsumosService insumosService(InsumosGateway insumosgateway, NotificadorEstoqueBaixo notificador ) {
         return new InsumosService(insumosgateway, notificador);

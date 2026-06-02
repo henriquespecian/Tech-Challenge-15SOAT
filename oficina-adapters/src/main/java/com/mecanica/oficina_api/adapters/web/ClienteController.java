@@ -3,7 +3,11 @@ package com.mecanica.oficina_api.adapters.web;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarClienteRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarClienteRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.ConsultarClienteResponse;
-import com.mecanica.oficina_api.application.cliente.ClienteService;
+import com.mecanica.oficina_api.application.cliente.usecase.AlterarClienteUseCase;
+import com.mecanica.oficina_api.application.cliente.usecase.CadastrarClienteUseCase;
+import com.mecanica.oficina_api.application.cliente.usecase.ConsultarClienteUseCase;
+import com.mecanica.oficina_api.application.cliente.usecase.DeletarClienteUseCase;
+import com.mecanica.oficina_api.application.cliente.usecase.ListarClientesUseCase;
 import com.mecanica.oficina_api.domain.cliente.Cliente;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,10 +29,22 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class ClienteController {
 
-    private final ClienteService clienteService;
+    private final CadastrarClienteUseCase cadastrarClienteUseCase;
+    private final ConsultarClienteUseCase consultarClienteUseCase;
+    private final ListarClientesUseCase listarClientesUseCase;
+    private final AlterarClienteUseCase alterarClienteUseCase;
+    private final DeletarClienteUseCase deletarClienteUseCase;
 
-    public ClienteController(ClienteService clienteService) {
-        this.clienteService = clienteService;
+    public ClienteController(CadastrarClienteUseCase cadastrarClienteUseCase,
+                             ConsultarClienteUseCase consultarClienteUseCase,
+                             ListarClientesUseCase listarClientesUseCase,
+                             AlterarClienteUseCase alterarClienteUseCase,
+                             DeletarClienteUseCase deletarClienteUseCase) {
+        this.cadastrarClienteUseCase = cadastrarClienteUseCase;
+        this.consultarClienteUseCase = consultarClienteUseCase;
+        this.listarClientesUseCase = listarClientesUseCase;
+        this.alterarClienteUseCase = alterarClienteUseCase;
+        this.deletarClienteUseCase = deletarClienteUseCase;
     }
 
     @PostMapping
@@ -41,7 +57,7 @@ public class ClienteController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ConsultarClienteResponse> cadastrar(@RequestBody CadastrarClienteRequest request) {
-    Cliente cliente = clienteService.cadastrar(
+    Cliente cliente = cadastrarClienteUseCase.executar(
         request.getNome(), request.getDocumento(), request.getEmail(), request.getTelefone()
     );
     return ResponseEntity.status(201).body(toResponse(cliente));
@@ -53,7 +69,7 @@ public class ClienteController {
         description = "Retorna todos os clientes ativos cadastrados na oficina")
     @ApiResponse(responseCode = "200", description = "Lista de clientes retornada com sucesso")
     public ResponseEntity<List<ConsultarClienteResponse>> listar() {
-        List<Cliente> clientes = clienteService.listar();
+        List<Cliente> clientes = listarClientesUseCase.executar();
         return ResponseEntity.ok(clientes.stream().map(this::toResponse).toList());
     }
 
@@ -67,7 +83,7 @@ public class ClienteController {
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ConsultarClienteResponse> consultar(@PathVariable String documento) {
-        return clienteService.consultar(documento)
+        return consultarClienteUseCase.executar(documento)
             .map(cliente -> ResponseEntity.status(200).body(toResponse(cliente)))
             .orElseGet(() -> ResponseEntity.status(404).build());
     }
@@ -81,7 +97,7 @@ public class ClienteController {
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<Void> alterar(@PathVariable String documento, @RequestBody AlterarClienteRequest request) {
-        clienteService.alterar(documento, request.getNome(), request.getEmail(), request.getTelefone());
+        alterarClienteUseCase.executar(documento, request.getNome(), request.getEmail(), request.getTelefone());
         return ResponseEntity.status(204).build();
     }
 
@@ -92,7 +108,7 @@ public class ClienteController {
         @ApiResponse(responseCode = "204", description = "Cliente desativado com sucesso")
     })
     public ResponseEntity<Void> deletar(@PathVariable String documento) {
-        clienteService.deletar(documento);
+        deletarClienteUseCase.executar(documento);
         return ResponseEntity.status(204).build();
     }
 
