@@ -12,9 +12,15 @@ import com.mecanica.oficina_api.application.insumo.gateway.InsumosGateway;
 import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
 import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
-import com.mecanica.oficina_api.application.servico.ServicoService;
 import com.mecanica.oficina_api.application.servico.gateway.ServicoGateway;
 import com.mecanica.oficina_api.application.servico.gateway.StatusServicoGateway;
+import com.mecanica.oficina_api.application.servico.usecase.AlterarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.AtivarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.CadastrarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.ConsultarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.ConsultarTempoMedioUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.InativarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.ListarServicosUseCase;
 import com.mecanica.oficina_api.application.usuario.PasswordEncoder;
 import com.mecanica.oficina_api.application.usuario.UsuarioService;
 import com.mecanica.oficina_api.application.usuario.gateway.UsuarioGateway;
@@ -54,9 +60,34 @@ public class ApplicationConfig {
         return new InsumosService(insumosgateway, notificador);
     }
 
+    /* Serviço */
     @Bean
-    ServicoService servicoService(ServicoGateway servicoGateway, StatusServicoGateway statusServicoGateway) {
-        return new ServicoService(servicoGateway, statusServicoGateway);
+    CadastrarServicoUseCase cadastrarServicoUseCase(ServicoGateway servicoGateway) {
+        return new CadastrarServicoUseCase(servicoGateway);
+    }
+    @Bean
+    ConsultarServicoUseCase consultarServicoUseCase(ServicoGateway servicoGateway) {
+        return new ConsultarServicoUseCase(servicoGateway);
+    }
+    @Bean
+    ConsultarTempoMedioUseCase consultarTempoMedioUseCase(ServicoGateway servicoGateway, StatusServicoGateway statusServicoGateway) {
+        return new ConsultarTempoMedioUseCase(servicoGateway, statusServicoGateway);
+    }
+    @Bean
+    ListarServicosUseCase listarServicosUseCase(ServicoGateway servicoGateway) {
+        return new ListarServicosUseCase(servicoGateway);
+    }
+    @Bean
+    AlterarServicoUseCase alterarServicoUseCase(ServicoGateway servicoGateway) {
+        return new AlterarServicoUseCase(servicoGateway);
+    }
+    @Bean
+    AtivarServicoUseCase ativarServicoUseCase(ServicoGateway servicoGateway) {
+        return new AtivarServicoUseCase(servicoGateway);
+    }
+    @Bean
+    InativarServicoUseCase inativarServicoUseCase(ServicoGateway servicoGateway) {
+        return new InativarServicoUseCase(servicoGateway);
     }
 
     @Bean
