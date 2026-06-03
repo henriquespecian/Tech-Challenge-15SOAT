@@ -1,6 +1,10 @@
 package com.mecanica.oficina_api.adapters.web;
 
-import com.mecanica.oficina_api.application.veiculo.VeiculoService;
+import com.mecanica.oficina_api.application.veiculo.usecase.AlterarVeiculoUseCase;
+import com.mecanica.oficina_api.application.veiculo.usecase.CadastrarVeiculoUseCase;
+import com.mecanica.oficina_api.application.veiculo.usecase.ConsultarVeiculoUseCase;
+import com.mecanica.oficina_api.application.veiculo.usecase.InativarVeiculoUseCase;
+import com.mecanica.oficina_api.application.veiculo.usecase.ListarVeiculosPorClienteUseCase;
 import com.mecanica.oficina_api.domain.veiculo.Veiculo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,10 +29,22 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class VeiculoController {
 
-    private final VeiculoService veiculoService;
+    private final CadastrarVeiculoUseCase cadastrarVeiculoUseCase;
+    private final ConsultarVeiculoUseCase consultarVeiculoUseCase;
+    private final ListarVeiculosPorClienteUseCase listarVeiculosPorClienteUseCase;
+    private final AlterarVeiculoUseCase alterarVeiculoUseCase;
+    private final InativarVeiculoUseCase inativarVeiculoUseCase;
 
-    public VeiculoController(VeiculoService veiculoService) {
-        this.veiculoService = veiculoService;
+    public VeiculoController(CadastrarVeiculoUseCase cadastrarVeiculoUseCase,
+                            ConsultarVeiculoUseCase consultarVeiculoUseCase,
+                            ListarVeiculosPorClienteUseCase listarVeiculosPorClienteUseCase,
+                            AlterarVeiculoUseCase alterarVeiculoUseCase,
+                            InativarVeiculoUseCase inativarVeiculoUseCase) {
+        this.cadastrarVeiculoUseCase = cadastrarVeiculoUseCase;
+        this.consultarVeiculoUseCase = consultarVeiculoUseCase;
+        this.listarVeiculosPorClienteUseCase = listarVeiculosPorClienteUseCase;
+        this.alterarVeiculoUseCase = alterarVeiculoUseCase;
+        this.inativarVeiculoUseCase = inativarVeiculoUseCase;
     }
 
     @PostMapping
@@ -40,7 +56,7 @@ public class VeiculoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<VeiculoResponse> cadastrar(@RequestBody CadastrarVeiculoRequest request) {
-        Veiculo veiculo = veiculoService.cadastrar(
+        Veiculo veiculo = cadastrarVeiculoUseCase.executar(
                 request.getClienteId(),
                 request.getPlaca(),
                 request.getMarca(),
@@ -60,7 +76,7 @@ public class VeiculoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<VeiculoResponse> buscarPorId(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(veiculoService.buscarPorId(id)));
+        return ResponseEntity.ok(toResponse(consultarVeiculoUseCase.executar(id)));
     }
 
     @GetMapping("/cliente/{clienteId}")
@@ -68,7 +84,7 @@ public class VeiculoController {
     @Operation(summary = "Listar veículos de um cliente", description = "Retorna todos os veículos associados a um cliente")
     @ApiResponse(responseCode = "200", description = "Lista de veículos do cliente")
     public ResponseEntity<List<VeiculoResponse>> listarPorCliente(@PathVariable String clienteId) {
-        return ResponseEntity.ok(veiculoService.listarPorCliente(clienteId).stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(listarVeiculosPorClienteUseCase.executar(clienteId).stream().map(this::toResponse).toList());
     }
 
     @PutMapping("/{id}")
@@ -82,7 +98,7 @@ public class VeiculoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<VeiculoResponse> alterar(@PathVariable String id, @RequestBody AlterarVeiculoRequest request) {
-        Veiculo veiculo = veiculoService.alterar(
+        Veiculo veiculo = alterarVeiculoUseCase.executar(
                 id,
                 request.getPlaca(),
                 request.getMarca(),
@@ -102,7 +118,7 @@ public class VeiculoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<Void> deletar(@PathVariable String id) {
-        veiculoService.deletar(id);
+        inativarVeiculoUseCase.executar(id);
         return ResponseEntity.status(204).build();
     }
 

@@ -3,7 +3,10 @@ package com.mecanica.oficina_api.adapters.web;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarUsuarioRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarUsuarioRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.UsuarioResponse;
-import com.mecanica.oficina_api.application.usuario.UsuarioService;
+import com.mecanica.oficina_api.application.usuario.usecase.AlterarUsuarioUseCase;
+import com.mecanica.oficina_api.application.usuario.usecase.CadastrarUsuarioUseCase;
+import com.mecanica.oficina_api.application.usuario.usecase.ConsultarUsuarioUseCase;
+import com.mecanica.oficina_api.application.usuario.usecase.InativarUsuarioUseCase;
 import com.mecanica.oficina_api.domain.usuario.Usuario;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,10 +34,19 @@ import org.springframework.web.server.ResponseStatusException;
 @SecurityRequirement(name = "bearerAuth")
 public class UsuarioController {
 
-    private final UsuarioService usuarioService;
+    private final CadastrarUsuarioUseCase cadastrarUsuarioUseCase;
+    private final ConsultarUsuarioUseCase consultarUsuarioUseCase;
+    private final AlterarUsuarioUseCase alterarUsuarioUseCase;
+    private final InativarUsuarioUseCase inativarUsuarioUseCase;
 
-    public UsuarioController(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
+    public UsuarioController(CadastrarUsuarioUseCase cadastrarUsuarioUseCase,
+                             ConsultarUsuarioUseCase consultarUsuarioUseCase,
+                             AlterarUsuarioUseCase alterarUsuarioUseCase,
+                             InativarUsuarioUseCase inativarUsuarioUseCase) {
+        this.cadastrarUsuarioUseCase = cadastrarUsuarioUseCase;
+        this.consultarUsuarioUseCase = consultarUsuarioUseCase;
+        this.alterarUsuarioUseCase = alterarUsuarioUseCase;
+        this.inativarUsuarioUseCase = inativarUsuarioUseCase;
     }
 
     @PostMapping
@@ -47,7 +59,7 @@ public class UsuarioController {
         @ApiResponse(responseCode = "409", description = "Email já cadastrado", content = @Content(schema = @Schema()))
     })
     public ResponseEntity<UsuarioResponse> cadastrar(@RequestBody CadastrarUsuarioRequest request) {
-        Usuario usuario = usuarioService.cadastrar(
+        Usuario usuario = cadastrarUsuarioUseCase.executar(
             request.getNome(), request.getEmail(), request.getSenha(),
             request.getPerfil(), request.getClienteId());
         return ResponseEntity.status(201).body(toResponse(usuario));
@@ -63,7 +75,7 @@ public class UsuarioController {
             content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
     })
     public ResponseEntity<UsuarioResponse> buscar(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(usuarioService.buscar(id)));
+        return ResponseEntity.ok(toResponse(consultarUsuarioUseCase.executar(id)));
     }
 
     @PutMapping("/{id}")
@@ -76,7 +88,7 @@ public class UsuarioController {
             content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
     })
     public ResponseEntity<UsuarioResponse> alterar(@PathVariable String id, @RequestBody AlterarUsuarioRequest request) {
-        Usuario usuario = usuarioService.alterar(
+        Usuario usuario = alterarUsuarioUseCase.executar(
             id, request.getNome(), request.getEmail(), request.getPerfil(), request.getClienteId());
         return ResponseEntity.ok(toResponse(usuario));
     }
@@ -90,7 +102,7 @@ public class UsuarioController {
             content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
     })
     public ResponseEntity<Void> deletar(@PathVariable String id) {
-        usuarioService.deletar(id);
+        inativarUsuarioUseCase.executar(id);
         return ResponseEntity.status(204).build();
     }
 

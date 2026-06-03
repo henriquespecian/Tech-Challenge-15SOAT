@@ -21,11 +21,18 @@ import com.mecanica.oficina_api.application.servico.usecase.ConsultarServicoUseC
 import com.mecanica.oficina_api.application.servico.usecase.ConsultarTempoMedioUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.InativarServicoUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.ListarServicosUseCase;
-import com.mecanica.oficina_api.application.usuario.UsuarioService;
 import com.mecanica.oficina_api.application.usuario.gateway.PasswordEncoder;
 import com.mecanica.oficina_api.application.usuario.gateway.UsuarioGateway;
-import com.mecanica.oficina_api.application.veiculo.VeiculoService;
+import com.mecanica.oficina_api.application.usuario.usecase.AlterarUsuarioUseCase;
+import com.mecanica.oficina_api.application.usuario.usecase.CadastrarUsuarioUseCase;
+import com.mecanica.oficina_api.application.usuario.usecase.ConsultarUsuarioUseCase;
+import com.mecanica.oficina_api.application.usuario.usecase.InativarUsuarioUseCase;
 import com.mecanica.oficina_api.application.veiculo.gateway.VeiculoGateway;
+import com.mecanica.oficina_api.application.veiculo.usecase.AlterarVeiculoUseCase;
+import com.mecanica.oficina_api.application.veiculo.usecase.CadastrarVeiculoUseCase;
+import com.mecanica.oficina_api.application.veiculo.usecase.ConsultarVeiculoUseCase;
+import com.mecanica.oficina_api.application.veiculo.usecase.InativarVeiculoUseCase;
+import com.mecanica.oficina_api.application.veiculo.usecase.ListarVeiculosPorClienteUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -90,14 +97,45 @@ public class ApplicationConfig {
         return new InativarServicoUseCase(servicoGateway);
     }
 
+    /* Usuário */
     @Bean
-    UsuarioService usuarioService(UsuarioGateway usuarioGateway, ClienteGateway clienteGateway, PasswordEncoder passwordEncoder) {
-        return new UsuarioService(usuarioGateway, clienteGateway, passwordEncoder);
+    CadastrarUsuarioUseCase cadastrarUsuarioUseCase(UsuarioGateway usuarioGateway, PasswordEncoder passwordEncoder) {
+        return new CadastrarUsuarioUseCase(usuarioGateway, passwordEncoder);
+    }
+    @Bean
+    ConsultarUsuarioUseCase consultarUsuarioUseCase(UsuarioGateway usuarioGateway) {
+        return new ConsultarUsuarioUseCase(usuarioGateway);
+    }
+    @Bean
+    AlterarUsuarioUseCase alterarUsuarioUseCase(UsuarioGateway usuarioGateway) {
+        return new AlterarUsuarioUseCase(usuarioGateway);
+    }
+    @Bean
+    InativarUsuarioUseCase inativarUsuarioUseCase(UsuarioGateway usuarioGateway) {
+        return new InativarUsuarioUseCase(usuarioGateway);
     }
 
+
+    /* Veículo */
     @Bean
-    VeiculoService veiculoService(VeiculoGateway veiculoGateway, ClienteGateway clienteGateway) {
-        return new VeiculoService(veiculoGateway, clienteGateway);
+    CadastrarVeiculoUseCase cadastrarVeiculoUseCase(VeiculoGateway veiculoGateway, ClienteGateway clienteGateway) {
+        return new CadastrarVeiculoUseCase(veiculoGateway, clienteGateway);
+    }
+    @Bean
+    ConsultarVeiculoUseCase consultarVeiculoUseCase(VeiculoGateway veiculoGateway) {
+        return new ConsultarVeiculoUseCase(veiculoGateway);
+    }
+    @Bean
+    ListarVeiculosPorClienteUseCase listarVeiculosPorClienteUseCase(VeiculoGateway veiculoGateway) {
+        return new ListarVeiculosPorClienteUseCase(veiculoGateway);
+    }
+    @Bean
+    AlterarVeiculoUseCase alterarVeiculoUseCase(VeiculoGateway veiculoGateway) {
+        return new AlterarVeiculoUseCase(veiculoGateway);
+    }
+    @Bean
+    InativarVeiculoUseCase inativarVeiculoUseCase(VeiculoGateway veiculoGateway) {
+        return new InativarVeiculoUseCase(veiculoGateway);
     }
 
     @Bean

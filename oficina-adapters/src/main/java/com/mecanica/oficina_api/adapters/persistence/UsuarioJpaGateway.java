@@ -58,7 +58,7 @@ public class UsuarioJpaGateway implements UsuarioGateway {
     }
 
     private Usuario toDomain(UsuarioJpaEntity e) {
-        return Usuario.reconstituir(e.getId(), e.getNome(), e.getEmail(), e.getSenha(), e.getPerfil());
+        return Usuario.reconstituir(e.getId(), e.getNome(), e.getEmail(), e.getSenha(), e.getPerfil(), e.getClienteId());
     }
 
     private UsuarioJpaEntity toEntity(Usuario u) {
