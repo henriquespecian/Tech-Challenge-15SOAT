@@ -31,6 +31,10 @@ public class Usuario {
         usuario.dataCadastro = LocalDateTime.now();
         usuario.dataAtualizacao = LocalDateTime.now();
         usuario.ativo = true;
+
+        if (perfil == Perfil.CLIENTE && (clienteId == null || clienteId.isBlank())) {
+            throw new IllegalArgumentException("clienteId é obrigatório para perfil CLIENTE");
+    }
         return usuario;
     }
 
@@ -46,13 +50,19 @@ public class Usuario {
     public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
     public boolean getAtivo() { return ativo; }
 
-    public static Usuario reconstituir(String id2, String nome2, String email2, String encode, Perfil perfil2) {
+    public static Usuario reconstituir(String id2, String nome2, String email2, String encode, Perfil perfil2, String clienteId2) {
         Usuario usuario = new Usuario();
+
+        if (perfil2 == Perfil.CLIENTE && (clienteId2 == null || clienteId2.isBlank())) {
+            throw new IllegalArgumentException("clienteId é obrigatório para perfil CLIENTE");
+        }
+
         usuario.id = id2;
         usuario.nome = nome2;
         usuario.email = email2;
         usuario.senha = encode;
         usuario.perfil = perfil2;
+        usuario.clienteId = clienteId2;
         return usuario;
     }
 }

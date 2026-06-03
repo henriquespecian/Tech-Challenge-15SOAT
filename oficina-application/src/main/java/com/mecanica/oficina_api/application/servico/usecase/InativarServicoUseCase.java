@@ -10,7 +10,7 @@ public class InativarServicoUseCase {
     }
 
     public void executar(String id) {
-        servicoGateway.buscar(id).orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado"));
+        servicoGateway.buscarOuFalhar(id);
         servicoGateway.inativar(id);
     }
 }

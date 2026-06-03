@@ -21,8 +21,8 @@ import com.mecanica.oficina_api.application.servico.usecase.ConsultarServicoUseC
 import com.mecanica.oficina_api.application.servico.usecase.ConsultarTempoMedioUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.InativarServicoUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.ListarServicosUseCase;
-import com.mecanica.oficina_api.application.usuario.PasswordEncoder;
 import com.mecanica.oficina_api.application.usuario.UsuarioService;
+import com.mecanica.oficina_api.application.usuario.gateway.PasswordEncoder;
 import com.mecanica.oficina_api.application.usuario.gateway.UsuarioGateway;
 import com.mecanica.oficina_api.application.veiculo.VeiculoService;
 import com.mecanica.oficina_api.application.veiculo.gateway.VeiculoGateway;

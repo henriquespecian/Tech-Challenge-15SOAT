@@ -16,8 +16,7 @@ public class ConsultarTempoMedioUseCase {
     }
 
     public TempoMedioServico executar(String id) {
-        Servico servico = servicoGateway.buscar(id)
-            .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado"));
+        Servico servico = servicoGateway.buscarOuFalhar(id);
         double media = statusServicoGateway.calcularTempoMedioMinutos(id);
         return new TempoMedioServico(servico.getId(), servico.getNome(), media);
     }

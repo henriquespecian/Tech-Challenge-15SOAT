@@ -15,8 +15,7 @@ public class AlterarClienteUseCase {
 
     public void executar(String documento, String nome, String email, String telefone) {
         Documento doc = Documento.parse(documento);
-        Cliente existente = gateway.findByDocumentoAtivo(doc.getValue())
-            .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+        Cliente existente = gateway.buscarPorDocumentoOuFalhar(doc.getValue());
         existente.alterar(nome, doc, new Email(email), new Telefone(telefone));
         gateway.save(existente);
     }

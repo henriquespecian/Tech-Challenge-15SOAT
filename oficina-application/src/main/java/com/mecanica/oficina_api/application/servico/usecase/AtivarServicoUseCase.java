@@ -11,7 +11,7 @@ public class AtivarServicoUseCase {
     }
 
     public Servico executar(String id) {
-        servicoGateway.buscar(id).orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado"));
+        servicoGateway.buscarOuFalhar(id);
         return servicoGateway.ativar(id);
     }
 }

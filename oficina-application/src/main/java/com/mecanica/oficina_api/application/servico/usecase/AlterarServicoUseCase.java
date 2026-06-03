@@ -14,7 +14,7 @@ public class AlterarServicoUseCase {
     }
 
     public Servico executar(String id, String nome, String descricao, BigDecimal preco, int tempoEstimadoHoras) {
-        servicoGateway.buscar(id).orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado"));
+        servicoGateway.buscarOuFalhar(id);
         return servicoGateway.alterar(id, Servico.reconstituir(id, nome, descricao, preco, Duration.ofHours(tempoEstimadoHoras), true));
     }
 }
