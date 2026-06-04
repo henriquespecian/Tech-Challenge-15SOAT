@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+import com.mecanica.oficina_api.application.insumo.output.AlertaEstoqueBaixo;
+
 class AlertaEstoqueBaixoTest {
 
     @Test

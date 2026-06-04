@@ -1,8 +1,9 @@
 package com.mecanica.oficina_api.adapters.notification;
 
-import com.mecanica.oficina_api.application.insumo.AlertaEstoqueBaixo;
-import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
-import com.mecanica.oficina_api.application.insumo.OrigemNotificacaoEstoque;
+import com.mecanica.oficina_api.application.insumo.gateway.NotificarEstoqueBaixoGateway;
+import com.mecanica.oficina_api.application.insumo.output.AlertaEstoqueBaixo;
+import com.mecanica.oficina_api.domain.insumo.OrigemNotificacaoEstoque;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
  * O padrão default do Spring/Logback não imprime {@code addKeyValue}; por isso os dados vão na mensagem.
  */
 @Component
-public class LogNotificadorEstoqueBaixo implements NotificadorEstoqueBaixo {
+public class LogNotificadorEstoqueBaixo implements NotificarEstoqueBaixoGateway {
 
     private static final Logger log = LoggerFactory.getLogger(LogNotificadorEstoqueBaixo.class);
 
@@ -26,8 +27,7 @@ public class LogNotificadorEstoqueBaixo implements NotificadorEstoqueBaixo {
                 a.nomeInsumo(),
                 a.estoqueAnterior(),
                 a.estoqueAtual(),
-                a.estoqueMinimo(),
-                a.referenciaOrigem());
+                a.estoqueMinimo());
     }
 
     /** Texto estável para filtro em log (ex.: {@code tipo_origem=baixa_os}). */

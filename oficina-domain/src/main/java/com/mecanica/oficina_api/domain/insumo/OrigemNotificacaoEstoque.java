@@ -1,4 +1,4 @@
-package com.mecanica.oficina_api.application.insumo;
+package com.mecanica.oficina_api.domain.insumo;
 
 /**
  * Origem do alerta — útil para roteamento futuro (ex.: e-mail só para baixa em OS).

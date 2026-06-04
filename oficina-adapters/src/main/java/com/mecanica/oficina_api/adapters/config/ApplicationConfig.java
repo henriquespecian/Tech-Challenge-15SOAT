@@ -6,9 +6,15 @@ import com.mecanica.oficina_api.application.cliente.usecase.CadastrarClienteUseC
 import com.mecanica.oficina_api.application.cliente.usecase.ConsultarClienteUseCase;
 import com.mecanica.oficina_api.application.cliente.usecase.DeletarClienteUseCase;
 import com.mecanica.oficina_api.application.cliente.usecase.ListarClientesUseCase;
-import com.mecanica.oficina_api.application.insumo.InsumosService;
-import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
 import com.mecanica.oficina_api.application.insumo.gateway.InsumosGateway;
+import com.mecanica.oficina_api.application.insumo.gateway.NotificarEstoqueBaixoGateway;
+import com.mecanica.oficina_api.application.insumo.usecase.AlterarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.AtivarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.CadastrarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.ConsultarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.InativarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.ListarInsumosUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.RegistrarCompraUseCase;
 import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
 import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
@@ -63,8 +69,32 @@ public class ApplicationConfig {
 
     /* Insumos */
     @Bean
-    InsumosService insumosService(InsumosGateway insumosgateway, NotificadorEstoqueBaixo notificador ) {
-        return new InsumosService(insumosgateway, notificador);
+    CadastrarInsumoUseCase cadastrarInsumoUseCase(InsumosGateway insumosGateway) {
+        return new CadastrarInsumoUseCase(insumosGateway);
+    }
+    @Bean
+    ConsultarInsumoUseCase consultarInsumoUseCase(InsumosGateway insumosGateway) {
+        return new ConsultarInsumoUseCase(insumosGateway);
+    }
+    @Bean
+    ListarInsumosUseCase listarInsumosUseCase(InsumosGateway insumosGateway) {
+        return new ListarInsumosUseCase(insumosGateway);
+    }
+    @Bean
+    AlterarInsumoUseCase alterarInsumoUseCase(InsumosGateway insumosGateway, NotificarEstoqueBaixoGateway notificarEstoqueBaixoGateway) {
+        return new AlterarInsumoUseCase(insumosGateway, notificarEstoqueBaixoGateway);
+    }
+    @Bean
+    AtivarInsumoUseCase ativarInsumoUseCase(InsumosGateway insumosGateway) {
+        return new AtivarInsumoUseCase(insumosGateway);
+    }
+    @Bean
+    InativarInsumoUseCase inativarInsumoUseCase(InsumosGateway insumosGateway) {
+        return new InativarInsumoUseCase(insumosGateway);
+    }
+    @Bean
+    RegistrarCompraUseCase registrarCompraUseCase(InsumosGateway insumosGateway) {
+        return new RegistrarCompraUseCase(insumosGateway);
     }
 
     /* Serviço */
@@ -144,7 +174,7 @@ public class ApplicationConfig {
             ClienteGateway clienteGateway,
             InsumosGateway insumosGateway,
             ServicoGateway servicoGateway,
-            NotificadorEstoqueBaixo notificadorEstoqueBaixo,
+            NotificarEstoqueBaixoGateway notificadorEstoqueBaixo,
             NotificadorCliente notificadorCliente,
             StatusServicoGateway statusServicoGateway) {
         return new OrdemServicoService(ordemServicoGateway, veiculoGateway, clienteGateway, insumosGateway,

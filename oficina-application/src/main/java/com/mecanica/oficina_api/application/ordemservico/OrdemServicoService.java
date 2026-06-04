@@ -1,14 +1,14 @@
 package com.mecanica.oficina_api.application.ordemservico;
 
 import com.mecanica.oficina_api.domain.insumo.Insumos;
+import com.mecanica.oficina_api.domain.insumo.OrigemNotificacaoEstoque;
 import com.mecanica.oficina_api.domain.ordemservico.ItemOrcamento;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.application.cliente.gateway.ClienteGateway;
-import com.mecanica.oficina_api.application.insumo.AlertaEstoqueBaixo;
-import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
-import com.mecanica.oficina_api.application.insumo.OrigemNotificacaoEstoque;
 import com.mecanica.oficina_api.application.insumo.gateway.InsumosGateway;
+import com.mecanica.oficina_api.application.insumo.gateway.NotificarEstoqueBaixoGateway;
+import com.mecanica.oficina_api.application.insumo.output.AlertaEstoqueBaixo;
 import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
 import com.mecanica.oficina_api.application.ordemservico.input.GerarOrcamentoInput;
@@ -31,7 +31,7 @@ public class OrdemServicoService {
     private final ClienteGateway clienteGateway;
     private final InsumosGateway insumosGateway;
     private final ServicoGateway servicoGateway;
-    private final NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+    private final NotificarEstoqueBaixoGateway notificadorEstoqueBaixo;
     private final NotificadorCliente notificadorCliente;
     private final StatusServicoGateway statusServicoGateway;
 
@@ -40,7 +40,7 @@ public class OrdemServicoService {
             ClienteGateway clienteGateway,
             InsumosGateway insumosGateway,
             ServicoGateway servicoGateway,
-            NotificadorEstoqueBaixo notificadorEstoqueBaixo,
+            NotificarEstoqueBaixoGateway notificadorEstoqueBaixo,
             NotificadorCliente notificadorCliente,
             StatusServicoGateway statusServicoGateway) {
         this.ordemServicoGateway = ordemServicoGateway;
@@ -255,15 +255,14 @@ public class OrdemServicoService {
             insumo.setEstoqueAtual(novoEstoque);
             insumosGateway.alterar(insumo.getId(), insumo);
 
-            if (AlertaEstoqueBaixo.deveEmitirAlerta(estoqueAnterior, estoqueMinimoAnterior, novoEstoque, insumo.getEstoqueMinimo())) {
+            if (Insumos.deveEmitirAlerta(estoqueAnterior, estoqueMinimoAnterior, novoEstoque, insumo.getEstoqueMinimo())) {
                 notificadorEstoqueBaixo.notificar(new AlertaEstoqueBaixo(
                         insumo.getId(),
                         insumo.getNome(),
                         estoqueAnterior,
                         novoEstoque,
                         insumo.getEstoqueMinimo(),
-                        OrigemNotificacaoEstoque.BAIXA_ORDEM_SERVICO,
-                        ordemServico.getId()));
+                        OrigemNotificacaoEstoque.BAIXA_ORDEM_SERVICO));
             }
         }
     }

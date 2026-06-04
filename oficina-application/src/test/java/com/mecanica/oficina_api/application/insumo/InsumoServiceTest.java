@@ -9,6 +9,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mecanica.oficina_api.application.insumo.gateway.NotificarEstoqueBaixoGateway;
+import com.mecanica.oficina_api.application.insumo.output.AlertaEstoqueBaixo;
 import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
 import com.mecanica.oficina_api.infrastructure.persistence.repository.InsumosSpringDataRepository;
 import com.mecanica.oficina_api.interfaces.dto.request.AlterarInsumosRequest;
@@ -31,7 +33,7 @@ public class InsumoServiceTest {
   private InsumosSpringDataRepository repository;
 
   @Mock
-  private NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+  private NotificarEstoqueBaixoGateway notificadorEstoqueBaixo;
 
   @InjectMocks
   private InsumosService service;

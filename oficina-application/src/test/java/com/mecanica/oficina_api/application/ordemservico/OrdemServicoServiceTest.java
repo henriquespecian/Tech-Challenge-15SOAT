@@ -1,8 +1,8 @@
 package com.mecanica.oficina_api.application.ordemservico;
 
 import com.mecanica.oficina_api.application.cliente.gateway.ClienteGateway;
-import com.mecanica.oficina_api.application.insumo.NotificadorEstoqueBaixo;
 import com.mecanica.oficina_api.application.insumo.gateway.InsumosGateway;
+import com.mecanica.oficina_api.application.insumo.gateway.NotificarEstoqueBaixoGateway;
 import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
 import com.mecanica.oficina_api.application.ordemservico.input.GerarOrcamentoInput;
@@ -47,7 +47,7 @@ class OrdemServicoServiceTest {
     private ClienteGateway clienteGateway;
     private InsumosGateway insumosGateway;
     private ServicoGateway servicoGateway;
-    private NotificadorEstoqueBaixo notificadorEstoqueBaixo;
+    private NotificarEstoqueBaixoGateway notificadorEstoqueBaixo;
     private NotificadorCliente notificadorCliente;
     private StatusServicoGateway statusServicoGateway;
 
@@ -60,7 +60,7 @@ class OrdemServicoServiceTest {
         clienteGateway = mock(ClienteGateway.class);
         insumosGateway = mock(InsumosGateway.class);
         servicoGateway = mock(ServicoGateway.class);
-        notificadorEstoqueBaixo = mock(NotificadorEstoqueBaixo.class);
+        notificadorEstoqueBaixo = mock(NotificarEstoqueBaixoGateway.class);
         notificadorCliente = mock(NotificadorCliente.class);
         statusServicoGateway = mock(StatusServicoGateway.class);
 
