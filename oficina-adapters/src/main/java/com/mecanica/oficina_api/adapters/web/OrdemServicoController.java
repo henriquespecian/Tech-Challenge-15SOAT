@@ -1,7 +1,23 @@
 package com.mecanica.oficina_api.adapters.web;
 
-import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
 import com.mecanica.oficina_api.application.ordemservico.input.GerarOrcamentoInput;
+import com.mecanica.oficina_api.application.ordemservico.usecase.AguardarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.AprovarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.AtualizarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ConsultarOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.CriarOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.EnviarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.EntregarOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.FinalizarOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.FinalizarServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.GerarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.IniciarDiagnosticoOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.IniciarExecucaoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.IniciarServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ListarOrdensServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ListarPorVeiculoOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ListarServicosPorOSUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.NegarOrcamentoUseCase;
 import com.mecanica.oficina_api.domain.ordemservico.ItemOrcamento;
 import com.mecanica.oficina_api.domain.ordemservico.Orcamento;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
@@ -32,10 +48,58 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class OrdemServicoController {
 
-    private final OrdemServicoService ordemServicoService;
+    private final CriarOrdemServicoUseCase criarOrdemServicoUseCase;
+    private final ConsultarOrdemServicoUseCase consultarOrdemServicoUseCase;
+    private final ListarOrdensServicoUseCase listarOrdensServicoUseCase;
+    private final ListarPorVeiculoOrdemServicoUseCase listarPorVeiculoOrdemServicoUseCase;
+    private final IniciarDiagnosticoOrdemServicoUseCase iniciarDiagnosticoOrdemServicoUseCase;
+    private final GerarOrcamentoUseCase gerarOrcamentoUseCase;
+    private final AtualizarOrcamentoUseCase atualizarOrcamentoUseCase;
+    private final EnviarOrcamentoUseCase enviarOrcamentoUseCase;
+    private final AguardarOrcamentoUseCase aguardarOrcamentoUseCase;
+    private final AprovarOrcamentoUseCase aprovarOrcamentoUseCase;
+    private final NegarOrcamentoUseCase negarOrcamentoUseCase;
+    private final IniciarExecucaoUseCase iniciarExecucaoUseCase;
+    private final FinalizarOrdemServicoUseCase finalizarOrdemServicoUseCase;
+    private final EntregarOrdemServicoUseCase entregarOrdemServicoUseCase;
+    private final ListarServicosPorOSUseCase listarServicosPorOSUseCase;
+    private final IniciarServicoUseCase iniciarServicoUseCase;
+    private final FinalizarServicoUseCase finalizarServicoUseCase;
 
-    public OrdemServicoController(OrdemServicoService ordemServicoService) {
-        this.ordemServicoService = ordemServicoService;
+    public OrdemServicoController(CriarOrdemServicoUseCase criarOrdemServicoUseCase,
+            ConsultarOrdemServicoUseCase consultarOrdemServicoUseCase,
+            ListarOrdensServicoUseCase listarOrdensServicoUseCase,
+            ListarPorVeiculoOrdemServicoUseCase listarPorVeiculoOrdemServicoUseCase,
+            IniciarDiagnosticoOrdemServicoUseCase iniciarDiagnosticoOrdemServicoUseCase,
+            GerarOrcamentoUseCase gerarOrcamentoUseCase,
+            AtualizarOrcamentoUseCase atualizarOrcamentoUseCase,
+            EnviarOrcamentoUseCase enviarOrcamentoUseCase,
+            AguardarOrcamentoUseCase aguardarOrcamentoUseCase,
+            AprovarOrcamentoUseCase aprovarOrcamentoUseCase,
+            NegarOrcamentoUseCase negarOrcamentoUseCase,
+            IniciarExecucaoUseCase iniciarExecucaoUseCase,
+            FinalizarOrdemServicoUseCase finalizarOrdemServicoUseCase,
+            EntregarOrdemServicoUseCase entregarOrdemServicoUseCase,
+            ListarServicosPorOSUseCase listarServicosPorOSUseCase,
+            IniciarServicoUseCase iniciarServicoUseCase,
+            FinalizarServicoUseCase finalizarServicoUseCase) {
+        this.criarOrdemServicoUseCase = criarOrdemServicoUseCase;
+        this.consultarOrdemServicoUseCase = consultarOrdemServicoUseCase;
+        this.listarOrdensServicoUseCase = listarOrdensServicoUseCase;
+        this.listarPorVeiculoOrdemServicoUseCase = listarPorVeiculoOrdemServicoUseCase;
+        this.iniciarDiagnosticoOrdemServicoUseCase = iniciarDiagnosticoOrdemServicoUseCase;
+        this.gerarOrcamentoUseCase = gerarOrcamentoUseCase;
+        this.atualizarOrcamentoUseCase = atualizarOrcamentoUseCase;
+        this.enviarOrcamentoUseCase = enviarOrcamentoUseCase;
+        this.aguardarOrcamentoUseCase = aguardarOrcamentoUseCase;
+        this.aprovarOrcamentoUseCase = aprovarOrcamentoUseCase;
+        this.negarOrcamentoUseCase = negarOrcamentoUseCase;
+        this.iniciarExecucaoUseCase = iniciarExecucaoUseCase;
+        this.finalizarOrdemServicoUseCase = finalizarOrdemServicoUseCase;
+        this.entregarOrdemServicoUseCase = entregarOrdemServicoUseCase;
+        this.listarServicosPorOSUseCase = listarServicosPorOSUseCase;
+        this.iniciarServicoUseCase = iniciarServicoUseCase;
+        this.finalizarServicoUseCase = finalizarServicoUseCase;
     }
 
     @GetMapping
@@ -45,7 +109,7 @@ public class OrdemServicoController {
     @ApiResponse(responseCode = "200", description = "Lista de OSs")
     public ResponseEntity<List<OrdemServicoResponse>> listar(
         @RequestParam(required = false) OrdemServicoStatus status) {
-        return ResponseEntity.ok(ordemServicoService.listar(status).stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(listarOrdensServicoUseCase.executar(status).stream().map(this::toResponse).toList());
     }
 
     @PostMapping
@@ -58,7 +122,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> criar(@RequestBody CriarOrdemServicoRequest request) {
-        OrdemServico os = ordemServicoService.criar(request.getVeiculoId(), request.getClienteId());
+        OrdemServico os = criarOrdemServicoUseCase.executar(request.getVeiculoId(), request.getClienteId());
         return ResponseEntity.status(201).body(toResponse(os));
     }
 
@@ -72,7 +136,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> buscarPorId(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.buscarPorId(id)));
+        return ResponseEntity.ok(toResponse(consultarOrdemServicoUseCase.executar(id)));
     }
 
     @GetMapping("/veiculo/{veiculoId}")
@@ -80,7 +144,7 @@ public class OrdemServicoController {
     @Operation(summary = "Listar OSs por veículo")
     @ApiResponse(responseCode = "200", description = "Lista de OSs do veículo")
     public ResponseEntity<List<OrdemServicoResponse>> listarPorVeiculo(@PathVariable String veiculoId) {
-        return ResponseEntity.ok(ordemServicoService.listarPorVeiculo(veiculoId).stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(listarPorVeiculoOrdemServicoUseCase.executar(veiculoId).stream().map(this::toResponse).toList());
     }
 
     // --- Transições de status da OS ---
@@ -95,7 +159,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> iniciarDiagnostico(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.iniciarDiagnostico(id)));
+        return ResponseEntity.ok(toResponse(iniciarDiagnosticoOrdemServicoUseCase.executar(id)));
     }
 
     @PatchMapping("/{id}/finalizar")
@@ -110,7 +174,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> finalizar(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.finalizar(id)));
+        return ResponseEntity.ok(toResponse(finalizarOrdemServicoUseCase.executar(id)));
     }
 
     @PatchMapping("/{id}/entregar")
@@ -123,7 +187,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> entregar(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.entregar(id)));
+        return ResponseEntity.ok(toResponse(entregarOrdemServicoUseCase.executar(id)));
     }
 
     // --- Orçamento ---
@@ -143,7 +207,7 @@ public class OrdemServicoController {
     })
     public ResponseEntity<OrdemServicoResponse> gerarOrcamento(@PathVariable String id,
                                                                 @RequestBody GerarOrcamentoRequest request) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.gerarOrcamento(id, toInput(request))));
+        return ResponseEntity.ok(toResponse(gerarOrcamentoUseCase.executar(id, toInput(request))));
     }
 
     @PutMapping("/{id}/orcamento")
@@ -157,7 +221,7 @@ public class OrdemServicoController {
     })
     public ResponseEntity<OrdemServicoResponse> atualizarOrcamento(@PathVariable String id,
                                                                     @RequestBody GerarOrcamentoRequest request) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.atualizarOrcamento(id, toInput(request))));
+        return ResponseEntity.ok(toResponse(atualizarOrcamentoUseCase.executar(id, toInput(request))));
     }
 
     @PatchMapping("/{id}/orcamento/enviar")
@@ -170,7 +234,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> enviarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.enviarOrcamento(id)));
+        return ResponseEntity.ok(toResponse(enviarOrcamentoUseCase.executar(id)));
     }
 
     @PatchMapping("/{id}/orcamento/aguardar")
@@ -183,7 +247,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> aguardarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.aguardarOrcamento(id)));
+        return ResponseEntity.ok(toResponse(aguardarOrcamentoUseCase.executar(id)));
     }
 
     @PatchMapping("/{id}/orcamento/aprovar")
@@ -196,7 +260,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> aprovarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.aprovarOrcamento(id)));
+        return ResponseEntity.ok(toResponse(aprovarOrcamentoUseCase.executar(id)));
     }
 
     @PatchMapping("/{id}/iniciar-execucao")
@@ -209,7 +273,7 @@ public class OrdemServicoController {
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> iniciarExecucao(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.iniciarExecucao(id)));
+        return ResponseEntity.ok(toResponse(iniciarExecucaoUseCase.executar(id)));
     }
 
     @PatchMapping("/{id}/orcamento/negar")
@@ -222,7 +286,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> negarOrcamento(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ordemServicoService.negarOrcamento(id)));
+        return ResponseEntity.ok(toResponse(negarOrcamentoUseCase.executar(id)));
     }
 
     // --- Serviços ---
@@ -233,7 +297,7 @@ public class OrdemServicoController {
         @ApiResponse(responseCode = "200", description = "Listado com sucesso", content = @Content(schema = @Schema()))
     })
     public ResponseEntity<List<ServicoStatusResponse>> listarServicos(@PathVariable String id) {
-        return ResponseEntity.ok(ordemServicoService.listarServicos(id).stream().map(this::toServicoStatusResponse).toList());
+        return ResponseEntity.ok(listarServicosPorOSUseCase.executar(id).stream().map(this::toServicoStatusResponse).toList());
     }
 
 
@@ -245,7 +309,7 @@ public class OrdemServicoController {
         @ApiResponse(responseCode = "404", description = "Serviço não encontrado", content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ServicoStatusResponse> iniciarServico(@PathVariable String servico_id) {
-        return ResponseEntity.ok(toServicoStatusResponse(ordemServicoService.iniciarServico(servico_id)));
+        return ResponseEntity.ok(toServicoStatusResponse(iniciarServicoUseCase.executar(servico_id)));
     }
 
     @PatchMapping("/servico/{servico_id}/finalizar")
@@ -256,7 +320,7 @@ public class OrdemServicoController {
         @ApiResponse(responseCode = "404", description = "Serviço não encontrado", content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ServicoStatusResponse> finalizarServico(@PathVariable String servico_id) {
-        return ResponseEntity.ok(toServicoStatusResponse(ordemServicoService.finalizarServico(servico_id)));
+        return ResponseEntity.ok(toServicoStatusResponse(finalizarServicoUseCase.executar(servico_id)));
     }
 
     // --- mapeamento domínio → response/input ---

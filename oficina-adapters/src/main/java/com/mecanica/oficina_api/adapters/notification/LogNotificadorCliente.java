@@ -1,7 +1,7 @@
 package com.mecanica.oficina_api.adapters.notification;
 
-import com.mecanica.oficina_api.application.ordemservico.NotificacaoCliente;
-import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorCliente;
+import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorClienteGateway;
+import com.mecanica.oficina_api.application.ordemservico.output.NotificacaoCliente;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * O padrão default do Spring/Logback não imprime {@code addKeyValue}; por isso os dados vão na mensagem.
  */
 @Component
-public class LogNotificadorCliente implements NotificadorCliente {
+public class LogNotificadorCliente implements NotificadorClienteGateway {
 
     private static final Logger log = LoggerFactory.getLogger(LogNotificadorCliente.class);
 

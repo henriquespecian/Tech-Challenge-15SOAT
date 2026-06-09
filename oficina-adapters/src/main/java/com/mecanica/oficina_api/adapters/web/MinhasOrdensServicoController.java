@@ -2,8 +2,8 @@ package com.mecanica.oficina_api.adapters.web;
 
 import com.mecanica.oficina_api.adapters.security.UsuarioPrincipal;
 import com.mecanica.oficina_api.adapters.web.dto.response.MinhaOrdemServicoResponse;
-import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
 import com.mecanica.oficina_api.application.ordemservico.output.MinhaOrdemServicoOutput;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ListarPorUsuarioOrdemServicoUseCase;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,10 +25,10 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class MinhasOrdensServicoController {
 
-    private final OrdemServicoService ordemServicoService;
+    private final ListarPorUsuarioOrdemServicoUseCase listarPorUsuarioOrdemServicoUseCase;
 
-    public MinhasOrdensServicoController(OrdemServicoService ordemServicoService) {
-        this.ordemServicoService = ordemServicoService;
+    public MinhasOrdensServicoController(ListarPorUsuarioOrdemServicoUseCase listarPorUsuarioOrdemServicoUseCase) {
+        this.listarPorUsuarioOrdemServicoUseCase = listarPorUsuarioOrdemServicoUseCase;
     }
 
     @GetMapping
@@ -41,7 +41,7 @@ public class MinhasOrdensServicoController {
             @RequestParam(required = false) OrdemServicoStatus status,
             @RequestParam(required = false) String placa) {
         return ResponseEntity.ok(
-                ordemServicoService.listarMinhasOs(principal.clienteId(), status, placa).stream()
+                listarPorUsuarioOrdemServicoUseCase.executar(principal.clienteId(), status, placa).stream()
                         .map(this::toResponse)
                         .toList());
     }

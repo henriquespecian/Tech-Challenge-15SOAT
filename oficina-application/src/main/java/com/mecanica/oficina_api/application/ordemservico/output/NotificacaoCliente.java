@@ -1,4 +1,4 @@
-package com.mecanica.oficina_api.application.ordemservico;
+package com.mecanica.oficina_api.application.ordemservico.output;
 
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 

@@ -14,4 +14,9 @@ public interface OrdemServicoGateway {
     List<OrdemServico> listar(OrdemServicoStatus status);
     List<OrdemServico> listarPorVeiculo(String veiculoId);
     List<MinhaOrdemServicoOutput> buscarPorCliente(String clienteId);
+
+    default OrdemServico encontrarOuLancar(String id) {
+        return buscar(id)
+                .orElseThrow(() -> new IllegalArgumentException("Ordem de serviço não encontrada: " + id));
+    }
 }
