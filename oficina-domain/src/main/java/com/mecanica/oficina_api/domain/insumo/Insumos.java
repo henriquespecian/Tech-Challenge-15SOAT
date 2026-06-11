@@ -3,10 +3,8 @@ package com.mecanica.oficina_api.domain.insumo;
 import java.math.BigDecimal;
 import java.util.Objects;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
 public class Insumos {
 
   private String id;
@@ -53,12 +51,20 @@ public class Insumos {
     this.precoUnitario = precoUnitario;
   }
 
-  public void setEstoqueAtual(Integer estoqueAtual) {
+  private void setEstoqueAtual(Integer estoqueAtual) {
     if(Objects.isNull(estoqueAtual) || estoqueAtual < 0) {
       throw new IllegalArgumentException("Estoque Atual deve ser um número inteiro positivo");
     }
 
     this.estoqueAtual = estoqueAtual;
+  }
+
+  public void ativar() {
+    this.ativo = true;
+  }
+
+  public void inativar() {
+    this.ativo = false;
   }
 
   private void setEstoqueMinimo(Integer estoqueMinimo) {
@@ -75,6 +81,14 @@ public class Insumos {
     if (this.estoqueAtual - quantidade < 0)
       throw new IllegalStateException("Estoque insuficiente para o insumo: " + nome);
     this.estoqueAtual -= quantidade;
+  }
+
+  public void adicionarEstoque(int quantidade) {
+    if (quantidade <= 0)
+      throw new IllegalArgumentException("Quantidade deve ser informada e ser um inteiro positivo");
+    if ((long) this.estoqueAtual + quantidade > Integer.MAX_VALUE)
+      throw new IllegalArgumentException("Quantidade excede o limite permitido para o estoque");
+    this.estoqueAtual += quantidade;
   }
 
   /**

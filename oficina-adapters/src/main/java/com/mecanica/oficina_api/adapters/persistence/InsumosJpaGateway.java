@@ -72,14 +72,6 @@ public class InsumosJpaGateway implements InsumosGateway {
     }
 
     @Override
-    public Insumos atualizaEstoque(String id, Integer quantidade) {
-        return repo.findByIdAndAtivoTrue(id).map(e -> {
-            e.setEstoqueAtual(e.getEstoqueAtual() + quantidade);
-            return toDomain(repo.save(e));
-        }).orElseThrow(() -> new IllegalArgumentException("Insumo não encontrado: " + id));
-    }
-
-    @Override
     public Integer obterEstoqueAtual(String id) {
         return repo.findByIdAndAtivoTrue(id)
                 .map(InsumosJpaEntity::getEstoqueAtual)
@@ -95,7 +87,11 @@ public class InsumosJpaGateway implements InsumosGateway {
                 e.getEstoqueMinimo(),
                 e.getUnidade()
         );
-        insumo.setAtivo(e.getAtivo());
+        if (Boolean.TRUE.equals(e.getAtivo())) {
+            insumo.ativar();
+        } else {
+            insumo.inativar();
+        }
         return insumo;
     }
 

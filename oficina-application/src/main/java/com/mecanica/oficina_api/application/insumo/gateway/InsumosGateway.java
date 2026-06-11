@@ -14,6 +14,5 @@ public interface InsumosGateway {
     Insumos alterar(String id, Insumos insumo);
     Insumos ativar(String id);
     void inativar(String id);
-    Insumos atualizaEstoque(String id, Integer quantidade);
     Integer obterEstoqueAtual(String id);
 }

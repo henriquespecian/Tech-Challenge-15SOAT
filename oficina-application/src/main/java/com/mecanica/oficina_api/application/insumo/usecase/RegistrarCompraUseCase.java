@@ -15,15 +15,11 @@ public class RegistrarCompraUseCase {
             throw new IllegalArgumentException("Quantidade deve ser informada e ser um inteiro positivo");
         }
 
-        var entity = insumosGateway.buscar(id)
+        var insumo = insumosGateway.buscar(id)
             .orElseThrow(() -> new IllegalArgumentException("Insumo não encontrado"));
 
-        long novoEstoque = (long) entity.getEstoqueAtual() + quantidade;
+        insumo.adicionarEstoque(quantidade);
 
-        if (novoEstoque > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Quantidade excede o limite permitido para o estoque");
-        }
-
-        return insumosGateway.atualizaEstoque(id, (int) novoEstoque);
+        return insumosGateway.alterar(id, insumo);
     }
 }
