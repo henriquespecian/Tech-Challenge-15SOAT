@@ -130,4 +130,43 @@ public class InsumoTest {
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Estoque insuficiente para o insumo");
   }
+
+  // --- deveEmitirAlerta ---
+
+  @Test
+  void deveEmitirQuandoSoAumentaMinimoEstoqueIgualAoMinimoAntigo() {
+    assertThat(Insumos.deveEmitirAlerta(5, 5, 5, 10)).isTrue();
+  }
+
+  @Test
+  void deveEmitirQuandoEstoqueCruzaParaCriticoPorBaixa() {
+    assertThat(Insumos.deveEmitirAlerta(10, 2, 1, 2)).isTrue();
+  }
+
+  @Test
+  void naoDeveEmitirQuandoJaCriticoESoBaixaMaisSemMudarMinimo() {
+    assertThat(Insumos.deveEmitirAlerta(2, 2, 1, 2)).isFalse();
+  }
+
+  @Test
+  void naoDeveEmitirQuandoPermaneceAcimaDoNovoMinimo() {
+    assertThat(Insumos.deveEmitirAlerta(30, 5, 30, 10)).isFalse();
+  }
+
+  // --- deveNotificarAlteracaoInsumo ---
+
+  @Test
+  void deveNotificarAlteracaoInsumoQuandoEstoqueIgualAoMinimo() {
+    assertThat(Insumos.deveNotificarAlteracaoInsumo(5, 5)).isTrue();
+  }
+
+  @Test
+  void deveNotificarAlteracaoInsumoQuandoEstoqueAbaixoDoMinimo() {
+    assertThat(Insumos.deveNotificarAlteracaoInsumo(2, 10)).isTrue();
+  }
+
+  @Test
+  void naoDeveNotificarAlteracaoInsumoQuandoEstoqueAcimaDoMinimo() {
+    assertThat(Insumos.deveNotificarAlteracaoInsumo(10, 5)).isFalse();
+  }
 }
