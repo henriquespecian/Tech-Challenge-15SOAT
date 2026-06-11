@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarVeiculoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarVeiculoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.VeiculoResponse;
+import com.mecanica.oficina_api.adapters.web.presenter.VeiculoPresenter;
 
 import java.util.List;
 
@@ -34,17 +35,20 @@ public class VeiculoController {
     private final ListarVeiculosPorClienteUseCase listarVeiculosPorClienteUseCase;
     private final AlterarVeiculoUseCase alterarVeiculoUseCase;
     private final InativarVeiculoUseCase inativarVeiculoUseCase;
+    private final VeiculoPresenter presenter;
 
     public VeiculoController(CadastrarVeiculoUseCase cadastrarVeiculoUseCase,
                             ConsultarVeiculoUseCase consultarVeiculoUseCase,
                             ListarVeiculosPorClienteUseCase listarVeiculosPorClienteUseCase,
                             AlterarVeiculoUseCase alterarVeiculoUseCase,
-                            InativarVeiculoUseCase inativarVeiculoUseCase) {
+                            InativarVeiculoUseCase inativarVeiculoUseCase,
+                            VeiculoPresenter presenter) {
         this.cadastrarVeiculoUseCase = cadastrarVeiculoUseCase;
         this.consultarVeiculoUseCase = consultarVeiculoUseCase;
         this.listarVeiculosPorClienteUseCase = listarVeiculosPorClienteUseCase;
         this.alterarVeiculoUseCase = alterarVeiculoUseCase;
         this.inativarVeiculoUseCase = inativarVeiculoUseCase;
+        this.presenter = presenter;
     }
 
     @PostMapping
@@ -64,7 +68,7 @@ public class VeiculoController {
                 request.getAno(),
                 request.getCor()
         );
-        return ResponseEntity.status(201).body(toResponse(veiculo));
+        return ResponseEntity.status(201).body(presenter.apresentar(veiculo));
     }
 
     @GetMapping("/{id}")
@@ -76,7 +80,7 @@ public class VeiculoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<VeiculoResponse> buscarPorId(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(consultarVeiculoUseCase.executar(id)));
+        return ResponseEntity.ok(presenter.apresentar(consultarVeiculoUseCase.executar(id)));
     }
 
     @GetMapping("/cliente/{clienteId}")
@@ -84,7 +88,7 @@ public class VeiculoController {
     @Operation(summary = "Listar veículos de um cliente", description = "Retorna todos os veículos associados a um cliente")
     @ApiResponse(responseCode = "200", description = "Lista de veículos do cliente")
     public ResponseEntity<List<VeiculoResponse>> listarPorCliente(@PathVariable String clienteId) {
-        return ResponseEntity.ok(listarVeiculosPorClienteUseCase.executar(clienteId).stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(presenter.apresentar(listarVeiculosPorClienteUseCase.executar(clienteId)));
     }
 
     @PutMapping("/{id}")
@@ -106,7 +110,7 @@ public class VeiculoController {
                 request.getAno(),
                 request.getCor()
         );
-        return ResponseEntity.ok(toResponse(veiculo));
+        return ResponseEntity.ok(presenter.apresentar(veiculo));
     }
 
     @DeleteMapping("/{id}")
@@ -120,9 +124,5 @@ public class VeiculoController {
     public ResponseEntity<Void> deletar(@PathVariable String id) {
         inativarVeiculoUseCase.executar(id);
         return ResponseEntity.status(204).build();
-    }
-
-    private VeiculoResponse toResponse(Veiculo v) {
-        return new VeiculoResponse(v.getId(), v.getClienteId(), v.getPlaca(), v.getMarca(), v.getModelo(), v.getAno(), v.getCor());
     }
 }

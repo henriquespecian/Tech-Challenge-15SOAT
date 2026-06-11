@@ -2,7 +2,7 @@ package com.mecanica.oficina_api.adapters.web;
 
 import com.mecanica.oficina_api.adapters.security.UsuarioPrincipal;
 import com.mecanica.oficina_api.adapters.web.dto.response.MinhaOrdemServicoResponse;
-import com.mecanica.oficina_api.application.ordemservico.output.MinhaOrdemServicoOutput;
+import com.mecanica.oficina_api.adapters.web.presenter.MinhaOrdemServicoPresenter;
 import com.mecanica.oficina_api.application.ordemservico.usecase.ListarPorUsuarioOrdemServicoUseCase;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,9 +26,12 @@ import java.util.List;
 public class MinhasOrdensServicoController {
 
     private final ListarPorUsuarioOrdemServicoUseCase listarPorUsuarioOrdemServicoUseCase;
+    private final MinhaOrdemServicoPresenter presenter;
 
-    public MinhasOrdensServicoController(ListarPorUsuarioOrdemServicoUseCase listarPorUsuarioOrdemServicoUseCase) {
+    public MinhasOrdensServicoController(ListarPorUsuarioOrdemServicoUseCase listarPorUsuarioOrdemServicoUseCase,
+                                         MinhaOrdemServicoPresenter presenter) {
         this.listarPorUsuarioOrdemServicoUseCase = listarPorUsuarioOrdemServicoUseCase;
+        this.presenter = presenter;
     }
 
     @GetMapping
@@ -41,16 +44,7 @@ public class MinhasOrdensServicoController {
             @RequestParam(required = false) OrdemServicoStatus status,
             @RequestParam(required = false) String placa) {
         return ResponseEntity.ok(
-                listarPorUsuarioOrdemServicoUseCase.executar(principal.clienteId(), status, placa).stream()
-                        .map(this::toResponse)
-                        .toList());
-    }
-
-    private MinhaOrdemServicoResponse toResponse(MinhaOrdemServicoOutput o) {
-        MinhaOrdemServicoResponse.VeiculoResumo veiculo = o.veiculo() == null ? null
-                : new MinhaOrdemServicoResponse.VeiculoResumo(
-                        o.veiculo().id(), o.veiculo().placa(), o.veiculo().marca(),
-                        o.veiculo().modelo(), o.veiculo().ano(), o.veiculo().cor());
-        return new MinhaOrdemServicoResponse(o.id(), o.status(), o.orcamentoStatus(), veiculo);
+                presenter.apresentar(
+                        listarPorUsuarioOrdemServicoUseCase.executar(principal.clienteId(), status, placa)));
     }
 }

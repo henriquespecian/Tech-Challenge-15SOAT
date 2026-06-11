@@ -4,6 +4,7 @@ import com.mecanica.oficina_api.adapters.web.dto.request.AlterarServicoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarServicoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.ServicoResponse;
 import com.mecanica.oficina_api.adapters.web.dto.response.TempoMedioServicoResponse;
+import com.mecanica.oficina_api.adapters.web.presenter.ServicoPresenter;
 import com.mecanica.oficina_api.application.servico.usecase.AlterarServicoUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.AtivarServicoUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.CadastrarServicoUseCase;
@@ -11,7 +12,6 @@ import com.mecanica.oficina_api.application.servico.usecase.ConsultarServicoUseC
 import com.mecanica.oficina_api.application.servico.usecase.ConsultarTempoMedioUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.InativarServicoUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.ListarServicosUseCase;
-import com.mecanica.oficina_api.domain.servico.Servico;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,6 +38,7 @@ public class ServicoController {
     private final AlterarServicoUseCase alterarServicoUseCase;
     private final AtivarServicoUseCase ativarServicoUseCase;
     private final InativarServicoUseCase inativarServicoUseCase;
+    private final ServicoPresenter presenter;
 
     public ServicoController(CadastrarServicoUseCase cadastrarServicoUseCase,
                              ConsultarServicoUseCase consultarServicoUseCase,
@@ -45,7 +46,8 @@ public class ServicoController {
                              ListarServicosUseCase listarServicosUseCase,
                              AlterarServicoUseCase alterarServicoUseCase,
                              AtivarServicoUseCase ativarServicoUseCase,
-                             InativarServicoUseCase inativarServicoUseCase) {
+                             InativarServicoUseCase inativarServicoUseCase,
+                             ServicoPresenter presenter) {
         this.cadastrarServicoUseCase = cadastrarServicoUseCase;
         this.consultarServicoUseCase = consultarServicoUseCase;
         this.consultarTempoMedioUseCase = consultarTempoMedioUseCase;
@@ -53,6 +55,7 @@ public class ServicoController {
         this.alterarServicoUseCase = alterarServicoUseCase;
         this.ativarServicoUseCase = ativarServicoUseCase;
         this.inativarServicoUseCase = inativarServicoUseCase;
+        this.presenter = presenter;
     }
 
     @PostMapping
@@ -69,7 +72,7 @@ public class ServicoController {
             request.getNome(), request.getDescricao(),
             request.getPreco(), request.getTempoEstimadoHoras()
         );
-        return ResponseEntity.status(201).body(toResponse(servico));
+        return ResponseEntity.status(201).body(presenter.apresentar(servico));
     }
 
     @GetMapping("/{id}")
@@ -82,7 +85,7 @@ public class ServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ServicoResponse> buscar(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(consultarServicoUseCase.executar(id)));
+        return ResponseEntity.ok(presenter.apresentar(consultarServicoUseCase.executar(id)));
     }
 
     @GetMapping("/{id}/tempo-medio")
@@ -95,12 +98,7 @@ public class ServicoController {
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<TempoMedioServicoResponse> buscarTempoMedio(@PathVariable String id) {
-        var resultado = consultarTempoMedioUseCase.executar(id);
-        return ResponseEntity.ok(new TempoMedioServicoResponse(
-            resultado.servicoId(),
-            resultado.nome(),
-            resultado.tempoMedioEmMinutos()
-        ));
+        return ResponseEntity.ok(presenter.apresentarTempoMedio(consultarTempoMedioUseCase.executar(id)));
     }
 
     @GetMapping
@@ -108,7 +106,7 @@ public class ServicoController {
     @Operation(summary = "Listar serviços ativos", description = "Retorna todos os serviços ativos do catálogo")
     @ApiResponse(responseCode = "200", description = "Lista de serviços ativos")
     public ResponseEntity<List<ServicoResponse>> listar() {
-        return ResponseEntity.ok(listarServicosUseCase.executar().stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(presenter.apresentar(listarServicosUseCase.executar()));
     }
 
     @PutMapping("/{id}")
@@ -126,7 +124,7 @@ public class ServicoController {
             id, request.getNome(), request.getDescricao(),
             request.getPreco(), request.getTempoEstimadoHoras()
         );
-        return ResponseEntity.ok(toResponse(servico));
+        return ResponseEntity.ok(presenter.apresentar(servico));
     }
 
     @PatchMapping("/{id}/ativar")
@@ -139,7 +137,7 @@ public class ServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ServicoResponse> ativar(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ativarServicoUseCase.executar(id)));
+        return ResponseEntity.ok(presenter.apresentar(ativarServicoUseCase.executar(id)));
     }
 
     @DeleteMapping("/{id}")
@@ -153,12 +151,5 @@ public class ServicoController {
     public ResponseEntity<Void> inativar(@PathVariable String id) {
         inativarServicoUseCase.executar(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private ServicoResponse toResponse(Servico s) {
-        return new ServicoResponse(
-            s.getId(), s.getNome(), s.getDescricao(), s.getPreco(),
-            (int) s.getTempoEstimadoHoras().toHours(), s.isAtivo()
-        );
     }
 }

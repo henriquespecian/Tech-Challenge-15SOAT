@@ -4,6 +4,7 @@ import com.mecanica.oficina_api.adapters.web.dto.request.AlterarInsumosRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarInsumosRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.ComprarInsumoSimuladoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.InsumosResponse;
+import com.mecanica.oficina_api.adapters.web.presenter.InsumosPresenter;
 import com.mecanica.oficina_api.application.insumo.usecase.AlterarInsumoUseCase;
 import com.mecanica.oficina_api.application.insumo.usecase.AtivarInsumoUseCase;
 import com.mecanica.oficina_api.application.insumo.usecase.CadastrarInsumoUseCase;
@@ -11,7 +12,6 @@ import com.mecanica.oficina_api.application.insumo.usecase.ConsultarInsumoUseCas
 import com.mecanica.oficina_api.application.insumo.usecase.InativarInsumoUseCase;
 import com.mecanica.oficina_api.application.insumo.usecase.ListarInsumosUseCase;
 import com.mecanica.oficina_api.application.insumo.usecase.RegistrarCompraUseCase;
-import com.mecanica.oficina_api.domain.insumo.Insumos;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -47,6 +47,7 @@ public class InsumosController {
     private final AtivarInsumoUseCase ativarInsumoUseCase;
     private final InativarInsumoUseCase inativarInsumoUseCase;
     private final RegistrarCompraUseCase registrarCompraUseCase;
+    private final InsumosPresenter presenter;
 
     public InsumosController(
             CadastrarInsumoUseCase cadastrarInsumoUseCase,
@@ -55,7 +56,8 @@ public class InsumosController {
             AlterarInsumoUseCase alterarInsumoUseCase,
             AtivarInsumoUseCase ativarInsumoUseCase,
             InativarInsumoUseCase inativarInsumoUseCase,
-            RegistrarCompraUseCase registrarCompraUseCase) {
+            RegistrarCompraUseCase registrarCompraUseCase,
+            InsumosPresenter presenter) {
         this.cadastrarInsumoUseCase = cadastrarInsumoUseCase;
         this.consultarInsumoUseCase = consultarInsumoUseCase;
         this.listarInsumosUseCase = listarInsumosUseCase;
@@ -63,6 +65,7 @@ public class InsumosController {
         this.ativarInsumoUseCase = ativarInsumoUseCase;
         this.inativarInsumoUseCase = inativarInsumoUseCase;
         this.registrarCompraUseCase = registrarCompraUseCase;
+        this.presenter = presenter;
     }
 
     @GetMapping
@@ -70,7 +73,7 @@ public class InsumosController {
     @Operation(summary = "Listar insumos ativos", description = "Retorna todos os insumos e peças com ativo=true")
     @ApiResponse(responseCode = "200", description = "Lista de insumos ativos")
     public ResponseEntity<List<InsumosResponse>> listarInsumos() {
-        return ResponseEntity.ok(listarInsumosUseCase.executar().stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(presenter.apresentar(listarInsumosUseCase.executar()));
     }
 
     @GetMapping("/{id}")
@@ -83,7 +86,7 @@ public class InsumosController {
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<InsumosResponse> buscarInsumoPorId(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(consultarInsumoUseCase.executar(id)));
+        return ResponseEntity.ok(presenter.apresentar(consultarInsumoUseCase.executar(id)));
     }
 
     @PostMapping
@@ -105,7 +108,7 @@ public class InsumosController {
             request.getEstoqueMinimo(),
             request.getUnidade()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(insumo));
+        return ResponseEntity.status(HttpStatus.CREATED).body(presenter.apresentar(insumo));
     }
 
     @PutMapping("/{id}")
@@ -145,7 +148,7 @@ public class InsumosController {
     public ResponseEntity<InsumosResponse> compraSimulada(
             @PathVariable String id,
             @RequestBody ComprarInsumoSimuladoRequest request) {
-        return ResponseEntity.ok(toResponse(registrarCompraUseCase.executar(id, request.getQuantidade())));
+        return ResponseEntity.ok(presenter.apresentar(registrarCompraUseCase.executar(id, request.getQuantidade())));
     }
 
     @PatchMapping("/{id}/ativar")
@@ -158,7 +161,7 @@ public class InsumosController {
             content = @Content(schema = @Schema()))
     })
     public ResponseEntity<InsumosResponse> ativarInsumo(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(ativarInsumoUseCase.executar(id)));
+        return ResponseEntity.ok(presenter.apresentar(ativarInsumoUseCase.executar(id)));
     }
 
     @DeleteMapping("/{id}")
@@ -172,17 +175,5 @@ public class InsumosController {
     public ResponseEntity<Void> desativarInsumo(@PathVariable String id) {
         inativarInsumoUseCase.executar(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private InsumosResponse toResponse(Insumos insumo) {
-        return new InsumosResponse(
-            insumo.getId(),
-            insumo.getNome(),
-            insumo.getPrecoUnitario(),
-            insumo.getEstoqueAtual(),
-            insumo.getEstoqueMinimo(),
-            insumo.getUnidade(),
-            insumo.getAtivo()
-        );
     }
 }

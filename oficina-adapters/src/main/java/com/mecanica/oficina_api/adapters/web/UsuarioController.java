@@ -3,6 +3,7 @@ package com.mecanica.oficina_api.adapters.web;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarUsuarioRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarUsuarioRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.UsuarioResponse;
+import com.mecanica.oficina_api.adapters.web.presenter.UsuarioPresenter;
 import com.mecanica.oficina_api.application.usuario.usecase.AlterarUsuarioUseCase;
 import com.mecanica.oficina_api.application.usuario.usecase.CadastrarUsuarioUseCase;
 import com.mecanica.oficina_api.application.usuario.usecase.ConsultarUsuarioUseCase;
@@ -38,15 +39,18 @@ public class UsuarioController {
     private final ConsultarUsuarioUseCase consultarUsuarioUseCase;
     private final AlterarUsuarioUseCase alterarUsuarioUseCase;
     private final InativarUsuarioUseCase inativarUsuarioUseCase;
+    private final UsuarioPresenter presenter;
 
     public UsuarioController(CadastrarUsuarioUseCase cadastrarUsuarioUseCase,
                              ConsultarUsuarioUseCase consultarUsuarioUseCase,
                              AlterarUsuarioUseCase alterarUsuarioUseCase,
-                             InativarUsuarioUseCase inativarUsuarioUseCase) {
+                             InativarUsuarioUseCase inativarUsuarioUseCase,
+                             UsuarioPresenter presenter) {
         this.cadastrarUsuarioUseCase = cadastrarUsuarioUseCase;
         this.consultarUsuarioUseCase = consultarUsuarioUseCase;
         this.alterarUsuarioUseCase = alterarUsuarioUseCase;
         this.inativarUsuarioUseCase = inativarUsuarioUseCase;
+        this.presenter = presenter;
     }
 
     @PostMapping
@@ -62,7 +66,7 @@ public class UsuarioController {
         Usuario usuario = cadastrarUsuarioUseCase.executar(
             request.getNome(), request.getEmail(), request.getSenha(),
             request.getPerfil(), request.getClienteId());
-        return ResponseEntity.status(201).body(toResponse(usuario));
+        return ResponseEntity.status(201).body(presenter.apresentar(usuario));
     }
 
     @GetMapping("/{id}")
@@ -75,7 +79,7 @@ public class UsuarioController {
             content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
     })
     public ResponseEntity<UsuarioResponse> buscar(@PathVariable String id) {
-        return ResponseEntity.ok(toResponse(consultarUsuarioUseCase.executar(id)));
+        return ResponseEntity.ok(presenter.apresentar(consultarUsuarioUseCase.executar(id)));
     }
 
     @PutMapping("/{id}")
@@ -90,7 +94,7 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponse> alterar(@PathVariable String id, @RequestBody AlterarUsuarioRequest request) {
         Usuario usuario = alterarUsuarioUseCase.executar(
             id, request.getNome(), request.getEmail(), request.getPerfil(), request.getClienteId());
-        return ResponseEntity.ok(toResponse(usuario));
+        return ResponseEntity.ok(presenter.apresentar(usuario));
     }
 
     @DeleteMapping("/{id}")
@@ -104,12 +108,5 @@ public class UsuarioController {
     public ResponseEntity<Void> deletar(@PathVariable String id) {
         inativarUsuarioUseCase.executar(id);
         return ResponseEntity.status(204).build();
-    }
-
-    private UsuarioResponse toResponse(Usuario usuario) {
-        return new UsuarioResponse(
-            usuario.getId(), usuario.getNome(), usuario.getEmail(),
-            usuario.getPerfil(), usuario.getClienteId(),
-            usuario.getDataCadastro(), usuario.getDataAtualizacao());
     }
 }

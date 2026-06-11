@@ -3,6 +3,7 @@ package com.mecanica.oficina_api.adapters.web;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarClienteRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarClienteRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.ConsultarClienteResponse;
+import com.mecanica.oficina_api.adapters.web.presenter.ClientePresenter;
 import com.mecanica.oficina_api.application.cliente.usecase.AlterarClienteUseCase;
 import com.mecanica.oficina_api.application.cliente.usecase.CadastrarClienteUseCase;
 import com.mecanica.oficina_api.application.cliente.usecase.ConsultarClienteUseCase;
@@ -34,17 +35,20 @@ public class ClienteController {
     private final ListarClientesUseCase listarClientesUseCase;
     private final AlterarClienteUseCase alterarClienteUseCase;
     private final DeletarClienteUseCase deletarClienteUseCase;
+    private final ClientePresenter presenter;
 
     public ClienteController(CadastrarClienteUseCase cadastrarClienteUseCase,
                              ConsultarClienteUseCase consultarClienteUseCase,
                              ListarClientesUseCase listarClientesUseCase,
                              AlterarClienteUseCase alterarClienteUseCase,
-                             DeletarClienteUseCase deletarClienteUseCase) {
+                             DeletarClienteUseCase deletarClienteUseCase,
+                             ClientePresenter presenter) {
         this.cadastrarClienteUseCase = cadastrarClienteUseCase;
         this.consultarClienteUseCase = consultarClienteUseCase;
         this.listarClientesUseCase = listarClientesUseCase;
         this.alterarClienteUseCase = alterarClienteUseCase;
         this.deletarClienteUseCase = deletarClienteUseCase;
+        this.presenter = presenter;
     }
 
     @PostMapping
@@ -60,7 +64,7 @@ public class ClienteController {
     Cliente cliente = cadastrarClienteUseCase.executar(
         request.getNome(), request.getDocumento(), request.getEmail(), request.getTelefone()
     );
-    return ResponseEntity.status(201).body(toResponse(cliente));
+    return ResponseEntity.status(201).body(presenter.apresentar(cliente));
 }
 
     @GetMapping
@@ -70,7 +74,7 @@ public class ClienteController {
     @ApiResponse(responseCode = "200", description = "Lista de clientes retornada com sucesso")
     public ResponseEntity<List<ConsultarClienteResponse>> listar() {
         List<Cliente> clientes = listarClientesUseCase.executar();
-        return ResponseEntity.ok(clientes.stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(presenter.apresentar(clientes));
     }
 
     @GetMapping("/{documento}")
@@ -84,7 +88,7 @@ public class ClienteController {
     })
     public ResponseEntity<ConsultarClienteResponse> consultar(@PathVariable String documento) {
         return consultarClienteUseCase.executar(documento)
-            .map(cliente -> ResponseEntity.status(200).body(toResponse(cliente)))
+            .map(cliente -> ResponseEntity.status(200).body(presenter.apresentar(cliente)))
             .orElseGet(() -> ResponseEntity.status(404).build());
     }
 
@@ -111,11 +115,4 @@ public class ClienteController {
         deletarClienteUseCase.executar(documento);
         return ResponseEntity.status(204).build();
     }
-
-    private ConsultarClienteResponse toResponse(Cliente c) {
-    return new ConsultarClienteResponse(
-        c.getId(), c.getNome(), c.getDocumento().getValue(),
-        c.getEmail().getValue(), c.getTelefone().getValue()
-    );
-}
 }
