@@ -40,17 +40,13 @@ public class AprovarOrcamentoUseCase {
                 continue;
             }
 
-            //Calcula o estoque
             int estoqueAnterior = insumo.getEstoqueAtual();
             int estoqueMinimoAnterior = insumo.getEstoqueMinimo();
-            int novoEstoque = insumo.getEstoqueAtual() - item.getQuantidade();
 
-            if (novoEstoque < 0) {
-                throw new IllegalStateException("Estoque insuficiente para o insumo: " + insumo.getNome());
-            }
-
-            insumo.setEstoqueAtual(novoEstoque);
+            insumo.darBaixa(item.getQuantidade());
             insumosGateway.alterar(insumo.getId(), insumo);
+
+            int novoEstoque = insumo.getEstoqueAtual();
 
             if (Insumos.deveEmitirAlerta(estoqueAnterior, estoqueMinimoAnterior, novoEstoque, insumo.getEstoqueMinimo())) {
                 notificadorEstoqueBaixo.notificar(new AlertaEstoqueBaixo(
