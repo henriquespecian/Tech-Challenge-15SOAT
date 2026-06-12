@@ -1,8 +1,8 @@
-package com.mecanica.oficina_api.integration;
+package com.mecanica.oficina_api.infrastructure.integration;
 
 import com.mecanica.oficina_api.domain.usuario.Perfil;
-import com.mecanica.oficina_api.interfaces.dto.request.AlterarClienteRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.CadastrarClienteRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.AlterarClienteRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarClienteRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 

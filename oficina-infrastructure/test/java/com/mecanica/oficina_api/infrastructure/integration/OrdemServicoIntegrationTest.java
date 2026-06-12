@@ -1,14 +1,14 @@
-package com.mecanica.oficina_api.integration;
+package com.mecanica.oficina_api.infrastructure.integration;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.mecanica.oficina_api.infrastructure.persistence.ClienteJpaEntity;
-import com.mecanica.oficina_api.infrastructure.persistence.InsumosJpaEntity;
-import com.mecanica.oficina_api.infrastructure.persistence.ServicoJpaEntity;
-import com.mecanica.oficina_api.interfaces.dto.request.CadastrarVeiculoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.ItemOrcamentoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.ItemServicoRequest;
+import com.mecanica.oficina_api.adapters.persistence.ClienteJpaEntity;
+import com.mecanica.oficina_api.adapters.persistence.InsumosJpaEntity;
+import com.mecanica.oficina_api.adapters.persistence.ServicoJpaEntity;
+import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarVeiculoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.CriarOrdemServicoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.GerarOrcamentoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.ItemOrcamentoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.ItemServicoRequest;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;

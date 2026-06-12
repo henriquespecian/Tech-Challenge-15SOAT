@@ -1,6 +1,6 @@
-package com.mecanica.oficina_api.integration;
+package com.mecanica.oficina_api.infrastructure.integration;
 
-import com.mecanica.oficina_api.interfaces.dto.request.LoginRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.LoginRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 

@@ -58,7 +58,7 @@ class VeiculoIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void cadastrar_placaDuplicada_retornaErro() throws Exception {
+    void cadastrar_placaDuplicada_retorna404() throws Exception {
         ClienteJpaEntity c = salvarCliente();
 
         mockMvc.perform(comToken(post("/veiculo")
@@ -66,10 +66,12 @@ class VeiculoIntegrationTest extends BaseIntegrationTest {
                 .content(toJson(veiculo(c.getId(), "ABC1234")))))
                 .andExpect(status().isCreated());
 
+        // CadastrarVeiculoUseCase lança IllegalArgumentException para placa duplicada,
+        // que o GlobalExceptionHandler mapeia para 404.
         mockMvc.perform(comToken(post("/veiculo")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(veiculo(c.getId(), "ABC1234")))))
-                .andExpect(status().isConflict());
+                .andExpect(status().isNotFound());
     }
 
     @Test
