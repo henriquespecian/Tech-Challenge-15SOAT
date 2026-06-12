@@ -1,29 +1,47 @@
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mecanica.oficina_api.application.ordemservico.OrdemServicoService;
+import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
+import com.mecanica.oficina_api.adapters.web.OrdemServicoController;
+import com.mecanica.oficina_api.adapters.web.dto.request.CriarOrdemServicoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.GerarOrcamentoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.ItemOrcamentoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.ItemServicoRequest;
+import com.mecanica.oficina_api.adapters.web.presenter.OrdemServicoPresenter;
+import com.mecanica.oficina_api.application.ordemservico.input.GerarOrcamentoInput;
+import com.mecanica.oficina_api.application.ordemservico.usecase.AguardarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.AprovarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.AtualizarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ConsultarOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.CriarOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.EnviarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.EntregarOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.FinalizarOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.FinalizarServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.GerarOrcamentoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.IniciarDiagnosticoOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.IniciarExecucaoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.IniciarServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ListarOrdensServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ListarPorVeiculoOrdemServicoUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.ListarServicosPorOSUseCase;
+import com.mecanica.oficina_api.application.ordemservico.usecase.NegarOrcamentoUseCase;
+import com.mecanica.oficina_api.domain.ordemservico.ItemOrcamento;
+import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
-import com.mecanica.oficina_api.interfaces.dto.request.CriarOrdemServicoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.GerarOrcamentoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.ItemOrcamentoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.ItemServicoRequest;
-import com.mecanica.oficina_api.interfaces.dto.response.ItemOrcamentoResponse;
-import com.mecanica.oficina_api.interfaces.dto.response.OrcamentoResponse;
-import com.mecanica.oficina_api.interfaces.dto.response.OrdemServicoResponse;
-import com.mecanica.oficina_api.interfaces.dto.response.ServicoStatusResponse;
+import com.mecanica.oficina_api.domain.ordemservico.StatusServico;
+
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,254 +59,366 @@ class OrdemServicoControllerTest {
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Mock private OrdemServicoService ordemServicoService;
-    @InjectMocks private OrdemServicoController controller;
+    @Mock private CriarOrdemServicoUseCase criarOrdemServicoUseCase;
+    @Mock private ConsultarOrdemServicoUseCase consultarOrdemServicoUseCase;
+    @Mock private ListarOrdensServicoUseCase listarOrdensServicoUseCase;
+    @Mock private ListarPorVeiculoOrdemServicoUseCase listarPorVeiculoOrdemServicoUseCase;
+    @Mock private IniciarDiagnosticoOrdemServicoUseCase iniciarDiagnosticoOrdemServicoUseCase;
+    @Mock private GerarOrcamentoUseCase gerarOrcamentoUseCase;
+    @Mock private AtualizarOrcamentoUseCase atualizarOrcamentoUseCase;
+    @Mock private EnviarOrcamentoUseCase enviarOrcamentoUseCase;
+    @Mock private AguardarOrcamentoUseCase aguardarOrcamentoUseCase;
+    @Mock private AprovarOrcamentoUseCase aprovarOrcamentoUseCase;
+    @Mock private NegarOrcamentoUseCase negarOrcamentoUseCase;
+    @Mock private IniciarExecucaoUseCase iniciarExecucaoUseCase;
+    @Mock private FinalizarOrdemServicoUseCase finalizarOrdemServicoUseCase;
+    @Mock private EntregarOrdemServicoUseCase entregarOrdemServicoUseCase;
+    @Mock private ListarServicosPorOSUseCase listarServicosPorOSUseCase;
+    @Mock private IniciarServicoUseCase iniciarServicoUseCase;
+    @Mock private FinalizarServicoUseCase finalizarServicoUseCase;
+
+    private static final String OS_ID = "os-1";
+    private static final String VEICULO_ID = "veiculo-1";
+    private static final String CLIENTE_ID = "cliente-1";
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        OrdemServicoController controller = new OrdemServicoController(
+                criarOrdemServicoUseCase, consultarOrdemServicoUseCase, listarOrdensServicoUseCase,
+                listarPorVeiculoOrdemServicoUseCase, iniciarDiagnosticoOrdemServicoUseCase,
+                gerarOrcamentoUseCase, atualizarOrcamentoUseCase, enviarOrcamentoUseCase,
+                aguardarOrcamentoUseCase, aprovarOrcamentoUseCase, negarOrcamentoUseCase,
+                iniciarExecucaoUseCase, finalizarOrdemServicoUseCase, entregarOrdemServicoUseCase,
+                listarServicosPorOSUseCase, iniciarServicoUseCase, finalizarServicoUseCase,
+                new OrdemServicoPresenter());
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
+    // --- helpers de construção de domínio ---
+
+    private OrdemServico osRecebida() {
+        return OrdemServico.reconstituir(OS_ID, VEICULO_ID, CLIENTE_ID,
+                OrdemServicoStatus.RECEBIDA, null, null, null);
+    }
+
+    private OrdemServico osComOrcamento() {
+        OrdemServico os = OrdemServico.criar(VEICULO_ID, CLIENTE_ID);
+        os.iniciarDiagnostico();
+        os.gerarOrcamento(List.of(
+                new ItemOrcamento("insumo-1", null, "Óleo", 2, new BigDecimal("50.00"))),
+                "obs");
+        return OrdemServico.reconstituir(OS_ID, VEICULO_ID, CLIENTE_ID,
+                OrdemServicoStatus.EM_DIAGNOSTICO, os.getOrcamento(), null, null);
+    }
+
+    private StatusServico statusServico() {
+        return StatusServico.recriar("status-1",
+                com.mecanica.oficina_api.domain.ordemservico.ServicoStatus.AGUARDANDO,
+                OS_ID, "servico-1", null, null);
+    }
+
+    private CriarOrdemServicoRequest criarRequest() {
+        CriarOrdemServicoRequest request = new CriarOrdemServicoRequest();
+        request.setVeiculoId(VEICULO_ID);
+        request.setClienteId(CLIENTE_ID);
+        return request;
+    }
+
+    private GerarOrcamentoRequest orcamentoRequest() {
+        ItemOrcamentoRequest insumo = new ItemOrcamentoRequest();
+        insumo.setInsumoId("insumo-1");
+        insumo.setQuantidade(2);
+        ItemServicoRequest servico = new ItemServicoRequest();
+        servico.setServicoId("servico-1");
+        servico.setQuantidade(1);
+        GerarOrcamentoRequest request = new GerarOrcamentoRequest();
+        request.setInsumos(List.of(insumo));
+        request.setServicos(List.of(servico));
+        request.setObservacoes("obs");
+        return request;
+    }
+
+    // --- listar ---
+
     @Test
-    void deveListarTodasAsOsERetornar200() throws Exception {
-        when(ordemServicoService.listar(null))
-                .thenReturn(List.of(osResponse("os-1", "RECEBIDA", null), osResponse("os-2", "EM_DIAGNOSTICO", null)));
+    void deveListarOrdensERetornar200() throws Exception {
+        when(listarOrdensServicoUseCase.executar(null)).thenReturn(List.of(osRecebida()));
 
         mockMvc.perform(get("/ordem-servico"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
-    }
-
-    @Test
-    void deveListarOsComFiltroStatusERetornar200() throws Exception {
-        when(ordemServicoService.listar(OrdemServicoStatus.RECEBIDA))
-                .thenReturn(List.of(osResponse("os-1", "RECEBIDA", null)));
-
-        mockMvc.perform(get("/ordem-servico").param("status", "RECEBIDA"))
-                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(OS_ID))
                 .andExpect(jsonPath("$[0].status").value("RECEBIDA"));
     }
 
     @Test
-    void deveCriarOrdemServicoERetornar201() throws Exception {
-        CriarOrdemServicoRequest req = new CriarOrdemServicoRequest();
-        req.setVeiculoId("veiculo-1");
-        req.setClienteId("cliente-1");
+    void deveListarOrdensFiltradasPorStatusERetornar200() throws Exception {
+        when(listarOrdensServicoUseCase.executar(OrdemServicoStatus.RECEBIDA))
+                .thenReturn(List.of(osRecebida()));
 
-        when(ordemServicoService.criar(any(CriarOrdemServicoRequest.class)))
-                .thenReturn(osResponse("os-1", "RECEBIDA", null));
+        mockMvc.perform(get("/ordem-servico").param("status", "RECEBIDA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].status").value("RECEBIDA"));
+    }
+
+    // --- criar ---
+
+    @Test
+    void deveCriarOrdemERetornar201() throws Exception {
+        when(criarOrdemServicoUseCase.executar(VEICULO_ID, CLIENTE_ID)).thenReturn(osRecebida());
 
         mockMvc.perform(post("/ordem-servico")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(objectMapper.writeValueAsString(criarRequest())))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value("os-1"))
+                .andExpect(jsonPath("$.id").value(OS_ID))
+                .andExpect(jsonPath("$.veiculoId").value(VEICULO_ID))
+                .andExpect(jsonPath("$.clienteId").value(CLIENTE_ID))
                 .andExpect(jsonPath("$.status").value("RECEBIDA"));
     }
 
     @Test
-    void deveBuscarPorIdERetornar200() throws Exception {
-        when(ordemServicoService.buscarPorId("os-1"))
-                .thenReturn(osResponse("os-1", "RECEBIDA", null));
+    void deveRetornar404AoCriar_quandoVeiculoNaoEncontrado() throws Exception {
+        when(criarOrdemServicoUseCase.executar(eq(VEICULO_ID), eq(CLIENTE_ID)))
+                .thenThrow(new IllegalArgumentException("Veículo não encontrado"));
 
-        mockMvc.perform(get("/ordem-servico/os-1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("os-1"))
-                .andExpect(jsonPath("$.status").value("RECEBIDA"))
-                .andExpect(jsonPath("$.orcamento").doesNotExist());
+        mockMvc.perform(post("/ordem-servico")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(criarRequest())))
+                .andExpect(status().isNotFound());
     }
+
+    // --- buscar por id ---
+
+    @Test
+    void deveBuscarOrdemPorIdERetornar200() throws Exception {
+        when(consultarOrdemServicoUseCase.executar(OS_ID)).thenReturn(osRecebida());
+
+        mockMvc.perform(get("/ordem-servico/" + OS_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(OS_ID))
+                .andExpect(jsonPath("$.status").value("RECEBIDA"));
+    }
+
+    @Test
+    void deveRetornar404AoBuscar_quandoOrdemNaoEncontrada() throws Exception {
+        when(consultarOrdemServicoUseCase.executar("inexistente"))
+                .thenThrow(new IllegalArgumentException("OS não encontrada"));
+
+        mockMvc.perform(get("/ordem-servico/inexistente"))
+                .andExpect(status().isNotFound());
+    }
+
+    // --- listar por veiculo ---
 
     @Test
     void deveListarPorVeiculoERetornar200() throws Exception {
-        when(ordemServicoService.listarPorVeiculo("veiculo-1"))
-                .thenReturn(List.of(osResponse("os-1", "RECEBIDA", null)));
+        when(listarPorVeiculoOrdemServicoUseCase.executar(VEICULO_ID))
+                .thenReturn(List.of(osRecebida()));
 
-        mockMvc.perform(get("/ordem-servico/veiculo/veiculo-1"))
+        mockMvc.perform(get("/ordem-servico/veiculo/" + VEICULO_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(OS_ID));
     }
+
+    // --- transições de status ---
 
     @Test
     void deveIniciarDiagnosticoERetornar200() throws Exception {
-        when(ordemServicoService.iniciarDiagnostico("os-1"))
-                .thenReturn(osResponse("os-1", "EM_DIAGNOSTICO", null));
+        when(iniciarDiagnosticoOrdemServicoUseCase.executar(OS_ID))
+                .thenReturn(OrdemServico.reconstituir(OS_ID, VEICULO_ID, CLIENTE_ID,
+                        OrdemServicoStatus.EM_DIAGNOSTICO, null, null, null));
 
-        mockMvc.perform(patch("/ordem-servico/os-1/iniciar-diagnostico"))
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/iniciar-diagnostico"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("os-1"))
                 .andExpect(jsonPath("$.status").value("EM_DIAGNOSTICO"));
     }
 
     @Test
-    void deveGerarOrcamentoERetornar200() throws Exception {
-        OrcamentoResponse orc = new OrcamentoResponse("PENDENTE",
-                List.of(new ItemOrcamentoResponse(null, "1", "Troca de oleo", 1, BigDecimal.valueOf(100), BigDecimal.valueOf(100))),
-                BigDecimal.valueOf(100), "obs", null);
-        when(ordemServicoService.gerarOrcamento(eq("os-1"), any()))
-                .thenReturn(osResponse("os-1", "EM_DIAGNOSTICO", orc));
+    void deveRetornar409AoIniciarDiagnostico_quandoEstadoInvalido() throws Exception {
+        when(iniciarDiagnosticoOrdemServicoUseCase.executar(OS_ID))
+                .thenThrow(new IllegalStateException("OS deve estar RECEBIDA"));
 
-        mockMvc.perform(post("/ordem-servico/os-1/orcamento")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(gerarOrcamentoRequest())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("EM_DIAGNOSTICO"))
-                .andExpect(jsonPath("$.orcamento.status").value("PENDENTE"))
-                .andExpect(jsonPath("$.orcamento.valorTotal").value(100));
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/iniciar-diagnostico"))
+                .andExpect(status().isConflict());
     }
 
     @Test
-    void deveAtualizarOrcamentoERetornar200() throws Exception {
-        OrcamentoResponse orc = new OrcamentoResponse("PENDENTE",
-                List.of(new ItemOrcamentoResponse(null, "1", "Alinhamento", 1, BigDecimal.valueOf(150), BigDecimal.valueOf(150))),
-                BigDecimal.valueOf(150), "ajuste", null);
-        when(ordemServicoService.atualizarOrcamento(eq("os-1"), any()))
-                .thenReturn(osResponse("os-1", "AGUARDANDO_APROVACAO", orc));
+    void deveFinalizarERetornar200() throws Exception {
+        when(finalizarOrdemServicoUseCase.executar(OS_ID))
+                .thenReturn(OrdemServico.reconstituir(OS_ID, VEICULO_ID, CLIENTE_ID,
+                        OrdemServicoStatus.FINALIZADA, null, new BigDecimal("100.00"), null));
 
-        mockMvc.perform(put("/ordem-servico/os-1/orcamento")
-                        .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(gerarOrcamentoRequest())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"))
-                .andExpect(jsonPath("$.orcamento.status").value("PENDENTE"))
-                .andExpect(jsonPath("$.orcamento.valorTotal").value(150));
-    }
-
-    @Test
-    void deveEnviarOrcamentoERetornar200() throws Exception {
-        OrcamentoResponse orc = new OrcamentoResponse("ENVIADO", List.of(), BigDecimal.ZERO, null, null);
-        when(ordemServicoService.enviarOrcamento("os-1"))
-                .thenReturn(osResponse("os-1", "AGUARDANDO_APROVACAO", orc));
-
-        mockMvc.perform(patch("/ordem-servico/os-1/orcamento/enviar"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"))
-                .andExpect(jsonPath("$.orcamento.status").value("ENVIADO"));
-    }
-
-    @Test
-    void deveAguardarOrcamentoERetornar200() throws Exception {
-        OrcamentoResponse orc = new OrcamentoResponse("AGUARDANDO", List.of(), BigDecimal.ZERO, null, null);
-        when(ordemServicoService.aguardarOrcamento("os-1"))
-                .thenReturn(osResponse("os-1", "AGUARDANDO_APROVACAO", orc));
-
-        mockMvc.perform(patch("/ordem-servico/os-1/orcamento/aguardar"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"))
-                .andExpect(jsonPath("$.orcamento.status").value("AGUARDANDO"));
-    }
-
-    @Test
-    void deveAprovarOrcamentoERetornar200() throws Exception {
-        OrcamentoResponse orc = new OrcamentoResponse("APROVADO", List.of(), BigDecimal.ZERO, null, null);
-        when(ordemServicoService.aprovarOrcamento("os-1"))
-                .thenReturn(osResponse("os-1", "AGUARDANDO_APROVACAO", orc));
-
-        mockMvc.perform(patch("/ordem-servico/os-1/orcamento/aprovar"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"))
-                .andExpect(jsonPath("$.orcamento.status").value("APROVADO"));
-    }
-
-    @Test
-    void deveIniciarExecucaoERetornar200() throws Exception {
-        OrcamentoResponse orc = new OrcamentoResponse("APROVADO", List.of(), BigDecimal.ZERO, null, null);
-        when(ordemServicoService.iniciarExecucao("os-1"))
-                .thenReturn(osResponse("os-1", "EM_EXECUCAO", orc));
-
-        mockMvc.perform(patch("/ordem-servico/os-1/iniciar-execucao"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"));
-    }
-
-    @Test
-    void deveNegarOrcamentoERetornar200() throws Exception {
-        OrcamentoResponse orc = new OrcamentoResponse("NEGADO", List.of(), BigDecimal.ZERO, null, null);
-        when(ordemServicoService.negarOrcamento("os-1"))
-                .thenReturn(osResponse("os-1", "FINALIZADA", orc));
-
-        mockMvc.perform(patch("/ordem-servico/os-1/orcamento/negar"))
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/finalizar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("FINALIZADA"))
-                .andExpect(jsonPath("$.orcamento.status").value("NEGADO"));
+                .andExpect(jsonPath("$.valorFinal").value(100.00));
     }
 
     @Test
-    void deveFinalizarOrdemServicoERetornar200() throws Exception {
-        when(ordemServicoService.finalizar("os-1"))
-                .thenReturn(osResponse("os-1", "FINALIZADA", null));
+    void deveEntregarERetornar200() throws Exception {
+        when(entregarOrdemServicoUseCase.executar(OS_ID))
+                .thenReturn(OrdemServico.reconstituir(OS_ID, VEICULO_ID, CLIENTE_ID,
+                        OrdemServicoStatus.ENTREGUE, null, null, null));
 
-        mockMvc.perform(patch("/ordem-servico/os-1/finalizar"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("FINALIZADA"));
-    }
-
-    @Test
-    void deveEntregarVeiculoERetornar200() throws Exception {
-        OrcamentoResponse orc = new OrcamentoResponse("APROVADO", List.of(), BigDecimal.ZERO, null, null);
-        when(ordemServicoService.entregar("os-1"))
-                .thenReturn(osResponse("os-1", "ENTREGUE", orc));
-
-        mockMvc.perform(patch("/ordem-servico/os-1/entregar"))
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/entregar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ENTREGUE"));
     }
 
+    // --- orçamento ---
+
+    @Test
+    void deveGerarOrcamentoERetornar200() throws Exception {
+        when(gerarOrcamentoUseCase.executar(eq(OS_ID), any(GerarOrcamentoInput.class)))
+                .thenReturn(osComOrcamento());
+
+        mockMvc.perform(post("/ordem-servico/" + OS_ID + "/orcamento")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(orcamentoRequest())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orcamento.status").value("PENDENTE"))
+                .andExpect(jsonPath("$.orcamento.itens.length()").value(1))
+                .andExpect(jsonPath("$.orcamento.valorTotal").value(100.00));
+    }
+
+    @Test
+    void deveRetornar404AoGerarOrcamento_quandoInsumoNaoEncontrado() throws Exception {
+        when(gerarOrcamentoUseCase.executar(eq(OS_ID), any(GerarOrcamentoInput.class)))
+                .thenThrow(new IllegalArgumentException("Insumo não encontrado"));
+
+        mockMvc.perform(post("/ordem-servico/" + OS_ID + "/orcamento")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(orcamentoRequest())))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deveAtualizarOrcamentoERetornar200() throws Exception {
+        when(atualizarOrcamentoUseCase.executar(eq(OS_ID), any(GerarOrcamentoInput.class)))
+                .thenReturn(osComOrcamento());
+
+        mockMvc.perform(put("/ordem-servico/" + OS_ID + "/orcamento")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(orcamentoRequest())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orcamento.itens.length()").value(1));
+    }
+
+    @Test
+    void deveRetornar409AoAtualizarOrcamento_quandoEstadoInvalido() throws Exception {
+        when(atualizarOrcamentoUseCase.executar(eq(OS_ID), any(GerarOrcamentoInput.class)))
+                .thenThrow(new IllegalStateException("Orçamento deve estar AGUARDANDO"));
+
+        mockMvc.perform(put("/ordem-servico/" + OS_ID + "/orcamento")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(orcamentoRequest())))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deveEnviarOrcamentoERetornar200() throws Exception {
+        when(enviarOrcamentoUseCase.executar(OS_ID)).thenReturn(osComOrcamento());
+
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/orcamento/enviar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(OS_ID));
+    }
+
+    @Test
+    void deveAguardarOrcamentoERetornar200() throws Exception {
+        when(aguardarOrcamentoUseCase.executar(OS_ID)).thenReturn(osComOrcamento());
+
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/orcamento/aguardar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(OS_ID));
+    }
+
+    @Test
+    void deveAprovarOrcamentoERetornar200() throws Exception {
+        when(aprovarOrcamentoUseCase.executar(OS_ID)).thenReturn(osComOrcamento());
+
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/orcamento/aprovar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(OS_ID));
+    }
+
+    @Test
+    void deveRetornar409AoAprovarOrcamento_quandoEstadoInvalido() throws Exception {
+        when(aprovarOrcamentoUseCase.executar(OS_ID))
+                .thenThrow(new IllegalStateException("Orçamento em estado inválido"));
+
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/orcamento/aprovar"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deveNegarOrcamentoERetornar200() throws Exception {
+        when(negarOrcamentoUseCase.executar(OS_ID)).thenReturn(osComOrcamento());
+
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/orcamento/negar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(OS_ID));
+    }
+
+    @Test
+    void deveIniciarExecucaoERetornar200() throws Exception {
+        when(iniciarExecucaoUseCase.executar(OS_ID))
+                .thenReturn(OrdemServico.reconstituir(OS_ID, VEICULO_ID, CLIENTE_ID,
+                        OrdemServicoStatus.EM_EXECUCAO, null, null, null));
+
+        mockMvc.perform(patch("/ordem-servico/" + OS_ID + "/iniciar-execucao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"));
+    }
+
+    // --- serviços ---
+
     @Test
     void deveListarServicosERetornar200() throws Exception {
-        when(ordemServicoService.listarServicos("os-1"))
-                .thenReturn(List.of(servicoStatusResponse("status-1", "AGUARDANDO")));
+        when(listarServicosPorOSUseCase.executar(OS_ID)).thenReturn(List.of(statusServico()));
 
-        mockMvc.perform(get("/ordem-servico/os-1/servico/listar"))
+        mockMvc.perform(get("/ordem-servico/" + OS_ID + "/servico/listar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value("status-1"))
-                .andExpect(jsonPath("$[0].status").value("AGUARDANDO"));
+                .andExpect(jsonPath("$[0].status").value("AGUARDANDO"))
+                .andExpect(jsonPath("$[0].servicoId").value("servico-1"));
     }
 
     @Test
     void deveIniciarServicoERetornar200() throws Exception {
-        when(ordemServicoService.iniciarServico("status-1"))
-                .thenReturn(servicoStatusResponse("status-1", "INICIADO"));
+        StatusServico iniciado = StatusServico.recriar("status-1",
+                com.mecanica.oficina_api.domain.ordemservico.ServicoStatus.INICIADO,
+                OS_ID, "servico-1", null, null);
+        when(iniciarServicoUseCase.executar("status-1")).thenReturn(iniciado);
 
         mockMvc.perform(patch("/ordem-servico/servico/status-1/iniciar"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("status-1"))
                 .andExpect(jsonPath("$.status").value("INICIADO"));
     }
 
     @Test
+    void deveRetornar404AoIniciarServico_quandoNaoEncontrado() throws Exception {
+        when(iniciarServicoUseCase.executar("inexistente"))
+                .thenThrow(new IllegalArgumentException("Serviço não encontrado"));
+
+        mockMvc.perform(patch("/ordem-servico/servico/inexistente/iniciar"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void deveFinalizarServicoERetornar200() throws Exception {
-        when(ordemServicoService.finalizarServico("status-1"))
-                .thenReturn(servicoStatusResponse("status-1", "FINALIZADO"));
+        StatusServico finalizado = StatusServico.recriar("status-1",
+                com.mecanica.oficina_api.domain.ordemservico.ServicoStatus.FINALIZADO,
+                OS_ID, "servico-1", null, null);
+        when(finalizarServicoUseCase.executar("status-1")).thenReturn(finalizado);
 
         mockMvc.perform(patch("/ordem-servico/servico/status-1/finalizar"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("status-1"))
                 .andExpect(jsonPath("$.status").value("FINALIZADO"));
-    }
-
-    private OrdemServicoResponse osResponse(String id, String status, OrcamentoResponse orcamento) {
-        return new OrdemServicoResponse(id, "veiculo-1", "cliente-1", status, null, null, orcamento);
-    }
-
-    private ServicoStatusResponse servicoStatusResponse(String id, String status) {
-        return new ServicoStatusResponse(id, status, "os-1", "servico-1", LocalDateTime.now(), null);
-    }
-
-    private GerarOrcamentoRequest gerarOrcamentoRequest() {
-        ItemOrcamentoRequest insumo = new ItemOrcamentoRequest();
-        insumo.setInsumoId("insumo-1");
-        insumo.setQuantidade(1);
-
-        ItemServicoRequest servico = new ItemServicoRequest();
-        servico.setServicoId("servico-1");
-        servico.setQuantidade(1);
-
-        GerarOrcamentoRequest req = new GerarOrcamentoRequest();
-        req.setInsumos(List.of(insumo));
-        req.setServicos(List.of(servico));
-        req.setObservacoes("obs");
-        return req;
     }
 }

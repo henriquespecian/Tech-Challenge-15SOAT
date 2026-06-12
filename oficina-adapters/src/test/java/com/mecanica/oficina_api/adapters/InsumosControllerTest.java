@@ -1,34 +1,45 @@
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mecanica.oficina_api.application.insumo.InsumosService;
-import com.mecanica.oficina_api.interfaces.dto.request.AlterarInsumosRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.CadastrarInsumosRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.ComprarInsumoSimuladoRequest;
-import com.mecanica.oficina_api.interfaces.dto.response.InsumosResponse;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.server.ResponseStatusException;
+import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
+import com.mecanica.oficina_api.adapters.web.InsumosController;
+import com.mecanica.oficina_api.adapters.web.dto.request.AlterarInsumosRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarInsumosRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.ComprarInsumoSimuladoRequest;
+import com.mecanica.oficina_api.adapters.web.presenter.InsumosPresenter;
+import com.mecanica.oficina_api.application.insumo.usecase.AlterarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.AtivarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.CadastrarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.ConsultarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.InativarInsumoUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.ListarInsumosUseCase;
+import com.mecanica.oficina_api.application.insumo.usecase.RegistrarCompraUseCase;
+import com.mecanica.oficina_api.domain.insumo.Insumos;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class InsumosControllerTest {
@@ -37,55 +48,70 @@ class InsumosControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
-    private InsumosService insumosService;
+    private CadastrarInsumoUseCase cadastrarInsumoUseCase;
+    @Mock
+    private ConsultarInsumoUseCase consultarInsumoUseCase;
+    @Mock
+    private ListarInsumosUseCase listarInsumosUseCase;
+    @Mock
+    private AlterarInsumoUseCase alterarInsumoUseCase;
+    @Mock
+    private AtivarInsumoUseCase ativarInsumoUseCase;
+    @Mock
+    private InativarInsumoUseCase inativarInsumoUseCase;
+    @Mock
+    private RegistrarCompraUseCase registrarCompraUseCase;
 
-    @InjectMocks
-    private InsumosController insumosController;
+    private static final String ID = "insumo-1";
+
+    private Insumos insumo;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(insumosController).build();
+        InsumosController controller = new InsumosController(
+                cadastrarInsumoUseCase, consultarInsumoUseCase, listarInsumosUseCase,
+                alterarInsumoUseCase, ativarInsumoUseCase, inativarInsumoUseCase,
+                registrarCompraUseCase, new InsumosPresenter());
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
+        insumo = Insumos.reconstituir(
+                ID, "Óleo 5W30", new BigDecimal("45.90"), 20, 5, "L");
+        insumo.ativar();
     }
 
     @Test
     void deveListarInsumosERetornar200() throws Exception {
-        InsumosResponse insumo = insumoResponse("uuid-1", "Óleo", true);
-        when(insumosService.listar()).thenReturn(List.of(insumo));
+        when(listarInsumosUseCase.executar()).thenReturn(List.of(insumo));
 
         mockMvc.perform(get("/insumos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value("uuid-1"))
-                .andExpect(jsonPath("$[0].nome").value("Óleo"));
-    }
-
-    @Test
-    void deveListarInsumosVazioERetornar200() throws Exception {
-        when(insumosService.listar()).thenReturn(List.of());
-
-        mockMvc.perform(get("/insumos"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$[0].id").value(ID))
+                .andExpect(jsonPath("$[0].nome").value("Óleo 5W30"))
+                .andExpect(jsonPath("$[0].ativo").value(true));
     }
 
     @Test
     void deveBuscarInsumoPorIdERetornar200() throws Exception {
-        InsumosResponse insumo = insumoResponse("uuid-1", "Óleo", true);
-        when(insumosService.buscarPorId("uuid-1")).thenReturn(insumo);
+        when(consultarInsumoUseCase.executar(ID)).thenReturn(insumo);
 
-        mockMvc.perform(get("/insumos/uuid-1"))
+        mockMvc.perform(get("/insumos/" + ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("uuid-1"))
-                .andExpect(jsonPath("$.nome").value("Óleo"))
-                .andExpect(jsonPath("$.precoUnitario").value(50))
-                .andExpect(jsonPath("$.estoqueAtual").value(10))
-                .andExpect(jsonPath("$.unidade").value("LITRO"));
+                .andExpect(jsonPath("$.id").value(ID))
+                .andExpect(jsonPath("$.nome").value("Óleo 5W30"))
+                .andExpect(jsonPath("$.precoUnitario").value(45.90))
+                .andExpect(jsonPath("$.estoqueAtual").value(20))
+                .andExpect(jsonPath("$.estoqueMinimo").value(5))
+                .andExpect(jsonPath("$.unidade").value("L"))
+                .andExpect(jsonPath("$.ativo").value(true));
     }
 
     @Test
-    void deveRetornar404QuandoInsumoNaoEncontrado() throws Exception {
-        when(insumosService.buscarPorId("inexistente"))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"));
+    void deveRetornar404AoBuscar_quandoInsumoNaoEncontrado() throws Exception {
+        when(consultarInsumoUseCase.executar("inexistente"))
+                .thenThrow(new IllegalArgumentException("Insumo não encontrado"));
 
         mockMvc.perform(get("/insumos/inexistente"))
                 .andExpect(status().isNotFound());
@@ -93,89 +119,118 @@ class InsumosControllerTest {
 
     @Test
     void deveCadastrarInsumoERetornar201() throws Exception {
-        CadastrarInsumosRequest req = new CadastrarInsumosRequest(
-                "Filtro de óleo", BigDecimal.valueOf(30), 5, 1, "UNIDADE", null);
-        InsumosResponse resp = insumoResponse("uuid-2", "Filtro de óleo", true);
-        when(insumosService.cadastrar(any(CadastrarInsumosRequest.class))).thenReturn(resp);
+        when(cadastrarInsumoUseCase.executar("Óleo 5W30", new BigDecimal("45.90"), 20, 5, "L"))
+                .thenReturn(insumo);
 
         mockMvc.perform(post("/insumos")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(objectMapper.writeValueAsString(cadastrarRequest())))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value("uuid-2"))
-                .andExpect(jsonPath("$.nome").value("Filtro de óleo"));
+                .andExpect(jsonPath("$.id").value(ID))
+                .andExpect(jsonPath("$.nome").value("Óleo 5W30"))
+                .andExpect(jsonPath("$.ativo").value(true));
+    }
+
+    @Test
+    void deveRetornar404AoCadastrar_quandoUseCaseLancaIllegalArgument() throws Exception {
+        when(cadastrarInsumoUseCase.executar(any(), any(), any(), any(), any()))
+                .thenThrow(new IllegalArgumentException("Insumo já cadastrado"));
+
+        mockMvc.perform(post("/insumos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(cadastrarRequest())))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void deveAlterarInsumoERetornar204() throws Exception {
-        AlterarInsumosRequest req = new AlterarInsumosRequest(
-                "Óleo atualizado", BigDecimal.valueOf(55), 12, 3, "LITRO", null);
-        doNothing().when(insumosService).atualizar(eq("uuid-1"), any(AlterarInsumosRequest.class));
-
-        mockMvc.perform(put("/insumos/uuid-1")
+        mockMvc.perform(put("/insumos/" + ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(objectMapper.writeValueAsString(alterarRequest())))
                 .andExpect(status().isNoContent());
+
+        verify(alterarInsumoUseCase).executar(
+                ID, "Óleo 10W40", new BigDecimal("50.00"), 30, 10, "L");
     }
 
     @Test
-    void deveRetornar404AoAlterarInsumoInexistente() throws Exception {
-        AlterarInsumosRequest req = new AlterarInsumosRequest(
-                "Óleo", BigDecimal.valueOf(50), 10, 2, "LITRO", null);
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"))
-                .when(insumosService).atualizar(eq("inexistente"), any(AlterarInsumosRequest.class));
+    void deveRetornar404AoAlterar_quandoUseCaseLancaIllegalArgument() throws Exception {
+        doThrow(new IllegalArgumentException("Insumo não encontrado"))
+                .when(alterarInsumoUseCase).executar(eq("inexistente"), any(), any(), any(), any(), any());
 
         mockMvc.perform(put("/insumos/inexistente")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(objectMapper.writeValueAsString(alterarRequest())))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void deveRegistrarCompraSimuladaERetornar200() throws Exception {
-        ComprarInsumoSimuladoRequest req = new ComprarInsumoSimuladoRequest(5);
-        InsumosResponse resp = insumoResponse("uuid-1", "Óleo", true);
-        when(insumosService.registrarCompraSimulada(eq("uuid-1"), any(ComprarInsumoSimuladoRequest.class)))
-                .thenReturn(resp);
+        when(registrarCompraUseCase.executar(ID, 15)).thenReturn(insumo);
 
-        mockMvc.perform(post("/insumos/uuid-1/compra-simulada")
+        mockMvc.perform(post("/insumos/" + ID + "/compra-simulada")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(objectMapper.writeValueAsString(new ComprarInsumoSimuladoRequest(15))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("uuid-1"));
+                .andExpect(jsonPath("$.id").value(ID));
+
+        verify(registrarCompraUseCase).executar(ID, 15);
+    }
+
+    @Test
+    void deveRetornar404AoRegistrarCompra_quandoUseCaseLancaIllegalArgument() throws Exception {
+        when(registrarCompraUseCase.executar(eq("inexistente"), any()))
+                .thenThrow(new IllegalArgumentException("Insumo não encontrado"));
+
+        mockMvc.perform(post("/insumos/inexistente/compra-simulada")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ComprarInsumoSimuladoRequest(15))))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void deveAtivarInsumoERetornar200() throws Exception {
-        InsumosResponse resp = insumoResponse("uuid-1", "Óleo", true);
-        when(insumosService.ativar("uuid-1")).thenReturn(resp);
+        when(ativarInsumoUseCase.executar(ID)).thenReturn(insumo);
 
-        mockMvc.perform(patch("/insumos/uuid-1/ativar"))
+        mockMvc.perform(patch("/insumos/" + ID + "/ativar"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("uuid-1"))
+                .andExpect(jsonPath("$.id").value(ID))
                 .andExpect(jsonPath("$.ativo").value(true));
+
+        verify(ativarInsumoUseCase).executar(ID);
+    }
+
+    @Test
+    void deveRetornar404AoAtivar_quandoUseCaseLancaIllegalArgument() throws Exception {
+        when(ativarInsumoUseCase.executar("inexistente"))
+                .thenThrow(new IllegalArgumentException("Insumo não encontrado"));
+
+        mockMvc.perform(patch("/insumos/inexistente/ativar"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void deveDesativarInsumoERetornar204() throws Exception {
-        doNothing().when(insumosService).deletar("uuid-1");
-
-        mockMvc.perform(delete("/insumos/uuid-1"))
+        mockMvc.perform(delete("/insumos/" + ID))
                 .andExpect(status().isNoContent());
+
+        verify(inativarInsumoUseCase).executar(ID);
     }
 
     @Test
-    void deveRetornar404AoDesativarInsumoInexistente() throws Exception {
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Insumo não encontrado"))
-                .when(insumosService).deletar("inexistente");
+    void deveRetornar404AoDesativar_quandoUseCaseLancaIllegalArgument() throws Exception {
+        doThrow(new IllegalArgumentException("Insumo não encontrado"))
+                .when(inativarInsumoUseCase).executar("inexistente");
 
         mockMvc.perform(delete("/insumos/inexistente"))
                 .andExpect(status().isNotFound());
     }
 
-    // --- helpers ---
+    private CadastrarInsumosRequest cadastrarRequest() {
+        return new CadastrarInsumosRequest("Óleo 5W30", new BigDecimal("45.90"), 20, 5, "L", true);
+    }
 
-    private InsumosResponse insumoResponse(String id, String nome, boolean ativo) {
-        return new InsumosResponse(id, nome, BigDecimal.valueOf(50), 10, 2, "LITRO", ativo);
+    private AlterarInsumosRequest alterarRequest() {
+        return new AlterarInsumosRequest("Óleo 10W40", new BigDecimal("50.00"), 30, 10, "L", true);
     }
 }

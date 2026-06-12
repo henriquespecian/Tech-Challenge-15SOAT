@@ -1,33 +1,44 @@
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mecanica.oficina_api.application.servico.ServicoService;
-import com.mecanica.oficina_api.interfaces.dto.request.AlterarServicoRequest;
-import com.mecanica.oficina_api.interfaces.dto.request.CadastrarServicoRequest;
-import com.mecanica.oficina_api.interfaces.dto.response.ServicoResponse;
+import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
+import com.mecanica.oficina_api.adapters.web.ServicoController;
+import com.mecanica.oficina_api.adapters.web.dto.request.AlterarServicoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarServicoRequest;
+import com.mecanica.oficina_api.adapters.web.presenter.ServicoPresenter;
+import com.mecanica.oficina_api.application.servico.usecase.AlterarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.AtivarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.CadastrarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.ConsultarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.ConsultarTempoMedioUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.InativarServicoUseCase;
+import com.mecanica.oficina_api.application.servico.usecase.ListarServicosUseCase;
+import com.mecanica.oficina_api.domain.servico.Servico;
+import com.mecanica.oficina_api.domain.servico.TempoMedioServico;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class ServicoControllerTest {
@@ -36,150 +47,186 @@ class ServicoControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
-    private ServicoService servicoService;
+    private CadastrarServicoUseCase cadastrarServicoUseCase;
+    @Mock
+    private ConsultarServicoUseCase consultarServicoUseCase;
+    @Mock
+    private ConsultarTempoMedioUseCase consultarTempoMedioUseCase;
+    @Mock
+    private ListarServicosUseCase listarServicosUseCase;
+    @Mock
+    private AlterarServicoUseCase alterarServicoUseCase;
+    @Mock
+    private AtivarServicoUseCase ativarServicoUseCase;
+    @Mock
+    private InativarServicoUseCase inativarServicoUseCase;
 
-    @InjectMocks
-    private ServicoController servicoController;
+    private Servico servico;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(servicoController).build();
+        ServicoController controller = new ServicoController(
+                cadastrarServicoUseCase, consultarServicoUseCase, consultarTempoMedioUseCase,
+                listarServicosUseCase, alterarServicoUseCase, ativarServicoUseCase,
+                inativarServicoUseCase, new ServicoPresenter());
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
+        servico = Servico.reconstituir(
+                "servico-1", "Troca de óleo", "Troca completa de óleo do motor",
+                new BigDecimal("150.00"), Duration.ofHours(2), true);
     }
 
     @Test
     void deveCadastrarServicoERetornar201() throws Exception {
-        CadastrarServicoRequest req = cadastrarRequest("Troca de óleo", "Troca completa do óleo do motor", 150.0, 1);
-        ServicoResponse resp = servicoResponse("srv-1", "Troca de óleo", true);
-        when(servicoService.cadastrar(any(CadastrarServicoRequest.class))).thenReturn(resp);
+        when(cadastrarServicoUseCase.executar("Troca de óleo", "Troca completa de óleo do motor",
+                new BigDecimal("150.00"), 2)).thenReturn(servico);
 
         mockMvc.perform(post("/servico")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(objectMapper.writeValueAsString(cadastrarRequest())))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value("srv-1"))
-                .andExpect(jsonPath("$.nome").value("Troca de óleo"));
-    }
-
-    @Test
-    void deveBuscarServicoPorIdERetornar200() throws Exception {
-        ServicoResponse resp = servicoResponse("srv-1", "Troca de óleo", true);
-        when(servicoService.buscar("srv-1")).thenReturn(resp);
-
-        mockMvc.perform(get("/servico/srv-1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("srv-1"))
+                .andExpect(jsonPath("$.id").value("servico-1"))
                 .andExpect(jsonPath("$.nome").value("Troca de óleo"))
-                .andExpect(jsonPath("$.preco").value(150))
-                .andExpect(jsonPath("$.tempoEstimadoHoras").value(1))
+                .andExpect(jsonPath("$.descricao").value("Troca completa de óleo do motor"))
+                .andExpect(jsonPath("$.preco").value(150.00))
+                .andExpect(jsonPath("$.tempoEstimadoHoras").value(2))
                 .andExpect(jsonPath("$.ativo").value(true));
     }
 
     @Test
-    void deveRetornar404QuandoServicoNaoEncontrado() throws Exception {
-        when(servicoService.buscar("inexistente"))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Serviço não encontrado"));
+    void deveBuscarServicoPorIdERetornar200() throws Exception {
+        when(consultarServicoUseCase.executar("servico-1")).thenReturn(servico);
+
+        mockMvc.perform(get("/servico/servico-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("servico-1"))
+                .andExpect(jsonPath("$.nome").value("Troca de óleo"))
+                .andExpect(jsonPath("$.tempoEstimadoHoras").value(2));
+    }
+
+    @Test
+    void deveRetornar404AoBuscar_quandoServicoNaoEncontrado() throws Exception {
+        when(consultarServicoUseCase.executar("inexistente"))
+                .thenThrow(new IllegalArgumentException("Serviço não encontrado"));
 
         mockMvc.perform(get("/servico/inexistente"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void deveListarServicosERetornar200() throws Exception {
-        when(servicoService.listar()).thenReturn(List.of(
-                servicoResponse("srv-1", "Troca de óleo", true),
-                servicoResponse("srv-2", "Alinhamento", true)));
+    void deveBuscarTempoMedioERetornar200() throws Exception {
+        when(consultarTempoMedioUseCase.executar("servico-1"))
+                .thenReturn(new TempoMedioServico("servico-1", "Troca de óleo", 95.5));
 
-        mockMvc.perform(get("/servico"))
+        mockMvc.perform(get("/servico/servico-1/tempo-medio"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value("srv-1"))
-                .andExpect(jsonPath("$[1].id").value("srv-2"));
+                .andExpect(jsonPath("$.servicoId").value("servico-1"))
+                .andExpect(jsonPath("$.nome").value("Troca de óleo"))
+                .andExpect(jsonPath("$.tempoMedioEmMinutos").value(95.5));
     }
 
     @Test
-    void deveListarServicosVazioERetornar200() throws Exception {
-        when(servicoService.listar()).thenReturn(List.of());
+    void deveRetornar404AoBuscarTempoMedio_quandoServicoNaoEncontrado() throws Exception {
+        when(consultarTempoMedioUseCase.executar("inexistente"))
+                .thenThrow(new IllegalArgumentException("Serviço não encontrado"));
+
+        mockMvc.perform(get("/servico/inexistente/tempo-medio"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deveListarServicosERetornar200() throws Exception {
+        when(listarServicosUseCase.executar()).thenReturn(List.of(servico));
 
         mockMvc.perform(get("/servico"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value("servico-1"))
+                .andExpect(jsonPath("$[0].nome").value("Troca de óleo"));
     }
 
     @Test
     void deveAlterarServicoERetornar200() throws Exception {
-        AlterarServicoRequest req = alterarRequest("Troca de óleo sintético", "Óleo sintético 5W30", 180.0, 2);
-        ServicoResponse resp = servicoResponse("srv-1", "Troca de óleo sintético", true);
-        when(servicoService.alterar(eq("srv-1"), any(AlterarServicoRequest.class))).thenReturn(resp);
+        Servico alterado = Servico.reconstituir(
+                "servico-1", "Troca de óleo premium", "Óleo sintético",
+                new BigDecimal("250.00"), Duration.ofHours(3), true);
+        when(alterarServicoUseCase.executar("servico-1", "Troca de óleo premium", "Óleo sintético",
+                new BigDecimal("250.00"), 3)).thenReturn(alterado);
 
-        mockMvc.perform(put("/servico/srv-1")
+        mockMvc.perform(put("/servico/servico-1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(objectMapper.writeValueAsString(alterarRequest())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("srv-1"))
-                .andExpect(jsonPath("$.nome").value("Troca de óleo sintético"));
+                .andExpect(jsonPath("$.nome").value("Troca de óleo premium"))
+                .andExpect(jsonPath("$.preco").value(250.00))
+                .andExpect(jsonPath("$.tempoEstimadoHoras").value(3));
     }
 
     @Test
-    void deveRetornar404AoAlterarServicoInexistente() throws Exception {
-        AlterarServicoRequest req = alterarRequest("Troca de óleo", "Desc", 150.0, 1);
-        when(servicoService.alterar(eq("inexistente"), any(AlterarServicoRequest.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Serviço não encontrado"));
+    void deveRetornar404AoAlterar_quandoServicoNaoEncontrado() throws Exception {
+        when(alterarServicoUseCase.executar("inexistente", "Troca de óleo premium", "Óleo sintético",
+                new BigDecimal("250.00"), 3))
+                .thenThrow(new IllegalArgumentException("Serviço não encontrado"));
 
         mockMvc.perform(put("/servico/inexistente")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(objectMapper.writeValueAsString(alterarRequest())))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void deveAtivarServicoERetornar200() throws Exception {
-        ServicoResponse resp = servicoResponse("srv-1", "Troca de óleo", true);
-        when(servicoService.ativar("srv-1")).thenReturn(resp);
+        when(ativarServicoUseCase.executar("servico-1")).thenReturn(servico);
 
-        mockMvc.perform(patch("/servico/srv-1/ativar"))
+        mockMvc.perform(patch("/servico/servico-1/ativar"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("srv-1"))
+                .andExpect(jsonPath("$.id").value("servico-1"))
                 .andExpect(jsonPath("$.ativo").value(true));
     }
 
     @Test
-    void deveInativarServicoERetornar204() throws Exception {
-        doNothing().when(servicoService).inativar("srv-1");
+    void deveRetornar404AoAtivar_quandoServicoNaoEncontrado() throws Exception {
+        when(ativarServicoUseCase.executar("inexistente"))
+                .thenThrow(new IllegalArgumentException("Serviço não encontrado"));
 
-        mockMvc.perform(delete("/servico/srv-1"))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(patch("/servico/inexistente/ativar"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    void deveRetornar404AoInativarServicoInexistente() throws Exception {
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Serviço não encontrado"))
-                .when(servicoService).inativar("inexistente");
+    void deveInativarServicoERetornar204() throws Exception {
+        mockMvc.perform(delete("/servico/servico-1"))
+                .andExpect(status().isNoContent());
+
+        verify(inativarServicoUseCase).executar("servico-1");
+    }
+
+    @Test
+    void deveRetornar404AoInativar_quandoServicoNaoEncontrado() throws Exception {
+        doThrow(new IllegalArgumentException("Serviço não encontrado"))
+                .when(inativarServicoUseCase).executar("inexistente");
 
         mockMvc.perform(delete("/servico/inexistente"))
                 .andExpect(status().isNotFound());
     }
 
-    // --- helpers ---
-
-    private ServicoResponse servicoResponse(String id, String nome, boolean ativo) {
-        return new ServicoResponse(id, nome, "Descrição padrão", BigDecimal.valueOf(150), 1, ativo);
+    private CadastrarServicoRequest cadastrarRequest() {
+        CadastrarServicoRequest request = new CadastrarServicoRequest();
+        request.setNome("Troca de óleo");
+        request.setDescricao("Troca completa de óleo do motor");
+        request.setPreco(new BigDecimal("150.00"));
+        request.setTempoEstimadoHoras(2);
+        return request;
     }
 
-    private CadastrarServicoRequest cadastrarRequest(String nome, String descricao, double preco, int horas) {
-        CadastrarServicoRequest req = new CadastrarServicoRequest();
-        req.setNome(nome);
-        req.setDescricao(descricao);
-        req.setPreco(BigDecimal.valueOf(preco));
-        req.setTempoEstimadoHoras(horas);
-        return req;
-    }
-
-    private AlterarServicoRequest alterarRequest(String nome, String descricao, double preco, int horas) {
-        AlterarServicoRequest req = new AlterarServicoRequest();
-        req.setNome(nome);
-        req.setDescricao(descricao);
-        req.setPreco(BigDecimal.valueOf(preco));
-        req.setTempoEstimadoHoras(horas);
-        return req;
+    private AlterarServicoRequest alterarRequest() {
+        AlterarServicoRequest request = new AlterarServicoRequest();
+        request.setNome("Troca de óleo premium");
+        request.setDescricao("Óleo sintético");
+        request.setPreco(new BigDecimal("250.00"));
+        request.setTempoEstimadoHoras(3);
+        return request;
     }
 }
