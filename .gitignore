@@ -35,3 +35,4 @@ build/
 ### CLAUDE ###
 CLAUDE.md
 .claude/
+.env

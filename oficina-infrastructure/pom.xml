@@ -51,18 +51,6 @@
     </dependencies>
 
     <build>
-        <sourceDirectory>main/java</sourceDirectory>
-        <testSourceDirectory>test/java</testSourceDirectory>
-        <resources>
-            <resource>
-                <directory>main/resources</directory>
-            </resource>
-        </resources>
-        <testResources>
-            <testResource>
-                <directory>test/resources</directory>
-            </testResource>
-        </testResources>
         <plugins>
             <!-- Só este módulo gera o JAR executável -->
             <plugin>
