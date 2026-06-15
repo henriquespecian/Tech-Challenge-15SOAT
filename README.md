@@ -5,22 +5,45 @@ API REST para gerenciamento de clientes e veículos de uma oficina mecânica, de
 ## Tecnologias
 
 - Java 25
-- Spring Boot 4.0.5
+- Spring Boot 4.1.0
 - Spring Data JPA + Hibernate
+- Spring Security + JWT
 - PostgreSQL 15
 - OpenAPI/Swagger (springdoc-openapi 2.8.3)
+- JaCoCo (cobertura de testes)
+- Maven multi-módulo
 - Docker / Docker Compose
 
 ## Arquitetura
 
-O projeto segue os princípios de **Clean Architecture** e **Domain-Driven Design (DDD)**:
+O projeto é um **Maven multi-módulo** que segue **Clean Architecture** pura. As dependências fluem sempre de fora para dentro:
 
 ```
-src/main/java/com/mecanica/oficina_api/
-├── domain/          # Regras de negócio e value objects (Cpf, Email, Telefone, Veiculo)
-├── application/     # Casos de uso (ClienteService)
-├── infrastructure/  # Persistência JPA
-└── interfaces/      # Controllers REST e DTOs
+oficina-infrastructure → oficina-adapters → oficina-application → oficina-domain
+```
+
+| Módulo | Responsabilidade |
+|---|---|
+| **`oficina-domain`** | Entidades, value objects (`Cpf`, `Email`, `Telefone`) e regras de negócio. Zero dependência de framework. |
+| **`oficina-application`** | Casos de uso (`XxxUseCase`) e interfaces de gateway. Conhece apenas o domínio. |
+| **`oficina-adapters`** | Implementações de gateway (JPA), controllers REST, DTOs e wiring dos beans (`ApplicationConfig`). |
+| **`oficina-infrastructure`** | Ponto de entrada (`@SpringBootApplication`), configuração de segurança e Spring. |
+
+Regras obrigatórias: nenhum módulo interno importa o externo; a camada `application` usa **use cases** (não services); regras de negócio vivem no domínio; DTOs não entram no domínio.
+
+## Funcionalidades
+
+A API cobre os seguintes domínios:
+
+- **Clientes** — cadastro, consulta, alteração e exclusão
+- **Veículos** — cadastro e gestão, vinculados a clientes
+- **Usuários** — gestão de usuários e perfis de acesso
+- **Serviços** — catálogo de serviços com tempo médio de execução
+- **Insumos** — controle de estoque, compras e movimentação
+- **Ordens de Serviço** — fluxo completo com orçamento e ciclo de vida de status:
+
+```
+RECEBIDA → EM_DIAGNOSTICO → AGUARDANDO_APROVACAO → EM_EXECUCAO → FINALIZADA → ENTREGUE
 ```
 
 ## Por Que PostgreSQL?
@@ -139,19 +162,27 @@ As coleções Bruno estão na pasta `bruno/` do projeto, organizadas por recurso
 4. Execute o request **Auth > Login** — o token JWT será salvo automaticamente no environment
 5. Todos os demais requests já usam `{{token}}` e estarão prontos para uso
 
+#### Rodar um teste específico
+
+```bash
+./mvnw test -Dtest=VeiculoTest
+./mvnw test -Dtest=CadastrarVeiculoUseCaseTest
+./mvnw test -Dtest=VeiculoControllerTest
+```
+
 ### Estrutura de testes
 
-Os testes seguem as mesmas camadas da aplicação:
+Cada módulo tem sua estratégia de teste:
 
-```
-src/test/java/com/mecanica/oficina_api/
-├── domain/veiculo/
-│   └── VeiculoTest.java          # Validações de domínio (sem Spring)
-├── application/veiculo/
-│   └── VeiculoServiceTest.java   # Lógica de negócio com Mockito
-└── interfaces/
-    └── VeiculoControllerTest.java # HTTP (status codes, JSON) com MockMvc
-```
+| Módulo | Tipo | Ferramenta | Spring? |
+|---|---|---|---|
+| `oficina-domain` | Unitário puro | JUnit 5 + AssertJ | Não |
+| `oficina-application` | Unitário com mock de gateway | JUnit 5 + Mockito | Não |
+| `oficina-adapters` (controller) | Slice | `@WebMvcTest` + MockMvc | Parcial |
+| `oficina-adapters` (JPA) | Slice | `@DataJpaTest` + H2 | Parcial |
+| `oficina-infrastructure` | E2E | `@SpringBootTest` + H2 | Completo |
+
+Os testes usam H2 em memória — não é necessário ter o PostgreSQL rodando.
 
 ## Relatório de vulnerabilidade
 
