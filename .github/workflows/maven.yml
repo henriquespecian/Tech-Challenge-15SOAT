@@ -8,6 +8,7 @@
 
 name: CI pipeline
 
+# Situações em que o workflow deve ser executado
 on:
   push:
     branches: [ "main" ]
