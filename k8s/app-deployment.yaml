@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Nome do Deployment e label de identificação do objeto
+  labels:
+    app: oficina-api
+  name: oficina-api
+spec:
+  # Quantidade de réplicas (pods)
+  replicas: 1
+
+  # O Deployment usa este selector para saber QUAIS Pods são dele.
+  # Tem que bater exatamente com template.metadata.labels abaixo.
+  selector:
+    matchLabels:
+      app: oficina-api
+
+  template:
+    # Molde do Pod. O label aqui precisa casar com o selector acima.
+    metadata:
+      labels:
+        app: oficina-api
+    spec:
+      containers:
+        - name: oficina-api
+          # Imagem publicada no Docker Hub
+          image: henriquespecian/oficina-api:1.1
+          ports:
+            # Porta que o Spring Boot expõe dentro do container.
+            - containerPort: 8080
+          # Injeta TODAS as chaves do ConfigMap e do Secret de uma vez
+          envFrom:
+            - configMapRef:
+                name: oficina-config
+            - secretRef:
+                name: oficina-secret
+
+          # ---- requests / limits ----
+          # requests = recursos reservados e BASE de cálculo do HPA (passo 6).
+          # limits   = teto; estourar memória mata o Pod (OOMKilled).
+          # Java consome bastante memória no boot, por isso 512Mi de request.
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+
+          # ---- Prova que ta pronto ----
+          # "Estou pronto para receber tráfego?" Se falhar, o Service PARA de
+          # mandar requisição (mas NÃO reinicia o Pod). Essencial no Spring,
+          # que demora a subir.
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+          # ---- Prova que ta vivo ----
+          # "Estou vivo ou travei?" Se falhar, o k8s REINICIA o Pod.
+          # initialDelay maior que o da readiness, para não matar o Pod enquanto o Spring ainda está inicializando.
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 40
+            periodSeconds: 15
+
+          # ---- Prova que ta subindo ----
+          # Como o build do Spring é lento, evita que o k8s mate o Pod por não responder rápido
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 30
+

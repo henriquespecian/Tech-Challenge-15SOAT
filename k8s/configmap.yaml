@@ -1,0 +1,9 @@
+# ConfigMap é usado para armazenar dados de configuração não sensíveis, como URLs, nomes de usuário, etc. Ele é útil para separar a configuração do código da aplicação, permitindo que você altere a configuração sem precisar reconstruir a imagem do contêiner. Para criar um ConfigMap, você pode usar o seguinte comando:
+apiVersion: v1
+data:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/oficina_db
+  SPRING_DATASOURCE_USERNAME: postgres
+  SPRING_PROFILES_ACTIVE: prod
+kind: ConfigMap
+metadata:
+  name: oficina-config

@@ -115,6 +115,108 @@ Isso cria os containers da aplicação e do PostgreSQL:
 - API: `http://localhost:8080`
 - Banco: `localhost:5432` — `oficina_db` / `postgres` / `123`
 
+## Executando no Kubernetes (Minikube)
+
+A aplicação também pode ser orquestrada com Kubernetes. Os manifestos estão na pasta [`k8s/`](k8s/) e contemplam Deployments, Services, ConfigMap/Secret, PersistentVolumeClaim e Horizontal Pod Autoscaler (HPA).
+
+### Pré-requisitos
+
+- [Minikube](https://minikube.sigs.k8s.io/) instalado e em execução
+- `kubectl` configurado para o cluster do Minikube
+- Docker (para build/push da imagem, caso vá alterar o código)
+
+### O que há na pasta `k8s/`
+
+| Arquivo | Objeto | Papel |
+|---|---|---|
+| `configmap.yaml` | ConfigMap | Configuração não sensível (URL do banco, usuário, profile) |
+| `secret.yaml` | Secret | Senha do banco e segredo do JWT (base64) |
+| `postgres-pvc.yaml` | PersistentVolumeClaim | Disco persistente do PostgreSQL |
+| `postgres-deployment.yaml` | Deployment | Container do PostgreSQL |
+| `postgres-service.yaml` | Service (ClusterIP) | Nome interno `postgres` para a aplicação encontrar o banco |
+| `app-deployment.yaml` | Deployment | Aplicação Spring Boot, com `requests/limits` e probes |
+| `app-service.yaml` | Service (NodePort) | Expõe a API para fora do cluster |
+| `app-hpa.yaml` | HorizontalPodAutoscaler | Escala a aplicação conforme CPU/memória |
+
+### 1. Suba o Minikube
+
+```bash
+minikube start
+```
+
+### 2. Habilite o metrics-server (necessário para o HPA)
+
+O HPA depende do `metrics-server` para ler o consumo de CPU/memória — ele **não vem habilitado** por padrão:
+
+```bash
+minikube addons enable metrics-server
+```
+
+Após ~1-2 minutos, valide a coleta de métricas:
+
+```bash
+kubectl top pods
+```
+
+> **Se `kubectl top pods` continuar retornando `Metrics API not available` após alguns minutos**, verifique se o Pod está pronto com `kubectl get pods -n kube-system | grep metrics-server`. No driver Docker do Minikube é comum o metrics-server não validar o certificado do kubelet — nesse caso, aplique:
+>
+> ```bash
+> kubectl -n kube-system patch deployment metrics-server --type=json \
+>   -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+> ```
+
+### 3. Aplique os manifestos
+
+A imagem da aplicação já está publicada no Docker Hub (`henriquespecian/oficina-api`), então basta aplicar a pasta inteira:
+
+```bash
+kubectl apply -f k8s/
+```
+
+Acompanhe os Pods até ficarem `1/1 Running`:
+
+```bash
+kubectl get pods -w
+```
+
+> O Pod da aplicação leva alguns segundos em `0/1` enquanto o Spring Boot inicializa (a `startupProbe` cobre esse tempo). O Pod do PostgreSQL deve ficar `1/1` primeiro.
+
+### 4. Acesse a API
+
+No Minikube, abra o túnel para o Service da aplicação:
+
+```bash
+minikube service oficina-api --url
+```
+
+O comando devolve uma URL (ex.: `http://127.0.0.1:51234`) e abre um túnel. **No driver Docker (Windows), mantenha esse terminal aberto** — o túnel só funciona enquanto o comando estiver em execução, e a porta muda a cada vez que ele é executado.
+
+Acesse o Swagger usando o caminho completo:
+
+```
+<URL>/swagger-ui/index.html
+```
+
+### 5. Verifique o autoscaler
+
+```bash
+kubectl get hpa
+```
+
+A coluna `TARGETS` deve mostrar o consumo atual de CPU e memória contra as metas (ex.: `cpu: 2%/70%, memory: 40%/80%`). Se aparecer `<unknown>`, o metrics-server ainda não está coletando (volte ao passo 2).
+
+### (Opcional) Reconstruir a imagem
+
+Caso altere o código da aplicação, reconstrua e publique a imagem com uma **nova tag**, depois atualize o campo `image:` em `k8s/app-deployment.yaml`:
+
+```bash
+docker build -t henriquespecian/oficina-api:<nova-tag> .
+docker push henriquespecian/oficina-api:<nova-tag>
+kubectl apply -f k8s/app-deployment.yaml
+```
+
+> Use sempre uma tag nova (nunca reaproveite a mesma) para garantir que o cluster faça o pull da versão atualizada em vez de usar a imagem em cache.
+
 ## Endpoints
 A documentação interativa (Swagger UI) está disponível em:
 
