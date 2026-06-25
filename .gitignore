@@ -36,3 +36,9 @@ build/
 CLAUDE.md
 .claude/
 .env
+
+### Terraform ###
+infra/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
