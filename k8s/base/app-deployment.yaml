@@ -24,7 +24,7 @@ spec:
       containers:
         - name: oficina-api
           # Imagem publicada no Docker Hub
-          image: henriquespecian/oficina-api:1.1
+          image: oficina-api-image
           ports:
             # Porta que o Spring Boot expõe dentro do container.
             - containerPort: 8080

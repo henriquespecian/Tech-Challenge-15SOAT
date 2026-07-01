@@ -1,0 +1,13 @@
+resources:
+  - ../../base
+  - secret.yaml
+
+images:
+  - name: oficina-api-image
+    #aqui ele usa a imagem do ECR, que é o repositório de imagens da AWS
+    newName: 029166075159.dkr.ecr.us-east-1.amazonaws.com/oficina-api
+    newTag: "1.0"
+
+patches:
+  - path: service-loadbalancer.yaml
+  - path: configmap-rds.yaml

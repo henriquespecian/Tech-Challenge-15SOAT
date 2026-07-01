@@ -1,0 +1,6 @@
+# Lista os arquivos da base, que são os comuns a execução do minikube e do EKS (aws)
+resources:
+  - app-deployment.yaml
+  - app-service.yaml
+  - app-hpa.yaml
+  - configmap.yaml

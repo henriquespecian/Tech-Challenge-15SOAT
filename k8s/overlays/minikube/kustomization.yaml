@@ -1,0 +1,15 @@
+resources:
+  - ../../base # herda os recursos da base
+  - postgres-deployment.yaml
+  - postgres-service.yaml
+  - postgres-pvc.yaml
+  - secret.yaml
+
+images:
+  - name: oficina-api-image
+    newName: henriquespecian/oficina-api
+    newTag: "1.1"
+
+patches:
+  - path: service-nodeport.yaml
+  - path: configmap-local.yaml

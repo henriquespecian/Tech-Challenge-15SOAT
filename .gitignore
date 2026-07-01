@@ -42,3 +42,7 @@ infra/.terraform/
 *.tfstate
 *.tfstate.*
 *.tfvars
+
+### Kubernetes secrets ###
+# Secrets reais nao vao pro git; apenas os secret.example.yaml sao versionados.
+k8s/overlays/*/secret.yaml
