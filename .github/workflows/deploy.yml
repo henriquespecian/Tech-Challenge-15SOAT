@@ -4,6 +4,15 @@ name: CD - Deploy na AWS (EKS)
 # O CI (build + testes) continua no maven.yml, rodando em PR/push na main.
 on:
   workflow_dispatch:
+    inputs:
+      # O endpoint do RDS muda toda vez que a instancia e recriada (destroy + apply),
+      # por causa do trecho aleatorio gerado pela AWS. Por isso NAO fica hardcoded no
+      # configmap: voce informa aqui, na hora de acionar o deploy, o valor atual obtido
+      # com `terraform output -raw DB_Endpoint`. O step "Apontar o endpoint do RDS" abaixo
+      # injeta esse valor no configmap-rds.yaml antes do apply.
+      rds_endpoint:
+        description: "Endpoint do RDS (rode: terraform output -raw DB_Endpoint)"
+        required: true
   push:
     tags:
       - "v*"
@@ -72,6 +81,16 @@ jobs:
       - name: Apontar a imagem publicada no overlay
         run: |
           sed -i "s|newTag:.*|newTag: \"${{ steps.meta.outputs.tag }}\"|" k8s/overlays/aws/kustomization.yaml
+
+      # Injeta o endpoint do RDS informado no dispatch dentro do SPRING_DATASOURCE_URL.
+      # Troca so o host (entre "//" e ":5432"), preservando o resto da URL.
+      # So roda quando o input foi informado (acionamento manual); em push de tag,
+      # como nao ha input, o step e pulado e vale o valor ja presente no configmap.
+      - name: Apontar o endpoint do RDS
+        if: ${{ inputs.rds_endpoint != '' }}
+        run: |
+          sed -i "s|jdbc:postgresql://[^:]*:5432|jdbc:postgresql://${{ inputs.rds_endpoint }}:5432|" \
+            k8s/overlays/aws/configmap-rds.yaml
 
       - name: Deploy no cluster (aplica os manifestos)
         run: kubectl apply -k k8s/overlays/aws
