@@ -1,6 +1,9 @@
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mecanica.oficina_api.adapters.common.FieldError;
+import com.mecanica.oficina_api.adapters.common.FileUtils;
+import com.mecanica.oficina_api.adapters.common.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
 import com.mecanica.oficina_api.adapters.web.OrdemServicoController;
 import com.mecanica.oficina_api.adapters.web.dto.request.CriarOrdemServicoRequest;
@@ -34,13 +37,22 @@ import com.mecanica.oficina_api.domain.ordemservico.StatusServico;
 import java.math.BigDecimal;
 import java.util.List;
 
+import java.util.UUID;
+import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -58,6 +70,7 @@ class OrdemServicoControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final FileUtils fileUtils = new FileUtils();
 
     @Mock private CriarOrdemServicoUseCase criarOrdemServicoUseCase;
     @Mock private ConsultarOrdemServicoUseCase consultarOrdemServicoUseCase;
@@ -420,5 +433,111 @@ class OrdemServicoControllerTest {
         mockMvc.perform(patch("/ordem-servico/servico/status-1/finalizar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("FINALIZADO"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidosOrdemServico")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoCadastrarOrdemServico(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/ordem_servicos/%s".formatted(filename));
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/ordem-servico")
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidosOrcamento")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoCadastrarOrcamento(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/ordem_servicos/%s".formatted(filename));
+
+        var ordemServicoId = UUID.randomUUID();
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/ordem-servico/"+ordemServicoId+"/orcamento")
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidosOrcamentoAlterar")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoAlterarOrcamento(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/ordem_servicos/%s".formatted(filename));
+
+        var ordemServicoId = UUID.randomUUID();
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/ordem-servico/"+ordemServicoId+"/orcamento")
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
+    private static Stream<Arguments> dadosCamposInvalidosOrdemServico() {
+        var erroVeiculoId = "O ID do veículo é obrigatório";
+        var erroClienteId = "O ID do cliente é obrigatório";
+
+        var errosComuns = List.of(erroClienteId, erroVeiculoId);
+
+        return Stream.of(
+            Arguments.of("cadastrar-ordem-servico-400-campos-vazios.json", errosComuns),
+            Arguments.of("cadastrar-ordem-servico-400-campos-nulos.json", errosComuns)
+        );
+    }
+
+    private static Stream<Arguments> dadosCamposInvalidosOrcamento() {
+        var erroInsumoId = "O ID do insumo é obrigatório";
+        var erroInsumoQuantidade = "A quantidade de insumo deve ser maior que zero";
+        var erroServicoId = "O ID do serviço é obrigatório";
+        var erroServicoQuantidade = "A quantidade de serviço deve ser maior que zero";
+
+        return Stream.of(
+            Arguments.of("cadastrar-orcamento-400-campos-nulos.json", List.of(erroInsumoId, erroServicoId)),
+            Arguments.of("cadastrar-orcamento-400-quantidade-negativa.json", List.of(erroInsumoQuantidade, erroServicoQuantidade))
+        );
+    }
+
+    private static Stream<Arguments> dadosCamposInvalidosOrcamentoAlterar() {
+        var erroInsumoId = "O ID do insumo é obrigatório";
+        var erroInsumoQuantidade = "A quantidade de insumo deve ser maior que zero";
+        var erroServicoId = "O ID do serviço é obrigatório";
+        var erroServicoQuantidade = "A quantidade de serviço deve ser maior que zero";
+
+        return Stream.of(
+            Arguments.of("alterar-orcamento-400-campos-nulos.json", List.of(erroInsumoId, erroServicoId)),
+            Arguments.of("alterar-orcamento-400-quantidade-negativa.json", List.of(erroInsumoQuantidade, erroServicoQuantidade))
+        );
     }
 }

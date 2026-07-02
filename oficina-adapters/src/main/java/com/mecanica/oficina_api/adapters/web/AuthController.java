@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +21,7 @@ import com.mecanica.oficina_api.adapters.persistence.repository.UsuarioSpringDat
 import com.mecanica.oficina_api.adapters.security.JwtService;
 import com.mecanica.oficina_api.adapters.web.dto.request.LoginRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.LoginResponse;
+import com.mecanica.oficina_api.adapters.web.dto.response.ValidationErrorResponse;
 
 @RestController
 @RequestMapping("/auth")
@@ -44,10 +46,12 @@ public class AuthController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Autenticação realizada com sucesso",
             content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+            content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "Credenciais inválidas",
             content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.senha())
         );

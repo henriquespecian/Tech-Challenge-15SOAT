@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarVeiculoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarVeiculoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.VeiculoResponse;
+import com.mecanica.oficina_api.adapters.web.dto.response.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.presenter.VeiculoPresenter;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -56,10 +58,10 @@ public class VeiculoController {
     @Operation(summary = "Cadastrar um novo veículo", description = "Permite cadastrar um novo veículo para um cliente na oficina")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Veículo criado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
-                    content = @Content(schema = @Schema()))
+            @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+                    content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
-    public ResponseEntity<VeiculoResponse> cadastrar(@RequestBody CadastrarVeiculoRequest request) {
+    public ResponseEntity<VeiculoResponse> cadastrar(@Valid @RequestBody CadastrarVeiculoRequest request) {
         Veiculo veiculo = cadastrarVeiculoUseCase.executar(
                 request.getClienteId(),
                 request.getPlaca(),
@@ -95,13 +97,12 @@ public class VeiculoController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ATENDENTE', 'MECANICO')")
     @Operation(summary = "Alterar um veículo", description = "Permite atualizar os dados de um veículo existente")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Veículo atualizado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
-                    content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+                    content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Veículo não encontrado",
                     content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<VeiculoResponse> alterar(@PathVariable String id, @RequestBody AlterarVeiculoRequest request) {
+    public ResponseEntity<VeiculoResponse> alterar(@PathVariable String id, @Valid @RequestBody AlterarVeiculoRequest request) {
         Veiculo veiculo = alterarVeiculoUseCase.executar(
                 id,
                 request.getPlaca(),

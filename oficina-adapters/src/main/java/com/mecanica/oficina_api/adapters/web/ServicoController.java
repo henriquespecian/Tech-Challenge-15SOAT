@@ -4,6 +4,7 @@ import com.mecanica.oficina_api.adapters.web.dto.request.AlterarServicoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarServicoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.ServicoResponse;
 import com.mecanica.oficina_api.adapters.web.dto.response.TempoMedioServicoResponse;
+import com.mecanica.oficina_api.adapters.web.dto.response.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.presenter.ServicoPresenter;
 import com.mecanica.oficina_api.application.servico.usecase.AlterarServicoUseCase;
 import com.mecanica.oficina_api.application.servico.usecase.AtivarServicoUseCase;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -64,10 +66,10 @@ public class ServicoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Serviço cadastrado com sucesso",
                     content = @Content(schema = @Schema(implementation = ServicoResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos",
-                    content = @Content(schema = @Schema()))
+            @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+                    content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
-    public ResponseEntity<ServicoResponse> cadastrar(@RequestBody CadastrarServicoRequest request) {
+    public ResponseEntity<ServicoResponse> cadastrar(@Valid @RequestBody CadastrarServicoRequest request) {
         var servico = cadastrarServicoUseCase.executar(
             request.getNome(), request.getDescricao(),
             request.getPreco(), request.getTempoEstimadoHoras()
@@ -115,11 +117,13 @@ public class ServicoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Serviço atualizado",
                     content = @Content(schema = @Schema(implementation = ServicoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+                    content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Serviço não encontrado",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<ServicoResponse> alterar(@PathVariable String id,
-                                                   @RequestBody AlterarServicoRequest request) {
+                                                   @Valid @RequestBody AlterarServicoRequest request) {
         var servico = alterarServicoUseCase.executar(
             id, request.getNome(), request.getDescricao(),
             request.getPreco(), request.getTempoEstimadoHoras()

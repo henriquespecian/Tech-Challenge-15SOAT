@@ -1,6 +1,9 @@
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mecanica.oficina_api.adapters.common.FieldError;
+import com.mecanica.oficina_api.adapters.common.FileUtils;
+import com.mecanica.oficina_api.adapters.common.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.ClienteController;
 import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarClienteRequest;
@@ -17,16 +20,25 @@ import com.mecanica.oficina_api.domain.cliente.Email;
 import com.mecanica.oficina_api.domain.cliente.Telefone;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +58,7 @@ class ClienteControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final FileUtils fileUtils = new FileUtils();
 
     @Mock
     private CadastrarClienteUseCase cadastrarClienteUseCase;
@@ -57,6 +70,8 @@ class ClienteControllerTest {
     private AlterarClienteUseCase alterarClienteUseCase;
     @Mock
     private DeletarClienteUseCase deletarClienteUseCase;
+
+
 
     private static final String CPF_VALIDO = "52998224725";
 
@@ -114,6 +129,28 @@ class ClienteControllerTest {
                 .andExpect(jsonPath("$.nome").value("João Silva"));
     }
 
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidos")
+    void deveRetornar400_quandoCamposEstaoInvalidos(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/clientes/%s".formatted(filename));
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/cliente")
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
     @Test
     void deveRetornar404_quandoClienteNaoEncontrado() throws Exception {
         when(consultarClienteUseCase.executar("99999999999")).thenReturn(Optional.empty());
@@ -166,5 +203,26 @@ class ClienteControllerTest {
         request.setEmail("joao.novo@email.com");
         request.setTelefone("11888888888");
         return request;
+    }
+
+    private static Stream<Arguments> dadosCamposInvalidos() {
+        var errosComuns = errosComuns();
+
+        var erroCampoEmailInvalido = new ArrayList<>(List.of("E-mail inválido"));
+
+        return Stream.of(
+            Arguments.of("cadastrar-clientes-400-campos-nulos.json", errosComuns),
+            Arguments.of("cadastrar-clientes-400-campos-vazios.json", errosComuns),
+            Arguments.of("cadastrar-clientes-400-email-invalido.json", erroCampoEmailInvalido)
+        );
+    }
+
+    private static List<String> errosComuns() {
+        var erroCampoNome = "O nome é obrigatório";
+        var erroCampoEmail = "O e-mail é obrigatório";
+        var erroDocumento = "O documento é obrigatório";
+        var erroTelefone = "O telefone é obrigatório";
+
+        return new ArrayList<>(List.of(erroCampoNome, erroCampoEmail, erroDocumento, erroTelefone));
     }
 }

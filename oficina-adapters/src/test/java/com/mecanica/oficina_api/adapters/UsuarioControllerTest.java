@@ -1,6 +1,9 @@
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mecanica.oficina_api.adapters.common.FieldError;
+import com.mecanica.oficina_api.adapters.common.FileUtils;
+import com.mecanica.oficina_api.adapters.common.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
 import com.mecanica.oficina_api.adapters.web.UsuarioController;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarUsuarioRequest;
@@ -13,13 +16,26 @@ import com.mecanica.oficina_api.application.usuario.usecase.InativarUsuarioUseCa
 import com.mecanica.oficina_api.domain.usuario.Perfil;
 import com.mecanica.oficina_api.domain.usuario.Usuario;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -39,6 +55,7 @@ class UsuarioControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final FileUtils fileUtils = new FileUtils();
 
     @Mock
     private CadastrarUsuarioUseCase cadastrarUsuarioUseCase;
@@ -151,6 +168,52 @@ class UsuarioControllerTest {
         verify(inativarUsuarioUseCase).executar("inexistente");
     }
 
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidos")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoCriar(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/usuarios/%s".formatted(filename));
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/usuario")
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidosAlterar")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoAlterar(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/usuarios/%s".formatted(filename));
+
+        var usuarioId = UUID.randomUUID();
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/usuario/"+usuarioId)
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
     private CadastrarUsuarioRequest cadastrarRequest() {
         CadastrarUsuarioRequest request = new CadastrarUsuarioRequest();
         request.setNome("Ana Souza");
@@ -166,5 +229,38 @@ class UsuarioControllerTest {
         request.setEmail("ana.nova@email.com");
         request.setPerfil("MECANICO");
         return request;
+    }
+
+    private static Stream<Arguments> dadosCamposInvalidos() {
+        var errosComuns = errosComuns();
+
+        var erroCampoSenha = "A senha é obrigatória";
+        errosComuns.add(erroCampoSenha);
+
+        var erroEmailInvalido = "E-mail inválido";
+
+        return Stream.of(
+            Arguments.of("cadastrar-usuarios-400-campos-vazios.json", errosComuns),
+            Arguments.of("cadastrar-usuarios-400-email-invalido.json", List.of(erroEmailInvalido))
+        );
+    }
+
+    private static Stream<Arguments> dadosCamposInvalidosAlterar() {
+        var errosComuns = errosComuns();
+
+        var erroEmailInvalido = "E-mail inválido";
+
+        return Stream.of(
+            Arguments.of("alterar-usuarios-400-campos-vazios.json", errosComuns),
+            Arguments.of("alterar-usuarios-400-email-invalido.json", List.of(erroEmailInvalido))
+        );
+    }
+
+    private static List<String> errosComuns() {
+        var erroCampoNome = "O nome é obrigatório";
+        var erroCampoEmail = "O e-mail é obrigatório";
+        var erroCampoPerfil = "O perfil é obrigatório";
+
+        return new ArrayList<>(List.of(erroCampoNome, erroCampoEmail, erroCampoPerfil));
     }
 }

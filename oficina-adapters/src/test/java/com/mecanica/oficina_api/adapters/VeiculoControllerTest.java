@@ -1,6 +1,9 @@
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mecanica.oficina_api.adapters.common.FieldError;
+import com.mecanica.oficina_api.adapters.common.FileUtils;
+import com.mecanica.oficina_api.adapters.common.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.VeiculoController;
 import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarVeiculoRequest;
@@ -13,15 +16,25 @@ import com.mecanica.oficina_api.application.veiculo.usecase.InativarVeiculoUseCa
 import com.mecanica.oficina_api.application.veiculo.usecase.ListarVeiculosPorClienteUseCase;
 import com.mecanica.oficina_api.domain.veiculo.Veiculo;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import java.util.UUID;
+import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -41,6 +54,7 @@ class VeiculoControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final FileUtils fileUtils = new FileUtils();
 
     @Mock
     private CadastrarVeiculoUseCase cadastrarVeiculoUseCase;
@@ -165,6 +179,52 @@ class VeiculoControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidos")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoCriar(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/veiculos/%s".formatted(filename));
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/veiculo")
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidos")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoAlterar(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/veiculos/%s".formatted(filename));
+
+        var veiculoId = UUID.randomUUID();
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/veiculo/"+veiculoId)
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
     private CadastrarVeiculoRequest cadastrarRequest() {
         CadastrarVeiculoRequest request = new CadastrarVeiculoRequest();
         request.setClienteId("cliente-1");
@@ -184,5 +244,25 @@ class VeiculoControllerTest {
         request.setAno(2021);
         request.setCor("Branco");
         return request;
+    }
+
+    private static Stream<Arguments> dadosCamposInvalidos() {
+        var errosComuns = errosComuns();
+
+        var erroAnoInvalido = "O ano do veículo deve ser igual ou superior a 1886";
+
+        return Stream.of(
+            //Arguments.of("veiculos-400-campos-vazios.json", errosComuns),
+            Arguments.of("veiculos-400-ano-invalido.json", List.of(erroAnoInvalido))
+        );
+    }
+
+    private static List<String> errosComuns() {
+        var erroPlaca = "A placa é obrigatória";
+        var erroMarca = "A marca é obrigatória";
+        var erroModelo = "O modelo é obrigatório";
+        var erroCor = "A cor é obrigatória";
+
+        return new ArrayList<>(List.of(erroPlaca, erroMarca, erroModelo, erroCor));
     }
 }

@@ -23,6 +23,8 @@ import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 import com.mecanica.oficina_api.adapters.web.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.GerarOrcamentoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.OrdemServicoResponse;
+import com.mecanica.oficina_api.adapters.web.dto.response.ValidationErrorResponse;
+import jakarta.validation.Valid;
 import com.mecanica.oficina_api.adapters.web.dto.response.ServicoStatusResponse;
 import com.mecanica.oficina_api.adapters.web.presenter.OrdemServicoPresenter;
 import io.swagger.v3.oas.annotations.Operation;
@@ -117,10 +119,12 @@ public class OrdemServicoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "OS criada com sucesso",
                     content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+                    content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Veículo ou cliente não encontrado",
                     content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<OrdemServicoResponse> criar(@RequestBody CriarOrdemServicoRequest request) {
+    public ResponseEntity<OrdemServicoResponse> criar(@Valid @RequestBody CriarOrdemServicoRequest request) {
         OrdemServico os = criarOrdemServicoUseCase.executar(request.getVeiculoId(), request.getClienteId());
         return ResponseEntity.status(201).body(presenter.apresentar(os));
     }
@@ -197,15 +201,15 @@ public class OrdemServicoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Orçamento gerado",
                     content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Nenhum item informado",
-                    content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Erro de validação ou nenhum item informado",
+                    content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "OS, insumo ou serviço não encontrado",
                     content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "409", description = "OS em estado inválido para gerar orçamento",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> gerarOrcamento(@PathVariable String id,
-                                                                @RequestBody GerarOrcamentoRequest request) {
+                                                                @Valid @RequestBody GerarOrcamentoRequest request) {
         return ResponseEntity.ok(presenter.apresentar(gerarOrcamentoUseCase.executar(id, toInput(request))));
     }
 
@@ -215,11 +219,13 @@ public class OrdemServicoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Orçamento atualizado",
                     content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+                    content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
             @ApiResponse(responseCode = "409", description = "Orçamento não está AGUARDANDO",
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> atualizarOrcamento(@PathVariable String id,
-                                                                    @RequestBody GerarOrcamentoRequest request) {
+                                                                    @Valid @RequestBody GerarOrcamentoRequest request) {
         return ResponseEntity.ok(presenter.apresentar(atualizarOrcamentoUseCase.executar(id, toInput(request))));
     }
 

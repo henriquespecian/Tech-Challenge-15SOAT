@@ -13,6 +13,7 @@ import com.mecanica.oficina_api.application.insumo.usecase.InativarInsumoUseCase
 import com.mecanica.oficina_api.application.insumo.usecase.ListarInsumosUseCase;
 import com.mecanica.oficina_api.application.insumo.usecase.RegistrarCompraUseCase;
 
+import com.mecanica.oficina_api.adapters.web.dto.response.ValidationErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -97,10 +99,10 @@ public class InsumosController {
             content = @Content(schema = @Schema(implementation = InsumosResponse.class))),
         @ApiResponse(responseCode = "409", description = "Insumo com o mesmo nome já existe",
             content = @Content(schema = @Schema())),
-        @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
-            content = @Content(schema = @Schema()))
+        @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+            content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
-    public ResponseEntity<InsumosResponse> cadastrarInsumo(@RequestBody CadastrarInsumosRequest request) {
+    public ResponseEntity<InsumosResponse> cadastrarInsumo(@Valid @RequestBody CadastrarInsumosRequest request) {
         var insumo = cadastrarInsumoUseCase.executar(
             request.getNome(),
             request.getPrecoUnitario(),
@@ -118,10 +120,10 @@ public class InsumosController {
         @ApiResponse(responseCode = "204", description = "Insumo alterado com sucesso"),
         @ApiResponse(responseCode = "404", description = "Insumo não encontrado",
             content = @Content(schema = @Schema())),
-        @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
-            content = @Content(schema = @Schema()))
+        @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+            content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
-    public ResponseEntity<Void> alterarInsumo(@PathVariable String id, @RequestBody AlterarInsumosRequest request) {
+    public ResponseEntity<Void> alterarInsumo(@PathVariable String id, @Valid @RequestBody AlterarInsumosRequest request) {
         alterarInsumoUseCase.executar(
             id,
             request.getNome(),
@@ -142,12 +144,12 @@ public class InsumosController {
             content = @Content(schema = @Schema(implementation = InsumosResponse.class))),
         @ApiResponse(responseCode = "404", description = "Insumo ativo não encontrado",
             content = @Content(schema = @Schema())),
-        @ApiResponse(responseCode = "400", description = "Quantidade inválida",
-            content = @Content(schema = @Schema()))
+        @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+            content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
     public ResponseEntity<InsumosResponse> compraSimulada(
             @PathVariable String id,
-            @RequestBody ComprarInsumoSimuladoRequest request) {
+            @Valid @RequestBody ComprarInsumoSimuladoRequest request) {
         return ResponseEntity.ok(presenter.apresentar(registrarCompraUseCase.executar(id, request.getQuantidade())));
     }
 

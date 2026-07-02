@@ -3,6 +3,7 @@ package com.mecanica.oficina_api.adapters.web;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarClienteRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.CadastrarClienteRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.ConsultarClienteResponse;
+import com.mecanica.oficina_api.adapters.web.dto.response.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.presenter.ClientePresenter;
 import com.mecanica.oficina_api.application.cliente.usecase.AlterarClienteUseCase;
 import com.mecanica.oficina_api.application.cliente.usecase.CadastrarClienteUseCase;
@@ -18,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -57,10 +59,10 @@ public class ClienteController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Cliente criado com sucesso",
                     content = @Content(schema = @Schema(implementation = ConsultarClienteResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos",
-                    content = @Content(schema = @Schema()))
+            @ApiResponse(responseCode = "400", description = "Dados da solicitação inválidos ou erro de validação",
+                    content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class)))
     })
-    public ResponseEntity<ConsultarClienteResponse> cadastrar(@RequestBody CadastrarClienteRequest request) {
+    public ResponseEntity<ConsultarClienteResponse> cadastrar(@Valid @RequestBody CadastrarClienteRequest request) {
     Cliente cliente = cadastrarClienteUseCase.executar(
         request.getNome(), request.getDocumento(), request.getEmail(), request.getTelefone()
     );
@@ -97,10 +99,12 @@ public class ClienteController {
     @Operation(summary = "Alterar um cliente por CPF ou CNPJ", description = "Permite alterar os dados de um cliente específico usando seu CPF ou CNPJ")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Cliente alterado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+            content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
             content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<Void> alterar(@PathVariable String documento, @RequestBody AlterarClienteRequest request) {
+    public ResponseEntity<Void> alterar(@PathVariable String documento, @Valid @RequestBody AlterarClienteRequest request) {
         alterarClienteUseCase.executar(documento, request.getNome(), request.getEmail(), request.getTelefone());
         return ResponseEntity.status(204).build();
     }
