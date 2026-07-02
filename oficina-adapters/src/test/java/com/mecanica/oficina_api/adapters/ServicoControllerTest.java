@@ -1,6 +1,10 @@
+
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mecanica.oficina_api.adapters.common.FieldError;
+import com.mecanica.oficina_api.adapters.common.FileUtils;
+import com.mecanica.oficina_api.adapters.common.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
 import com.mecanica.oficina_api.adapters.web.ServicoController;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarServicoRequest;
@@ -16,17 +20,31 @@ import com.mecanica.oficina_api.application.servico.usecase.ListarServicosUseCas
 import com.mecanica.oficina_api.domain.servico.Servico;
 import com.mecanica.oficina_api.domain.servico.TempoMedioServico;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
+import java.util.UUID;
+import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.Mockito.doThrow;
@@ -45,6 +63,7 @@ class ServicoControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final FileUtils fileUtils = new  FileUtils();
 
     @Mock
     private CadastrarServicoUseCase cadastrarServicoUseCase;
@@ -210,6 +229,72 @@ class ServicoControllerTest {
 
         mockMvc.perform(delete("/servico/inexistente"))
                 .andExpect(status().isNotFound());
+    }
+
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidos")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoCriar(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/servicos/%s".formatted(filename));
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/servico")
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidos")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoAlterar(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/servicos/%s".formatted(filename));
+
+        var servicoId = UUID.randomUUID();
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/servico/"+servicoId)
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
+    private static Stream<Arguments> dadosCamposInvalidos() {
+        var errosComuns = errosComuns();
+
+        var erroPrecoNegativo = "O preço deve ser maior ou igual a zero";
+        var erroTempoNegativo = "O tempo estimado em horas deve ser maior que zero";
+
+        return Stream.of(
+            Arguments.of("cadastrar-servico-400-unidades-negativas.json", List.of(erroPrecoNegativo, erroTempoNegativo)),
+            Arguments.of("alterar-servico-400-unidades-negativas.json", List.of(erroPrecoNegativo, erroTempoNegativo))
+        );
+    }
+
+    private static List<String> errosComuns() {
+        var erroCampoNome = "O nome é obrigatório";
+        var erroCampoDescricao = "A descrição é obrigatória";
+        var erroPreco = "O preço é obrigatório";
+
+        return new ArrayList<>(List.of(erroCampoNome, erroCampoDescricao, erroPreco));
     }
 
     private CadastrarServicoRequest cadastrarRequest() {

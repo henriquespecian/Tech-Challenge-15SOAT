@@ -2,12 +2,9 @@ package com.mecanica.oficina_api.domain.ordemservico;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
 public class StatusServico {
+
   private String id;
   private ServicoStatus status;
   private String ordemServicoId;
@@ -16,7 +13,7 @@ public class StatusServico {
   private LocalDateTime dataFim;
 
 
-  protected StatusServico(String ordemServicoId, String servicoId){
+  protected StatusServico(String ordemServicoId, String servicoId) {
     this.status = ServicoStatus.AGUARDANDO;
     this.ordemServicoId = Objects.requireNonNull(ordemServicoId, "O ID da Ordem de Serviço é obrigatório");
     this.servicoId = Objects.requireNonNull(servicoId, "O ID do Serviço é obrigatório");
@@ -28,7 +25,8 @@ public class StatusServico {
     return new StatusServico(ordemServicoId, servicoId);
   }
 
-  public static StatusServico recriar(String id, ServicoStatus status, String ordemServicoId, String servicoId, LocalDateTime dataInicio, LocalDateTime dataFim) {
+  public static StatusServico recriar(String id, ServicoStatus status, String ordemServicoId, String servicoId, LocalDateTime dataInicio,
+      LocalDateTime dataFim) {
     StatusServico statusServico = new StatusServico(ordemServicoId, servicoId);
     statusServico.id = id;
     statusServico.status = status;
@@ -38,8 +36,8 @@ public class StatusServico {
     return statusServico;
   }
 
-  public void iniciarServico(){
-    if(this.status != ServicoStatus.AGUARDANDO){
+  public void iniciarServico() {
+    if (this.status != ServicoStatus.AGUARDANDO) {
       throw new IllegalArgumentException("Status do serviço deve ser: AGUARDANDO");
     }
 
@@ -47,12 +45,60 @@ public class StatusServico {
     this.dataInicio = LocalDateTime.now();
   }
 
-  public void finalizarServico(){
-    if(this.status != ServicoStatus.INICIADO){
+  public void finalizarServico() {
+    if (this.status != ServicoStatus.INICIADO) {
       throw new IllegalArgumentException("Status do serviço deve ser: INICIADO");
     }
 
     this.status = ServicoStatus.FINALIZADO;
     this.dataFim = LocalDateTime.now();
+  }
+
+  public String getId() {
+    return this.id;
+  }
+
+  public ServicoStatus getStatus() {
+    return this.status;
+  }
+
+  public String getOrdemServicoId() {
+    return this.ordemServicoId;
+  }
+
+  public String getServicoId() {
+    return this.servicoId;
+  }
+
+  public LocalDateTime getDataInicio() {
+    return this.dataInicio;
+  }
+
+  public LocalDateTime getDataFim() {
+    return this.dataFim;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public void setStatus(ServicoStatus status) {
+    this.status = status;
+  }
+
+  public void setOrdemServicoId(String ordemServicoId) {
+    this.ordemServicoId = ordemServicoId;
+  }
+
+  public void setServicoId(String servicoId) {
+    this.servicoId = servicoId;
+  }
+
+  public void setDataInicio(LocalDateTime dataInicio) {
+    this.dataInicio = dataInicio;
+  }
+
+  public void setDataFim(LocalDateTime dataFim) {
+    this.dataFim = dataFim;
   }
 }

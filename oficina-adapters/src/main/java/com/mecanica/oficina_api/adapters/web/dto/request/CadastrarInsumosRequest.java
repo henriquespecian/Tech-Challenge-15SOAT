@@ -1,13 +1,28 @@
 package com.mecanica.oficina_api.adapters.web.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 
 public class CadastrarInsumosRequest {
 
+  @NotBlank(message = "O nome é obrigatório")
   private String nome;
+
+  @NotNull(message = "O preço unitário é obrigatório")
+  @PositiveOrZero(message = "O preço unitário deve ser maior ou igual a zero")
   private BigDecimal precoUnitario;
+
+  @NotNull(message = "O estoque atual é obrigatório")
+  @PositiveOrZero(message = "O estoque atual deve ser maior ou igual a zero")
   private Integer estoqueAtual;
+
+  @NotNull(message = "O estoque mínimo é obrigatório")
+  @PositiveOrZero(message = "O estoque mínimo deve ser maior ou igual a zero")
   private Integer estoqueMinimo;
+
+  @NotBlank(message = "A unidade é obrigatória")
   private String unidade;
 
   public CadastrarInsumosRequest() {}

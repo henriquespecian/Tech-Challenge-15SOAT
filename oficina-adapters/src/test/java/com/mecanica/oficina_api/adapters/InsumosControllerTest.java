@@ -1,6 +1,9 @@
 package com.mecanica.oficina_api.adapters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mecanica.oficina_api.adapters.common.FieldError;
+import com.mecanica.oficina_api.adapters.common.FileUtils;
+import com.mecanica.oficina_api.adapters.common.ValidationErrorResponse;
 import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
 import com.mecanica.oficina_api.adapters.web.InsumosController;
 import com.mecanica.oficina_api.adapters.web.dto.request.AlterarInsumosRequest;
@@ -17,15 +20,25 @@ import com.mecanica.oficina_api.application.insumo.usecase.RegistrarCompraUseCas
 import com.mecanica.oficina_api.domain.insumo.Insumos;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
+import java.util.UUID;
+import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +59,7 @@ class InsumosControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final FileUtils fileUtils = new FileUtils();
 
     @Mock
     private CadastrarInsumoUseCase cadastrarInsumoUseCase;
@@ -226,6 +240,52 @@ class InsumosControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidos")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoCriar(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/insumos/%s".formatted(filename));
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/insumos")
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dadosCamposInvalidos")
+    void deveRetornar400_quandoCamposEstaoInvalidosAoAlterar(String filename, List<String> errors) throws Exception {
+        var request = fileUtils.readResourceFile("/insumos/%s".formatted(filename));
+
+        var insumoId = UUID.randomUUID();
+
+        var mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/insumos/"+insumoId)
+                .content(request)
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        var responseError = objectMapper.readValue(mvcResult, ValidationErrorResponse.class);
+
+        Assertions.assertThat(responseError.erros())
+            .extracting(FieldError::mensagem)
+            .containsExactlyInAnyOrderElementsOf(errors);
+    }
+
     private CadastrarInsumosRequest cadastrarRequest() {
         return new CadastrarInsumosRequest("Óleo 5W30", new BigDecimal("45.90"), 20, 5, "L", true);
     }
@@ -233,4 +293,31 @@ class InsumosControllerTest {
     private AlterarInsumosRequest alterarRequest() {
         return new AlterarInsumosRequest("Óleo 10W40", new BigDecimal("50.00"), 30, 10, "L", true);
     }
+
+    private static Stream<Arguments> dadosCamposInvalidos() {
+        var errosComuns = errosComuns();
+
+        var erroPrecoNegativo = "O preço unitário deve ser maior ou igual a zero";
+        var erroEstoqueAtualNegativo = "O estoque atual deve ser maior ou igual a zero";
+        var erroEstoqueMinimoNegativo = "O estoque mínimo deve ser maior ou igual a zero";
+
+        return Stream.of(
+            Arguments.of("cadastrar-insumos-400-campos-vazios.json", errosComuns),
+            Arguments.of("cadastrar-insumos-400-campos-nulos.json", errosComuns),
+            Arguments.of("alterar-insumo-400-preco-negativo.json", List.of(erroPrecoNegativo)),
+            Arguments.of("alterar-insumo-400-estoque-atual-negativo.json", List.of(erroEstoqueAtualNegativo)),
+            Arguments.of("alterar-insumo-400-estoque-minimo-negativo.json", List.of(erroEstoqueMinimoNegativo))
+        );
+    }
+
+    private static List<String> errosComuns() {
+        var erroCampoNome = "O nome é obrigatório";
+        var erroPrecoNulo = "O preço unitário é obrigatório";
+        var erroEstoqueAtualNulo = "O estoque atual é obrigatório";
+        var erroEstoqueMinimoNulo = "O estoque mínimo é obrigatório";
+        var erroUnidade = "A unidade é obrigatória";
+
+        return new ArrayList<>(List.of(erroCampoNome, erroPrecoNulo, erroEstoqueAtualNulo, erroEstoqueMinimoNulo, erroUnidade));
+    }
+
 }

@@ -10,6 +10,7 @@ import com.mecanica.oficina_api.application.usuario.usecase.ConsultarUsuarioUseC
 import com.mecanica.oficina_api.application.usuario.usecase.InativarUsuarioUseCase;
 import com.mecanica.oficina_api.domain.usuario.Usuario;
 
+import com.mecanica.oficina_api.adapters.web.dto.response.ValidationErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -59,10 +61,10 @@ public class UsuarioController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso",
             content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema())),
+        @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada", content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
         @ApiResponse(responseCode = "409", description = "Email já cadastrado", content = @Content(schema = @Schema()))
     })
-    public ResponseEntity<UsuarioResponse> cadastrar(@RequestBody CadastrarUsuarioRequest request) {
+    public ResponseEntity<UsuarioResponse> cadastrar(@Valid @RequestBody CadastrarUsuarioRequest request) {
         Usuario usuario = cadastrarUsuarioUseCase.executar(
             request.getNome(), request.getEmail(), request.getSenha(),
             request.getPerfil(), request.getClienteId());
@@ -88,10 +90,12 @@ public class UsuarioController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Usuário alterado com sucesso",
             content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Erro de validação nos campos de entrada",
+            content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
             content = @Content(schema = @Schema(implementation = ResponseStatusException.class)))
     })
-    public ResponseEntity<UsuarioResponse> alterar(@PathVariable String id, @RequestBody AlterarUsuarioRequest request) {
+    public ResponseEntity<UsuarioResponse> alterar(@PathVariable String id, @Valid @RequestBody AlterarUsuarioRequest request) {
         Usuario usuario = alterarUsuarioUseCase.executar(
             id, request.getNome(), request.getEmail(), request.getPerfil(), request.getClienteId());
         return ResponseEntity.ok(presenter.apresentar(usuario));

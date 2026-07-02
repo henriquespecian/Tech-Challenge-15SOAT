@@ -1,11 +1,12 @@
 package com.mecanica.oficina_api.adapters.web.dto.request;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 public class GerarOrcamentoRequest {
 
-    private List<ItemOrcamentoRequest> insumos;
-    private List<ItemServicoRequest> servicos;
+    private List<@Valid ItemOrcamentoRequest> insumos;
+    private List<@Valid ItemServicoRequest> servicos;
     private String observacoes;
 
     public GerarOrcamentoRequest() {}
