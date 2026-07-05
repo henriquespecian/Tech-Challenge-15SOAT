@@ -1,0 +1,23 @@
+meta {
+  name: Webhook Negar Orçamento
+  type: http
+  seq: 100
+}
+
+post {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento/webhook/negar
+  body: {
+    "externalId": "{{webhookExternalId}}",
+    "observacoes": "Negado via webhook"
+  }
+  auth: none
+}
+
+headers {
+  X-Webhook-Token: {{webhookToken}}
+  Content-Type: application/json
+}
+
+params:path {
+  id:
+}

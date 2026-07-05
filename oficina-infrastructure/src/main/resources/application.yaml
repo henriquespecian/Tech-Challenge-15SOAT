@@ -18,3 +18,6 @@ spring:
 jwt:
   secret: ${JWT_SECRET:c2VjcmV0b0p3dFN1cGVyU2VndXJvUGFyYU9maWNpbmFBcGkxMjM0NTY3ODk=}
   expiration: 86400000
+
+webhook:
+  secret: ${WEBHOOK_SECRET:webhookSecretPadraoOficinaApi123456}
