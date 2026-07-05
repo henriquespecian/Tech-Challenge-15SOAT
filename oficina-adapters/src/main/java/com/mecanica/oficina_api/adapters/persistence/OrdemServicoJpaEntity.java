@@ -29,6 +29,9 @@ public class OrdemServicoJpaEntity {
     @Column(nullable = false)
     private String status;
 
+    @Column(name = "data_criacao")
+    private LocalDateTime dataCriacao;
+
     @Column(name = "orcamento_status")
     private String orcamentoStatus;
 

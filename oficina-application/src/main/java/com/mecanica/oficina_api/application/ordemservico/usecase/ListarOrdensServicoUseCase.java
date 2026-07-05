@@ -14,6 +14,9 @@ public class ListarOrdensServicoUseCase {
     }
 
     public List<OrdemServico> executar(OrdemServicoStatus status) {
+        if (status == null) {
+            return ordemServicoGateway.listarAtivas();
+        }
         return ordemServicoGateway.listar(status);
     }
 }

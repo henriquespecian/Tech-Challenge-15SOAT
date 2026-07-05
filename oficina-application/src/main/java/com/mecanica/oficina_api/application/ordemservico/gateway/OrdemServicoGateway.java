@@ -12,6 +12,7 @@ public interface OrdemServicoGateway {
     OrdemServico atualizar(OrdemServico ordemServico);
     Optional<OrdemServico> buscar(String id);
     List<OrdemServico> listar(OrdemServicoStatus status);
+    List<OrdemServico> listarAtivas();
     List<OrdemServico> listarPorVeiculo(String veiculoId);
     List<MinhaOrdemServicoOutput> buscarPorCliente(String clienteId);
 

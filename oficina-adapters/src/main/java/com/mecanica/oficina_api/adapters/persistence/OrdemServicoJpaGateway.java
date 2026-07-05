@@ -33,6 +33,7 @@ public class OrdemServicoJpaGateway implements OrdemServicoGateway {
         entity.setVeiculoId(veiculoId);
         entity.setClienteId(clienteId);
         entity.setStatus(OrdemServicoStatus.RECEBIDA.name());
+        entity.setDataCriacao(java.time.LocalDateTime.now());
         return toDomain(repository.save(entity));
     }
 
@@ -55,6 +56,11 @@ public class OrdemServicoJpaGateway implements OrdemServicoGateway {
                 ? repository.findByStatus(status.name())
                 : repository.findAll();
         return entities.stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<OrdemServico> listarAtivas() {
+        return repository.findAtivasOrdenadas().stream().map(this::toDomain).toList();
     }
 
     @Override

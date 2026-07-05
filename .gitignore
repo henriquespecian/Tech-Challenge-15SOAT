@@ -36,6 +36,7 @@ build/
 CLAUDE.md
 .claude/
 .env
+.secrets
 
 ### Terraform ###
 infra/.terraform/

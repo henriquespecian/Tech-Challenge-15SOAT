@@ -1,0 +1,23 @@
+meta {
+  name: Webhook Aprovar Orçamento
+  type: http
+  seq: 99
+}
+
+post {
+  url: {{baseUrl}}/ordem-servico/:id/orcamento/webhook/aprovar
+  body: {
+    "externalId": "{{webhookExternalId}}",
+    "observacoes": "Aprovado via webhook"
+  }
+  auth: none
+}
+
+headers {
+  X-Webhook-Token: {{webhookToken}}
+  Content-Type: application/json
+}
+
+params:path {
+  id:
+}

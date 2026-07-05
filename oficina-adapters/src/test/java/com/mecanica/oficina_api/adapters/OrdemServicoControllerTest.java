@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mecanica.oficina_api.adapters.common.FieldError;
 import com.mecanica.oficina_api.adapters.common.FileUtils;
 import com.mecanica.oficina_api.adapters.common.ValidationErrorResponse;
+import com.mecanica.oficina_api.adapters.security.WebhookTokenValidator;
 import com.mecanica.oficina_api.adapters.web.GlobalExceptionHandler;
 import com.mecanica.oficina_api.adapters.web.OrdemServicoController;
 import com.mecanica.oficina_api.adapters.web.dto.request.CriarOrdemServicoRequest;
@@ -93,6 +94,7 @@ class OrdemServicoControllerTest {
     private static final String OS_ID = "os-1";
     private static final String VEICULO_ID = "veiculo-1";
     private static final String CLIENTE_ID = "cliente-1";
+    private static final String WEBHOOK_SECRET = "test-webhook-secret";
 
     @BeforeEach
     void setUp() {
@@ -103,7 +105,7 @@ class OrdemServicoControllerTest {
                 aguardarOrcamentoUseCase, aprovarOrcamentoUseCase, negarOrcamentoUseCase,
                 iniciarExecucaoUseCase, finalizarOrdemServicoUseCase, entregarOrdemServicoUseCase,
                 listarServicosPorOSUseCase, iniciarServicoUseCase, finalizarServicoUseCase,
-                new OrdemServicoPresenter());
+                new OrdemServicoPresenter(), new WebhookTokenValidator(WEBHOOK_SECRET));
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
