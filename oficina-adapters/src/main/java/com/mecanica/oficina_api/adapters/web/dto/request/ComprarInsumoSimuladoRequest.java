@@ -1,5 +1,7 @@
 package com.mecanica.oficina_api.adapters.web.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,5 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ComprarInsumoSimuladoRequest {
 
+    @NotNull(message = "A quantidade é obrigatória")
+    @Positive(message = "A quantidade deve ser maior que zero")
     private Integer quantidade;
 }

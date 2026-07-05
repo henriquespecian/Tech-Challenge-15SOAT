@@ -4,10 +4,8 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Objects;
 
-import lombok.Getter;
-
-@Getter
 public class Servico {
+
     private String id;
     private String nome;
     private String descricao;
@@ -15,10 +13,11 @@ public class Servico {
     private Duration tempoEstimadoHoras;
     private boolean ativo;
 
-    protected Servico() {}
+    protected Servico() {
+    }
 
     public static Servico criar(String nome, String descricao, BigDecimal preco, Duration tempoEstimadoHoras) {
-        
+
         Servico servico = new Servico();
         validarParametros(nome, descricao, preco, tempoEstimadoHoras);
 
@@ -33,22 +32,22 @@ public class Servico {
     }
 
     public static void validarParametros(String nome, String descricao, BigDecimal preco, Duration tempoEstimadoHoras) {
-        if(Objects.isNull(nome) || nome.isBlank()) {
+        if (Objects.isNull(nome) || nome.isBlank()) {
             throw new IllegalArgumentException("Nome é obrigatório");
         }
-        if(Objects.isNull(descricao) || descricao.isBlank()) {
+        if (Objects.isNull(descricao) || descricao.isBlank()) {
             throw new IllegalArgumentException("Descrição é obrigatória");
         }
-        if(Objects.isNull(preco) || preco.compareTo(BigDecimal.ZERO) < 0) {
+        if (Objects.isNull(preco) || preco.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Preço deve ser um número positivo");
         }
-        if(Objects.isNull(tempoEstimadoHoras) || tempoEstimadoHoras.isNegative()) {
+        if (Objects.isNull(tempoEstimadoHoras) || tempoEstimadoHoras.isNegative()) {
             throw new IllegalArgumentException("Tempo Estimado deve ser um valor positivo");
         }
     }
 
     public static Servico reconstituir(String id, String nome, String descricao,
-                                       BigDecimal preco, Duration tempoEstimadoHoras, boolean ativo) {
+        BigDecimal preco, Duration tempoEstimadoHoras, boolean ativo) {
         Servico servico = new Servico();
         servico.id = id;
         servico.nome = nome;
@@ -70,8 +69,32 @@ public class Servico {
     public void ativar() {
         this.ativo = true;
     }
+
     public void inativar() {
         this.ativo = false;
     }
 
+    public String getId() {
+        return this.id;
+    }
+
+    public String getNome() {
+        return this.nome;
+    }
+
+    public String getDescricao() {
+        return this.descricao;
+    }
+
+    public BigDecimal getPreco() {
+        return this.preco;
+    }
+
+    public Duration getTempoEstimadoHoras() {
+        return this.tempoEstimadoHoras;
+    }
+
+    public boolean isAtivo() {
+        return this.ativo;
+    }
 }
