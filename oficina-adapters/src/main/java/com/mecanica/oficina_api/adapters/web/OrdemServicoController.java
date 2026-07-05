@@ -20,8 +20,10 @@ import com.mecanica.oficina_api.application.ordemservico.usecase.ListarServicosP
 import com.mecanica.oficina_api.application.ordemservico.usecase.NegarOrcamentoUseCase;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServico;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
+import com.mecanica.oficina_api.adapters.security.WebhookTokenValidator;
 import com.mecanica.oficina_api.adapters.web.dto.request.CriarOrdemServicoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.request.GerarOrcamentoRequest;
+import com.mecanica.oficina_api.adapters.web.dto.request.WebhookOrcamentoRequest;
 import com.mecanica.oficina_api.adapters.web.dto.response.OrdemServicoResponse;
 import com.mecanica.oficina_api.adapters.web.dto.response.ValidationErrorResponse;
 import jakarta.validation.Valid;
@@ -64,6 +66,7 @@ public class OrdemServicoController {
     private final IniciarServicoUseCase iniciarServicoUseCase;
     private final FinalizarServicoUseCase finalizarServicoUseCase;
     private final OrdemServicoPresenter presenter;
+    private final WebhookTokenValidator webhookTokenValidator;
 
     public OrdemServicoController(CriarOrdemServicoUseCase criarOrdemServicoUseCase,
             ConsultarOrdemServicoUseCase consultarOrdemServicoUseCase,
@@ -82,7 +85,8 @@ public class OrdemServicoController {
             ListarServicosPorOSUseCase listarServicosPorOSUseCase,
             IniciarServicoUseCase iniciarServicoUseCase,
             FinalizarServicoUseCase finalizarServicoUseCase,
-            OrdemServicoPresenter presenter) {
+            OrdemServicoPresenter presenter,
+            WebhookTokenValidator webhookTokenValidator) {
         this.criarOrdemServicoUseCase = criarOrdemServicoUseCase;
         this.consultarOrdemServicoUseCase = consultarOrdemServicoUseCase;
         this.listarOrdensServicoUseCase = listarOrdensServicoUseCase;
@@ -101,6 +105,7 @@ public class OrdemServicoController {
         this.iniciarServicoUseCase = iniciarServicoUseCase;
         this.finalizarServicoUseCase = finalizarServicoUseCase;
         this.presenter = presenter;
+        this.webhookTokenValidator = webhookTokenValidator;
     }
 
     @GetMapping
@@ -291,6 +296,46 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> negarOrcamento(@PathVariable String id) {
+        return ResponseEntity.ok(presenter.apresentar(negarOrcamentoUseCase.executar(id)));
+    }
+
+    // --- Webhook (aprovação/negação externa, sem autenticação JWT) ---
+
+    @PostMapping("/{id}/orcamento/webhook/aprovar")
+    @Operation(summary = "Aprovar orçamento via webhook",
+        description = "Endpoint público para notificação externa de aprovação. Requer o header X-Webhook-Token.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Orçamento aprovado, OS em execução",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Token de webhook inválido",
+                    content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "409", description = "Orçamento em estado inválido para aprovação",
+                    content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<OrdemServicoResponse> aprovarOrcamentoWebhook(
+            @PathVariable String id,
+            @RequestHeader("X-Webhook-Token") String token,
+            @RequestBody(required = false) WebhookOrcamentoRequest request) {
+        webhookTokenValidator.validate(token);
+        return ResponseEntity.ok(presenter.apresentar(aprovarOrcamentoUseCase.executar(id)));
+    }
+
+    @PostMapping("/{id}/orcamento/webhook/negar")
+    @Operation(summary = "Negar orçamento via webhook",
+        description = "Endpoint público para notificação externa de recusa. Requer o header X-Webhook-Token.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Orçamento negado",
+                    content = @Content(schema = @Schema(implementation = OrdemServicoResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Token de webhook inválido",
+                    content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "409", description = "Orçamento em estado inválido para negar",
+                    content = @Content(schema = @Schema()))
+    })
+    public ResponseEntity<OrdemServicoResponse> negarOrcamentoWebhook(
+            @PathVariable String id,
+            @RequestHeader("X-Webhook-Token") String token,
+            @RequestBody(required = false) WebhookOrcamentoRequest request) {
+        webhookTokenValidator.validate(token);
         return ResponseEntity.ok(presenter.apresentar(negarOrcamentoUseCase.executar(id)));
     }
 

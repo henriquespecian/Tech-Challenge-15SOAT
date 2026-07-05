@@ -2,6 +2,7 @@ package com.mecanica.oficina_api.application.ordemservico.usecase;
 
 import static com.mecanica.oficina_api.application.ordemservico.OrdemServicoFixture.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
@@ -37,8 +38,20 @@ class ListarOrdensServicoUseCaseTest {
     }
 
     @Test
+    void deveChamarListarAtivas_quandoStatusNulo() {
+        OrdemServico os = osSemOrcamento(OrdemServicoStatus.RECEBIDA);
+        when(ordemServicoGateway.listarAtivas()).thenReturn(List.of(os));
+
+        List<OrdemServico> resultado = useCase.executar(null);
+
+        assertThat(resultado).hasSize(1);
+        verify(ordemServicoGateway).listarAtivas();
+        verify(ordemServicoGateway, never()).listar(any());
+    }
+
+    @Test
     void deveRetornarListaVazia_quandoNaoHaOrdens() {
-        when(ordemServicoGateway.listar(null)).thenReturn(List.of());
+        when(ordemServicoGateway.listarAtivas()).thenReturn(List.of());
 
         List<OrdemServico> resultado = useCase.executar(null);
 
