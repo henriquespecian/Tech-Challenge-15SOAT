@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
-public abstract class BaseIntegrationTest {
+public abstract class BaseIntegrationTest extends PostgresTestcontainersSupport {
 
     @Autowired private WebApplicationContext context;
     protected final ObjectMapper objectMapper = new ObjectMapper();
