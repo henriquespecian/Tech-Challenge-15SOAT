@@ -192,8 +192,8 @@ public class ApplicationConfig {
         return new MontadorItensOrcamento(insumosGateway, servicoGateway);
     }
     @Bean
-    CriarOrdemServicoUseCase criarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway, VeiculoGateway veiculoGateway, ClienteGateway clienteGateway) {
-        return new CriarOrdemServicoUseCase(ordemServicoGateway, veiculoGateway, clienteGateway);
+    CriarOrdemServicoUseCase criarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway, VeiculoGateway veiculoGateway, ClienteGateway clienteGateway, MontadorItensOrcamento montadorItensOrcamento) {
+        return new CriarOrdemServicoUseCase(ordemServicoGateway, veiculoGateway, clienteGateway, montadorItensOrcamento);
     }
     @Bean
     ConsultarOrdemServicoUseCase consultarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway) {

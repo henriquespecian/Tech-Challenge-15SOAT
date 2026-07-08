@@ -130,7 +130,7 @@ public class OrdemServicoController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<OrdemServicoResponse> criar(@Valid @RequestBody CriarOrdemServicoRequest request) {
-        OrdemServico os = criarOrdemServicoUseCase.executar(request.getVeiculoId(), request.getClienteId());
+        OrdemServico os = criarOrdemServicoUseCase.executar(request.getVeiculoId(), request.getClienteId(), toInput(request));
         return ResponseEntity.status(201).body(presenter.apresentar(os));
     }
 
@@ -374,6 +374,17 @@ public class OrdemServicoController {
     }
 
     // --- mapeamento request → input ---
+    private GerarOrcamentoInput toInput(CriarOrdemServicoRequest request) {
+        List<GerarOrcamentoInput.ItemInsumoInput> insumos = request.getInsumos() == null ? List.of()
+            : request.getInsumos().stream()
+                .map(i -> new GerarOrcamentoInput.ItemInsumoInput(i.getInsumoId(), i.getQuantidade()))
+                .toList();
+        List<GerarOrcamentoInput.ItemServicoInput> servicos = request.getServicos() == null ? List.of()
+            : request.getServicos().stream()
+                .map(s -> new GerarOrcamentoInput.ItemServicoInput(s.getServicoId(), s.getQuantidade()))
+                .toList();
+        return new GerarOrcamentoInput(insumos, servicos, request.getObservacoes());
+    }
 
     private GerarOrcamentoInput toInput(GerarOrcamentoRequest request) {
         List<GerarOrcamentoInput.ItemInsumoInput> insumos = request.getInsumos() == null ? List.of()

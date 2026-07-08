@@ -64,4 +64,18 @@ class GerarOrcamentoUseCaseTest {
 
         verify(ordemServicoGateway, never()).atualizar(any());
     }
+
+    @Test
+    void deveLancarExcecao_quandoOrcamentoJaExiste() {
+        List<ItemOrcamento> itens = List.of(itemServico("serv-1"));
+        OrdemServico os = osComOrcamento(OrdemServicoStatus.EM_DIAGNOSTICO, OrcamentoStatus.PENDENTE, itens);
+        GerarOrcamentoInput input = new GerarOrcamentoInput(null, List.of(new GerarOrcamentoInput.ItemServicoInput("serv-1", 1)), "obs");
+        when(ordemServicoGateway.encontrarOuLancar(OS_ID)).thenReturn(os);
+
+        assertThatThrownBy(() -> useCase.executar(OS_ID, input))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Ordem De Serviço já possui um orçamento recebido. Por favor, utilize o método PUT para alterar-lo");
+
+        verify(ordemServicoGateway, never()).atualizar(any());
+    }
 }

@@ -182,7 +182,7 @@ class OrdemServicoControllerTest {
 
     @Test
     void deveCriarOrdemERetornar201() throws Exception {
-        when(criarOrdemServicoUseCase.executar(VEICULO_ID, CLIENTE_ID)).thenReturn(osRecebida());
+        when(criarOrdemServicoUseCase.executar(eq(VEICULO_ID), eq(CLIENTE_ID), any(GerarOrcamentoInput.class))).thenReturn(osRecebida());
 
         mockMvc.perform(post("/ordem-servico")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -196,7 +196,7 @@ class OrdemServicoControllerTest {
 
     @Test
     void deveRetornar404AoCriar_quandoVeiculoNaoEncontrado() throws Exception {
-        when(criarOrdemServicoUseCase.executar(eq(VEICULO_ID), eq(CLIENTE_ID)))
+        when(criarOrdemServicoUseCase.executar(eq(VEICULO_ID), eq(CLIENTE_ID), any(GerarOrcamentoInput.class)))
                 .thenThrow(new IllegalArgumentException("Veículo não encontrado"));
 
         mockMvc.perform(post("/ordem-servico")
