@@ -1,16 +1,11 @@
-# 🚀 Execução — Minikube (local) e AWS Learner Lab (EKS)
+# 🚀 Deploy na AWS (Learner Lab + EKS + RDS)
 
-Guia passo a passo para subir a Oficina API nos dois ambientes. A aplicação usa
-**Kustomize** para reaproveitar os manifestos: um `base/` comum e dois overlays
-(`minikube` e `aws`) com apenas as diferenças de cada ambiente.
+Guia passo a passo para subir a Oficina API na AWS. Para rodar localmente (Docker Compose
+ou Minikube), ver [execucao-local.md](execucao-local.md). Para o deploy **automatizado** via
+GitHub Actions, ver [cicd-github-actions.md](cicd-github-actions.md).
 
-```
-k8s/
-  base/                 # Deployment, Service, HPA, ConfigMap comuns
-  overlays/
-    minikube/           # Postgres in-cluster + NodePort + imagem Docker Hub
-    aws/                # RDS (via Terraform) + LoadBalancer + imagem ECR
-```
+A aplicação usa **Kustomize**: um `base/` comum e dois overlays. O overlay `aws` usa RDS
+PostgreSQL (via Terraform), imagem no ECR e Service `LoadBalancer` (ELB).
 
 | Diferença | Minikube | AWS |
 |---|---|---|
@@ -23,65 +18,6 @@ k8s/
 > `secret.example.yaml` versionado como modelo. Copie e preencha antes de aplicar:
 > `cp secret.example.yaml secret.yaml`.
 
----
-
-## Parte A — Execução local com Minikube
-
-### Pré-requisitos
-- Docker, Minikube e `kubectl` instalados.
-
-### Passos
-
-**1. Suba o Minikube e o metrics-server (necessário para o HPA):**
-```bash
-minikube start
-minikube addons enable metrics-server
-```
-
-**2. Aponte o kubectl para o cluster local e confirme:**
-```bash
-kubectl config use-context minikube
-kubectl config current-context   # deve dizer: minikube
-```
-
-**3. Crie o Secret local a partir do modelo:**
-```bash
-cp k8s/overlays/minikube/secret.example.yaml k8s/overlays/minikube/secret.yaml
-# edite e preencha os valores base64:
-#   echo -n 'senha-do-postgres-local' | base64
-#   echo -n 'seu-jwt-secret'          | base64
-```
-
-**4. (Opcional) Valide o manifesto final sem aplicar:**
-```bash
-kubectl kustomize k8s/overlays/minikube
-```
-
-**5. Aplique e acompanhe:**
-```bash
-kubectl apply -k k8s/overlays/minikube
-kubectl get pods -w        # aguarde os dois pods 1/1 Running
-```
-
-**6. Acesse a API (abre um túnel; mantenha o terminal aberto):**
-```bash
-minikube service oficina-api --url
-```
-Use a URL retornada + `/swagger-ui/index.html`. O login usa as mesmas credenciais da
-tabela em [B.6](#b6--acessar-a-api) (`admin@oficina.com` / `admin123`).
-
-> Para ter o usuário admin e dados de exemplo, o `configmap-local.yaml` deve conter
-> `SPRING_PROFILES_ACTIVE: dev` — o seed (`DevDataLoader`) só roda no profile `dev`.
-
-**7. Verifique o autoscaler:**
-```bash
-kubectl get hpa
-```
-
----
-
-## Parte B — Execução na AWS (Learner Lab + EKS + RDS)
-
 > As credenciais do Learner Lab expiram a cada sessão (máx. 4h). Como iniciar o
 > lab e exportar as chaves está documentado em
 > [acesso-aws-learner-lab.md](acesso-aws-learner-lab.md). **Faça isso antes** dos passos abaixo.
@@ -91,7 +27,9 @@ kubectl get hpa
 - Lab iniciado e credenciais exportadas (ver doc acima).
 - Validar: `aws sts get-caller-identity`.
 
-### B.1 — Provisionar a infraestrutura (Terraform)
+---
+
+## 1 — Provisionar a infraestrutura (Terraform)
 
 ```bash
 cd infra
@@ -103,7 +41,7 @@ terraform apply        # ~15-20 min (EKS + RDS são lentos)
 ```
 
 > A senha definida aqui em `db_password` é a senha **master do RDS**. Ela precisa
-> ser a mesma usada depois no Secret do Kubernetes (B.4) e no GitHub Secret
+> ser a mesma usada depois no Secret do Kubernetes (passo 4) e no GitHub Secret
 > `RDS_PASSWORD` (CI/CD) — se divergir, o app não conecta no banco.
 
 Ao terminar, anote os outputs (`terraform output`):
@@ -114,7 +52,7 @@ Ao terminar, anote os outputs (`terraform output`):
 > ⚠️ Particularidade do Learner Lab: não é possível criar IAM Roles. O Terraform
 > usa a role pré-existente **`LabRole`** (ver `infra/iam-role.tf`).
 
-### B.2 — Conectar o kubectl ao EKS
+## 2 — Conectar o kubectl ao EKS
 
 ```bash
 aws eks update-kubeconfig --name eks-oficina-terraform --region us-east-1
@@ -122,7 +60,7 @@ kubectl config current-context      # deve apontar para o cluster eks-oficina-te
 kubectl get nodes                    # nó(s) devem aparecer como Ready
 ```
 
-### B.3 — Publicar a imagem no ECR
+## 3 — Publicar a imagem no ECR
 
 > Rode a partir da **raiz do projeto** (onde está o `Dockerfile`), não de dentro de `infra/`.
 > O `docker build` é que **cria** a tag local; o `push` só envia uma tag que já existe —
@@ -143,7 +81,7 @@ docker push 029166075159.dkr.ecr.us-east-1.amazonaws.com/oficina-api:1.0
 aws ecr list-images --repository-name oficina-api --region us-east-1
 ```
 
-### B.4 — Ajustar o overlay `aws`
+## 4 — Ajustar o overlay `aws`
 
 - Confirme o `image` (registry/tag) no `k8s/overlays/aws/kustomization.yaml`.
 - Confirme o host do RDS em `configmap-rds.yaml` (= output `DB_Endpoint`).
@@ -167,7 +105,7 @@ aws ecr list-images --repository-name oficina-api --region us-east-1
 > 💡 Alternativa sem base64 manual: use `stringData:` no lugar de `data:` e coloque os
 > valores em **texto puro** — o Kubernetes codifica sozinho.
 
-### B.5 — Deploy no EKS
+## 5 — Deploy no EKS
 
 ```bash
 kubectl kustomize k8s/overlays/aws     # valida o render (opcional)
@@ -181,7 +119,7 @@ kubectl get pods -w                     # aguarde 1/1 Running
 > kubectl rollout restart deploy/oficina-api
 > ```
 
-### B.6 — Acessar a API
+## 6 — Acessar a API
 
 ```bash
 kubectl get svc oficina-api            # aguarde o EXTERNAL-IP (DNS do ELB) aparecer
@@ -191,16 +129,14 @@ O Service expõe a **porta 8080** (`8080:xxxxx/TCP`) — o ELB escuta na 8080, *
 Sempre inclua `:8080` na URL, senão a conexão falha (`Could not connect`). O ELB também
 leva ~2-3 min após criado para registrar o alvo e responder.
 
-- **Swagger UI:**
-  ```
-  http://<EXTERNAL-IP>:8080/swagger-ui/index.html
-  ```
+- **Swagger UI:** `http://<EXTERNAL-IP>:8080/swagger-ui/index.html`
 - **Health check:**
   ```bash
   curl http://<EXTERNAL-IP>:8080/actuator/health     # {"status":"UP"}
   ```
 
-**Login (obter o token JWT):** use o usuário admin criado pelo seed:
+**Login (obter o token JWT):** use o usuário admin criado pelo seed. As credenciais dos
+usuários de exemplo estão em [autenticacao-e-perfis.md](autenticacao-e-perfis.md).
 
 ```bash
 curl -X POST http://<EXTERNAL-IP>:8080/auth/login \
@@ -208,16 +144,9 @@ curl -X POST http://<EXTERNAL-IP>:8080/auth/login \
   -d '{"email":"admin@oficina.com","senha":"admin123"}'
 ```
 
-| Perfil | E-mail | Senha |
-|---|---|---|
-| ADMIN | `admin@oficina.com` | `admin123` |
-| MECANICO | `mecanico@oficina.com` | `mecanico123` |
-| ATENDENTE | `atendente@oficina.com` | `atendente123` |
-| CLIENTE | `ana.portal@teste.com` | `cliente123` |
-
 Nos demais endpoints, envie o header `Authorization: Bearer <token>`.
 
-### B.7 — Encerrar (evita consumir crédito)
+## 7 — Encerrar (evita consumir crédito)
 
 ```bash
 terraform destroy      # apaga EKS, RDS, ECR, VPC etc.
@@ -226,7 +155,7 @@ E clique em **End Lab** no Learner Lab.
 
 ---
 
-## Roteiro de teste ponta a ponta (AWS)
+## Roteiro de teste ponta a ponta
 
 Cada etapa tem uma verificação. Se uma falhar, pare nela antes de seguir.
 
@@ -255,8 +184,9 @@ kubectl logs <nome-do-pod>           # log da aplicação (ex.: erro de conexão
 
 | Sintoma | Causa provável | Correção |
 |---|---|---|
-| `dial tcp 127.0.0.1:xxxxx: connection refused` | Minikube parado | `minikube start` |
+| `AccessDenied ... voc-cancel-cred` | credenciais de sessão encerrada | Start Lab + reexportar as chaves (ver [acesso-aws-learner-lab.md](acesso-aws-learner-lab.md)) |
 | Overlay aplicado no cluster errado | contexto do kubectl trocado | `kubectl config current-context` e ajuste antes do apply |
+| `no such host` no `kubectl` local | cluster recriado → endpoint do EKS mudou | rode `aws eks update-kubeconfig` de novo |
 | `pod has unbound immediate PersistentVolumeClaims` | overlay `minikube` (com PVC) aplicado no EKS | aplique o overlay `aws` no EKS; o `minikube` só no Minikube |
 | `illegal base64 data at input byte 0` | template do CI (`$(...)`/`${{ }}`) num `secret.yaml` estático | ponha valores base64 reais, ou use `stringData` com texto puro |
 | `tag does not exist` no `docker push` | build rodado fora da raiz / não rodado | `docker build` a partir da raiz do projeto |
@@ -266,6 +196,9 @@ kubectl logs <nome-do-pod>           # log da aplicação (ex.: erro de conexão
 | Login não retorna token | banco vazio: profile `prod` não roda o seed (`DevDataLoader`) | adicione `SPRING_PROFILES_ACTIVE: dev` no `configmap-rds.yaml`, reaplique e `rollout restart` |
 | Falha ao conectar na URL do ELB | acessando na porta 80 em vez de 8080 | use `http://<EXTERNAL-IP>:8080/...` |
 
+> 💡 Regra de ouro do ciclo Learner Lab: **toda recriação da infra muda dois endpoints** — o do
+> **RDS** e o do **EKS** (resolvido com `aws eks update-kubeconfig`).
+
 ## Observações
 
 - **Contexto do kubectl é crítico.** Rode sempre `kubectl config current-context`
@@ -274,6 +207,6 @@ kubectl logs <nome-do-pod>           # log da aplicação (ex.: erro de conexão
 - **Learner Lab:** não permite criar IAM Roles (usa-se a `LabRole`) e as credenciais
   expiram a cada sessão (~4h) — no CI/CD é preciso reatualizar os GitHub Secrets de AWS
   a cada nova sessão do lab.
-- **Deploy automatizado:** o pipeline de CI/CD executa os passos B.3 e B.5
+- **Deploy automatizado:** o pipeline de CI/CD executa os passos 3 e 5
   automaticamente e injeta o Secret a partir dos GitHub Secrets — o `secret.yaml`
-  real nunca vai para o repositório.
+  real nunca vai para o repositório. Ver [cicd-github-actions.md](cicd-github-actions.md).

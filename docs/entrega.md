@@ -31,5 +31,3 @@ https://youtu.be/ErhqqlafBAU
 ```
 https://github.com/henriquespecian/Tech-Challenge-15SOAT
 ```
-
-## Relatório com análise de vulnerabilidades encontradas no sistema.
