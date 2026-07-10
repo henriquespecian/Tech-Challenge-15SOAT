@@ -6,7 +6,6 @@ import java.util.List;
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
 import com.mecanica.oficina_api.application.ordemservico.output.MinhaOrdemServicoOutput;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
-import java.util.stream.Collectors;
 
 public class ListarPorUsuarioOrdemServicoUseCase {
     private final OrdemServicoGateway ordemServicoGateway;
