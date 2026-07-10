@@ -16,7 +16,6 @@ import com.mecanica.oficina_api.application.veiculo.usecase.InativarVeiculoUseCa
 import com.mecanica.oficina_api.application.veiculo.usecase.ListarVeiculosPorClienteUseCase;
 import com.mecanica.oficina_api.domain.veiculo.Veiculo;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import java.util.UUID;
@@ -247,22 +246,11 @@ class VeiculoControllerTest {
     }
 
     private static Stream<Arguments> dadosCamposInvalidos() {
-        var errosComuns = errosComuns();
-
         var erroAnoInvalido = "O ano do veículo deve ser igual ou superior a 1886";
 
         return Stream.of(
             //Arguments.of("veiculos-400-campos-vazios.json", errosComuns),
             Arguments.of("veiculos-400-ano-invalido.json", List.of(erroAnoInvalido))
         );
-    }
-
-    private static List<String> errosComuns() {
-        var erroPlaca = "A placa é obrigatória";
-        var erroMarca = "A marca é obrigatória";
-        var erroModelo = "O modelo é obrigatório";
-        var erroCor = "A cor é obrigatória";
-
-        return new ArrayList<>(List.of(erroPlaca, erroMarca, erroModelo, erroCor));
     }
 }

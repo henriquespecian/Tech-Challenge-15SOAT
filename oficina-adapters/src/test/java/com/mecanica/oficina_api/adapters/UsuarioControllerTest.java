@@ -16,8 +16,6 @@ import com.mecanica.oficina_api.application.usuario.usecase.InativarUsuarioUseCa
 import com.mecanica.oficina_api.domain.usuario.Perfil;
 import com.mecanica.oficina_api.domain.usuario.Usuario;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

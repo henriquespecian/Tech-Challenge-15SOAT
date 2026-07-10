@@ -3,9 +3,13 @@ package com.mecanica.oficina_api.infrastructure.integration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+
+@Testcontainers(disabledWithoutDocker = true)
 public abstract class PostgresTestcontainersSupport {
 
+    @SuppressWarnings("resource")
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:15-alpine")
             .withDatabaseName("oficina_test")
             .withUsername("postgres")

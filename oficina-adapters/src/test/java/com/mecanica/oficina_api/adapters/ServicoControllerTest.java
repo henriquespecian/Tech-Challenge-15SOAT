@@ -20,13 +20,8 @@ import com.mecanica.oficina_api.application.servico.usecase.ListarServicosUseCas
 import com.mecanica.oficina_api.domain.servico.Servico;
 import com.mecanica.oficina_api.domain.servico.TempoMedioServico;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 
 import java.util.UUID;
@@ -278,7 +273,6 @@ class ServicoControllerTest {
     }
 
     private static Stream<Arguments> dadosCamposInvalidos() {
-        var errosComuns = errosComuns();
 
         var erroPrecoNegativo = "O preço deve ser maior ou igual a zero";
         var erroTempoNegativo = "O tempo estimado em horas deve ser maior que zero";
@@ -287,14 +281,6 @@ class ServicoControllerTest {
             Arguments.of("cadastrar-servico-400-unidades-negativas.json", List.of(erroPrecoNegativo, erroTempoNegativo)),
             Arguments.of("alterar-servico-400-unidades-negativas.json", List.of(erroPrecoNegativo, erroTempoNegativo))
         );
-    }
-
-    private static List<String> errosComuns() {
-        var erroCampoNome = "O nome é obrigatório";
-        var erroCampoDescricao = "A descrição é obrigatória";
-        var erroPreco = "O preço é obrigatório";
-
-        return new ArrayList<>(List.of(erroCampoNome, erroCampoDescricao, erroPreco));
     }
 
     private CadastrarServicoRequest cadastrarRequest() {

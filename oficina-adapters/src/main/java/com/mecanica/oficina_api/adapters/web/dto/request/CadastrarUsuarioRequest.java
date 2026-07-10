@@ -2,7 +2,6 @@ package com.mecanica.oficina_api.adapters.web.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 public class CadastrarUsuarioRequest {
     @NotBlank(message = "O nome é obrigatório")
