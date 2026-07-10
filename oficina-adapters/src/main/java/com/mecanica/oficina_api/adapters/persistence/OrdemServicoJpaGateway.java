@@ -124,6 +124,6 @@ public class OrdemServicoJpaGateway implements OrdemServicoGateway {
                 .map(v -> new MinhaOrdemServicoOutput.VeiculoResumo(
                         v.getId(), v.getPlaca(), v.getMarca(), v.getModelo(), v.getAno(), v.getCor()))
                 .orElse(null);
-        return new MinhaOrdemServicoOutput(entity.getId(), entity.getStatus(), entity.getOrcamentoStatus(), veiculo);
+        return new MinhaOrdemServicoOutput(entity.getId(), entity.getStatus(), entity.getDataCriacao(), entity.getOrcamentoStatus(), veiculo);
     }
 }

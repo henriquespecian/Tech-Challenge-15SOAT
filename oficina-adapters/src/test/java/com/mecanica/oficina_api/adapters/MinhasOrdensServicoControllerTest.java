@@ -7,6 +7,7 @@ import com.mecanica.oficina_api.application.ordemservico.output.MinhaOrdemServic
 import com.mecanica.oficina_api.application.ordemservico.usecase.ListarPorUsuarioOrdemServicoUseCase;
 import com.mecanica.oficina_api.domain.ordemservico.OrdemServicoStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -62,7 +63,7 @@ class MinhasOrdensServicoControllerTest {
     @Test
     void deveListarOrdensDoClienteLogado_semFiltros() throws Exception {
         MinhaOrdemServicoOutput output = new MinhaOrdemServicoOutput(
-                "os-1", "RECEBIDA", "PENDENTE",
+                "os-1", "RECEBIDA", LocalDateTime.now(), "PENDENTE",
                 new MinhaOrdemServicoOutput.VeiculoResumo("v-1", "ABC1D23", "Fiat", "Uno", 2020, "Prata"));
         when(listarPorUsuarioOrdemServicoUseCase.executar(eq(CLIENTE_ID), isNull(), isNull()))
                 .thenReturn(List.of(output));
