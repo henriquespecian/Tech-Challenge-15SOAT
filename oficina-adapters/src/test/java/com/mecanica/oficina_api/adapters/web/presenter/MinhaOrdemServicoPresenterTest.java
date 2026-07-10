@@ -3,6 +3,7 @@ package com.mecanica.oficina_api.adapters.web.presenter;
 import com.mecanica.oficina_api.adapters.web.dto.response.MinhaOrdemServicoResponse;
 import com.mecanica.oficina_api.application.ordemservico.output.MinhaOrdemServicoOutput;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ class MinhaOrdemServicoPresenterTest {
     @Test
     void deveApresentar_comVeiculoNulo() {
         MinhaOrdemServicoOutput output = new MinhaOrdemServicoOutput(
-                "os-1", "RECEBIDA", null, null);
+                "os-1", "RECEBIDA", LocalDateTime.now(), null, null);
 
         MinhaOrdemServicoResponse response = presenter.apresentar(output);
 
@@ -31,7 +32,7 @@ class MinhaOrdemServicoPresenterTest {
         MinhaOrdemServicoOutput.VeiculoResumo veiculo = new MinhaOrdemServicoOutput.VeiculoResumo(
                 "veiculo-1", "ABC1D23", "Ford", "Ka", 2020, "Prata");
         MinhaOrdemServicoOutput output = new MinhaOrdemServicoOutput(
-                "os-1", "EM_DIAGNOSTICO", "PENDENTE", veiculo);
+                "os-1", "EM_DIAGNOSTICO", LocalDateTime.now(), "PENDENTE", veiculo);
 
         MinhaOrdemServicoResponse response = presenter.apresentar(output);
 
@@ -50,7 +51,7 @@ class MinhaOrdemServicoPresenterTest {
     @Test
     void deveApresentarLista() {
         MinhaOrdemServicoOutput output = new MinhaOrdemServicoOutput(
-                "os-1", "RECEBIDA", null, null);
+                "os-1", "RECEBIDA", LocalDateTime.now(), null, null);
 
         List<MinhaOrdemServicoResponse> responses = presenter.apresentar(List.of(output));
 
