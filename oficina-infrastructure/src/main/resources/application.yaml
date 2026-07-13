@@ -27,6 +27,15 @@ spring:
           starttls:
             enable: true
 
+management:
+  health:
+    # O MailHealthIndicator abre uma conexao SMTP com o Gmail a cada chamada de
+    # /actuator/health. No EKS isso estoura o timeout da probe e derruba o pod
+    # (503 -> CrashLoopBackOff). A disponibilidade do e-mail nao deve gatilhar a
+    # saude do pod, entao desligamos esse indicador.
+    mail:
+      enabled: false
+
 jwt:
   secret: ${JWT_SECRET:c2VjcmV0b0p3dFN1cGVyU2VndXJvUGFyYU9maWNpbmFBcGkxMjM0NTY3ODk=}
   expiration: 86400000
