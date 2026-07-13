@@ -11,7 +11,31 @@ public record NotificacaoCliente(
         String clienteId,
         String veiculoId) {
 
+    public static NotificacaoCliente recebido(OrdemServico os) {
+        return new NotificacaoCliente(
+                TipoNotificacaoCliente.RECEBIDA,
+                os.getId(),
+                os.getClienteId(),
+                os.getVeiculoId());
+    }
+
+    public static NotificacaoCliente emDiagnostico(OrdemServico os) {
+        return new NotificacaoCliente(
+                TipoNotificacaoCliente.EM_DIAGNOSTICO,
+                os.getId(),
+                os.getClienteId(),
+                os.getVeiculoId());
+    }
+
     public static NotificacaoCliente envioOrcamento(OrdemServico os) {
+        return new NotificacaoCliente(
+                TipoNotificacaoCliente.ENVIO_ORCAMENTO,
+                os.getId(),
+                os.getClienteId(),
+                os.getVeiculoId());
+    }
+
+    public static NotificacaoCliente emExecucao(OrdemServico os) {
         return new NotificacaoCliente(
                 TipoNotificacaoCliente.ENVIO_ORCAMENTO,
                 os.getId(),
@@ -22,6 +46,14 @@ public record NotificacaoCliente(
     public static NotificacaoCliente finalizacao(OrdemServico os) {
         return new NotificacaoCliente(
                 TipoNotificacaoCliente.FINALIZACAO_OS,
+                os.getId(),
+                os.getClienteId(),
+                os.getVeiculoId());
+    }
+
+    public static NotificacaoCliente entrega(OrdemServico os) {
+        return new NotificacaoCliente(
+                TipoNotificacaoCliente.ENVIO_ORCAMENTO,
                 os.getId(),
                 os.getClienteId(),
                 os.getVeiculoId());
