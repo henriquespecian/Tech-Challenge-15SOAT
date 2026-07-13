@@ -46,7 +46,7 @@ public class OrdemServicoJpaGateway implements OrdemServicoGateway {
     }
 
     @Override
-    public Optional<OrdemServico> buscar(String id) {
+    public Optional<OrdemServico>   buscar(String id) {
         return repository.findById(id).map(this::toDomain);
     }
 

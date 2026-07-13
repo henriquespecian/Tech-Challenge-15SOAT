@@ -25,11 +25,6 @@ public class OrdemServico {
         return new OrdemServico(veiculoId, clienteId);
     }
 
-
-//    public static OrdemServico criar(String veiculoId, String clienteId, Orcamento orcamento) {
-//
-//    }
-
     public static OrdemServico reconstituir(String id, String veiculoId, String clienteId,
                                             OrdemServicoStatus status, Orcamento orcamento,
                                             BigDecimal valorFinal, LocalDateTime dataFinal) {

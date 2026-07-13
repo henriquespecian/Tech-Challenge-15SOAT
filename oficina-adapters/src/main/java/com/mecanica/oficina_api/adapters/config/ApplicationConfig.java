@@ -192,8 +192,8 @@ public class ApplicationConfig {
         return new MontadorItensOrcamento(insumosGateway, servicoGateway);
     }
     @Bean
-    CriarOrdemServicoUseCase criarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway, VeiculoGateway veiculoGateway, ClienteGateway clienteGateway, MontadorItensOrcamento montadorItensOrcamento) {
-        return new CriarOrdemServicoUseCase(ordemServicoGateway, veiculoGateway, clienteGateway, montadorItensOrcamento);
+    CriarOrdemServicoUseCase criarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway, NotificadorClienteGateway notificadorClienteGateway, VeiculoGateway veiculoGateway, ClienteGateway clienteGateway, MontadorItensOrcamento montadorItensOrcamento) {
+        return new CriarOrdemServicoUseCase(ordemServicoGateway, notificadorClienteGateway, veiculoGateway, clienteGateway, montadorItensOrcamento);
     }
     @Bean
     ConsultarOrdemServicoUseCase consultarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway) {
@@ -212,8 +212,8 @@ public class ApplicationConfig {
         return new ListarPorUsuarioOrdemServicoUseCase(ordemServicoGateway);
     }
     @Bean
-    IniciarDiagnosticoOrdemServicoUseCase iniciarDiagnosticoOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway) {
-        return new IniciarDiagnosticoOrdemServicoUseCase(ordemServicoGateway);
+    IniciarDiagnosticoOrdemServicoUseCase iniciarDiagnosticoOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway, NotificadorClienteGateway notificadorClienteGateway) {
+        return new IniciarDiagnosticoOrdemServicoUseCase(ordemServicoGateway, notificadorClienteGateway);
     }
     @Bean
     GerarOrcamentoUseCase gerarOrcamentoUseCase(OrdemServicoGateway ordemServicoGateway, MontadorItensOrcamento montadorItensOrcamento) {
@@ -240,16 +240,16 @@ public class ApplicationConfig {
         return new NegarOrcamentoUseCase(ordemServicoGateway);
     }
     @Bean
-    IniciarExecucaoUseCase iniciarExecucaoUseCase(OrdemServicoGateway ordemServicoGateway, StatusServicoGateway statusServicoGateway) {
-        return new IniciarExecucaoUseCase(ordemServicoGateway, statusServicoGateway);
+    IniciarExecucaoUseCase iniciarExecucaoUseCase(OrdemServicoGateway ordemServicoGateway, NotificadorClienteGateway notificadorClienteGateway, StatusServicoGateway statusServicoGateway) {
+        return new IniciarExecucaoUseCase(ordemServicoGateway, notificadorClienteGateway, statusServicoGateway);
     }
     @Bean
     FinalizarOrdemServicoUseCase finalizarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway, StatusServicoGateway statusServicoGateway, NotificadorClienteGateway notificadorClienteGateway) {
         return new FinalizarOrdemServicoUseCase(ordemServicoGateway, statusServicoGateway, notificadorClienteGateway);
     }
     @Bean
-    EntregarOrdemServicoUseCase entregarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway) {
-        return new EntregarOrdemServicoUseCase(ordemServicoGateway);
+    EntregarOrdemServicoUseCase entregarOrdemServicoUseCase(OrdemServicoGateway ordemServicoGateway, NotificadorClienteGateway notificadorClienteGateway) {
+        return new EntregarOrdemServicoUseCase(ordemServicoGateway, notificadorClienteGateway);
     }
     @Bean
     ListarServicosPorOSUseCase listarServicosPorOSUseCase(StatusServicoGateway statusServicoGateway) {
