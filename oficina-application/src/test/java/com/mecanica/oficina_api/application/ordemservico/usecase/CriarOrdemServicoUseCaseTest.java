@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.mecanica.oficina_api.application.cliente.gateway.ClienteGateway;
 import com.mecanica.oficina_api.application.ordemservico.MontadorItensOrcamento;
+import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorClienteGateway;
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
 import com.mecanica.oficina_api.application.ordemservico.input.GerarOrcamentoInput;
 import com.mecanica.oficina_api.application.veiculo.gateway.VeiculoGateway;
@@ -44,6 +45,9 @@ class CriarOrdemServicoUseCaseTest {
 
     @Mock
     private MontadorItensOrcamento montadorItensOrcamento;
+
+    @Mock
+    private NotificadorClienteGateway notificadorClienteGateway;
 
     @InjectMocks
     private CriarOrdemServicoUseCase useCase;

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.mecanica.oficina_api.application.ordemservico.gateway.NotificadorClienteGateway;
 import com.mecanica.oficina_api.application.ordemservico.gateway.OrdemServicoGateway;
 import com.mecanica.oficina_api.application.servico.gateway.StatusServicoGateway;
 import com.mecanica.oficina_api.domain.ordemservico.OrcamentoStatus;
@@ -27,6 +28,8 @@ class IniciarExecucaoUseCaseTest {
 
     @Mock
     private OrdemServicoGateway ordemServicoGateway;
+    @Mock
+    private NotificadorClienteGateway notificadorClienteGateway;
 
     @Mock
     private StatusServicoGateway statusServicoGateway;
