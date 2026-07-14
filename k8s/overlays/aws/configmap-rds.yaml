@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: oficina-config   # identifica (mesmo nome do base)
 data:
-  SPRING_DATASOURCE_URL: jdbc:postgresql://terraform-20260701125219199100000001.c5olajhzxt8o.us-east-1.rds.amazonaws.com:5432/oficina_db
+  SPRING_DATASOURCE_URL: jdbc:postgresql://terraform-20260713234556452600000001.cdh7ifbthkmx.us-east-1.rds.amazonaws.com:5432/oficina_db
   SPRING_PROFILES_ACTIVE: dev
