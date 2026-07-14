@@ -20,7 +20,7 @@ on:
 env:
   AWS_REGION: us-east-1
   EKS_CLUSTER: eks-oficina-terraform
-  ECR_REGISTRY: 029166075159.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REGISTRY: 322517093426.dkr.ecr.us-east-1.amazonaws.com
   ECR_REPOSITORY: oficina-api
 
 jobs:
