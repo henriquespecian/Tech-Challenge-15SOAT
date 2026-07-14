@@ -95,12 +95,5 @@ jobs:
       - name: Deploy no cluster (aplica os manifestos)
         run: kubectl apply -k k8s/overlays/aws
         
-      - name: Check pod status
-        if: always()
-        run: |
-          kubectl get pods -l app=oficina-api
-          kubectl describe pod -l app=oficina-api
-          kubectl logs -l app=oficina-api --tail=50
-    
       - name: Aguardar o rollout
         run: kubectl rollout status deploy/oficina-api --timeout=300s
