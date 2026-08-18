@@ -47,8 +47,14 @@ WORKDIR /app
 # O .jar é gerado dentro do infrastructure
 COPY --from=build /app/oficina-infrastructure/target/oficina-infrastructure-*.jar app.jar
 
+# 1. Baixa o agente do open telemetry
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar /app/opentelemetry-javaagent.jar
+
+# 2. Garante as permissões de leitura
+RUN chmod 644 /app/opentelemetry-javaagent.jar
+
 #Expondo a porta 8080 para acessar a aplicação
 EXPOSE 8080
 
-# Define o comando de entrada para rodar a aplicação, usando o .jar copiado
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Define o comando de entrada para rodar a aplicação, usando o .jar copiado junto com o agente do opentelemetry
+ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-jar", "app.jar"]
