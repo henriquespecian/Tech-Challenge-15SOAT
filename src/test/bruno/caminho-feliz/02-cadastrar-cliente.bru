@@ -17,13 +17,78 @@ headers {
 
 body:json {
   {
-    "nome": "João da Silva",
-    "documento": "885.355.780-05",
-    "email": "joao.slva@email.com",
-    "telefone": "11988887777"
+    "nome": "{{clienteNome}}",
+    "documento": "{{clienteCpf}}",
+    "email": "{{clienteEmail}}",
+    "telefone": "{{clienteTelefone}}"
   }
 }
 
-vars:pre-request {
-  baseUrl: http://localhost:8080
+script:pre-request {
+  // --- Gerador de CPF válido ---
+  function gerarCpf() {
+    const n = [];
+    for (let i = 0; i < 9; i++) {
+      n.push(Math.floor(Math.random() * 10));
+    }
+    // Primeiro dígito verificador
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+      soma += n[i] * (10 - i);
+    }
+    let resto = soma % 11;
+    const d1 = resto < 2 ? 0 : 11 - resto;
+    n.push(d1);
+    // Segundo dígito verificador
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+      soma += n[i] * (11 - i);
+    }
+    resto = soma % 11;
+    const d2 = resto < 2 ? 0 : 11 - resto;
+    n.push(d2);
+    return n.join('');
+  }
+
+  // Evitar CPFs com todos os dígitos iguais (ex: 111.111.111-11)
+  let cpfNum;
+  do {
+    cpfNum = gerarCpf();
+  } while (/^(\d)\1{10}$/.test(cpfNum));
+
+  const cpfFormatado = cpfNum.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+
+  // --- Gerador de nome ---
+  const nomes = [
+    "Ana", "Carlos", "Mariana", "Pedro", "Lucas", "Juliana",
+    "Rafael", "Fernanda", "Bruno", "Camila", "Diego", "Larissa",
+    "Gabriel", "Tatiane", "Thiago", "Patricia", "Marcos", "Beatriz",
+    "Ricardo", "Amanda", "Gustavo", "Vanessa", "Felipe", "Isabela"
+  ];
+  const sobrenomes = [
+    "Silva", "Santos", "Oliveira", "Souza", "Pereira", "Costa",
+    "Ferreira", "Almeida", "Nascimento", "Lima", "Araujo", "Ribeiro",
+    "Carvalho", "Gomes", "Martins", "Rocha", "Rodrigues", "Melo"
+  ];
+
+  const nome = nomes[Math.floor(Math.random() * nomes.length)];
+  const sobrenome = sobrenomes[Math.floor(Math.random() * sobrenomes.length)];
+  const nomeCompleto = nome + " " + sobrenome;
+
+  // --- Gerador de email ---
+  const sufixo = Math.floor(Math.random() * 1000);
+  const email = nome.toLowerCase() + "." + sobrenome.toLowerCase() + sufixo + "@email.com";
+
+  // --- Gerador de telefone ---
+  const ddd = "11";
+  const prefixo = "9";
+  const numTel = String(Math.floor(Math.random() * 100000000)).padStart(8, '0');
+  const telefone = ddd + prefixo + numTel;
+
+  // --- Salvar variáveis ---
+  bru.setEnvVar("cpf", cpfNum);
+  bru.setEnvVar("clienteNome", nomeCompleto);
+  bru.setEnvVar("clienteCpf", cpfFormatado);
+  bru.setEnvVar("clienteEmail", email);
+  bru.setEnvVar("clienteTelefone", telefone);
 }

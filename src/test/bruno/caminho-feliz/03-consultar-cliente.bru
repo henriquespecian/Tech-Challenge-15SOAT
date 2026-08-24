@@ -10,20 +10,8 @@ get {
   auth: none
 }
 
-params:query {
-  : 
-}
-
 headers {
   Authorization: Bearer {{token}}
-}
-
-auth:bearer {
-  token: {{token}}
-}
-
-vars:pre-request {
-  baseUrl: http://localhost:8080
 }
 
 script:post-response {

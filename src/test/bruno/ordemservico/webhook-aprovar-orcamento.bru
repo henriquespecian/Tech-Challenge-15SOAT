@@ -6,11 +6,15 @@ meta {
 
 post {
   url: {{baseUrl}}/ordem-servico/:id/orcamento/webhook/aprovar
-  body: {
+  body: json
+  auth: none
+}
+
+body:json {
+  {
     "externalId": "{{webhookExternalId}}",
     "observacoes": "Aprovado via webhook"
   }
-  auth: none
 }
 
 headers {
