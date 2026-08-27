@@ -18,12 +18,62 @@ headers {
 body:json {
   {
     "clienteId": "{{clienteId}}",
-    "placa": "BRA2E19",
-    "marca": "Honda",
-    "modelo": "Civic",
-    "ano": 2021,
-    "cor": "Preto"
+    "placa": "{{veiculoPlaca}}",
+    "marca": "{{veiculoMarca}}",
+    "modelo": "{{veiculoModelo}}",
+    "ano": {{veiculoAno}},
+    "cor": "{{veiculoCor}}"
   }
+}
+
+script:pre-request {
+  // --- Gerador de placa Mercosul (ABC1D23) ---
+  const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  function letraAleatoria() {
+    return letras[Math.floor(Math.random() * letras.length)];
+  }
+  function digitoAleatorio() {
+    return Math.floor(Math.random() * 10);
+  }
+  const placa = letraAleatoria() + letraAleatoria() + letraAleatoria() +
+                digitoAleatorio() + letraAleatoria() +
+                digitoAleatorio() + digitoAleatorio();
+
+  // --- Gerador de veículo ---
+  const veiculos = [
+    { marca: "Honda", modelo: "Civic" },
+    { marca: "Honda", modelo: "Fit" },
+    { marca: "Toyota", modelo: "Corolla" },
+    { marca: "Toyota", modelo: "Yaris" },
+    { marca: "Fiat", modelo: "Argo" },
+    { marca: "Fiat", modelo: "Cronos" },
+    { marca: "Fiat", modelo: "Mobi" },
+    { marca: "VW", modelo: "Gol" },
+    { marca: "VW", modelo: "Polo" },
+    { marca: "VW", modelo: "T-Cross" },
+    { marca: "Chevrolet", modelo: "Onix" },
+    { marca: "Chevrolet", modelo: "Tracker" },
+    { marca: "Hyundai", modelo: "HB20" },
+    { marca: "Hyundai", modelo: "Creta" },
+    { marca: "Renault", modelo: "Kwid" },
+    { marca: "Renault", modelo: "Sandero" },
+    { marca: "Jeep", modelo: "Compass" },
+    { marca: "Jeep", modelo: "Renegade" },
+    { marca: "Ford", modelo: "Ka" },
+    { marca: "Nissan", modelo: "Kicks" }
+  ];
+  const cores = ["Preto", "Branco", "Prata", "Cinza", "Vermelho", "Azul", "Verde", "Marrom"];
+
+  const veiculo = veiculos[Math.floor(Math.random() * veiculos.length)];
+  const ano = 2015 + Math.floor(Math.random() * 11); // 2015-2025
+  const cor = cores[Math.floor(Math.random() * cores.length)];
+
+  // --- Salvar variáveis ---
+  bru.setEnvVar("veiculoPlaca", placa);
+  bru.setEnvVar("veiculoMarca", veiculo.marca);
+  bru.setEnvVar("veiculoModelo", veiculo.modelo);
+  bru.setEnvVar("veiculoAno", String(ano));
+  bru.setEnvVar("veiculoCor", cor);
 }
 
 script:post-response {

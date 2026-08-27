@@ -17,9 +17,9 @@ headers {
 script:post-response {
   const service = res.getBody();
   if (service && service.length >= 1) {
-    bru.setEnvVar("serviceid1", service[0].id);
+    bru.setEnvVar("servicoId1", service[0].id);
   }
   if (service && service.length >= 2) {
-    bru.setEnvVar("serviceid2", service[1].id);
+    bru.setEnvVar("servicoId2", service[1].id);
   }
 }
